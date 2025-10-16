@@ -1,58 +1,108 @@
 // src/hooks/useInventario.js
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../api/supabaseClient';
 
 const useInventario = (empresaId, refreshTrigger = 0) => {
-    const [productos, setProductos] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const controllerRef = useRef(null);
+  const lastFetchRef = useRef({ empresaId: null, refreshTrigger: null });
 
-    // Función para obtener los productos
-    const fetchProductos = useCallback(async () => {
-        if (!empresaId) {
-            return;
-        }
-        setLoading(true);
-        setError(null);
+  const fetchProductos = useCallback(async () => {
+    // Evitar llamadas duplicadas
+    if (lastFetchRef.current.empresaId === empresaId && 
+        lastFetchRef.current.refreshTrigger === refreshTrigger) {
+      return;
+    }
 
-        // La magia: Supabase usa el token de sesión para aplicar el RLS
-        // y solo devuelve los productos donde empresa_id coincide.
-        const { data, error } = await supabase
-            .from('productos')
-            .select('*') // Selecciona todos los campos de la tabla
-            .eq('empresa_id', empresaId)
-            .order('nombre', { ascending: true }); // Ordena alfabéticamente
+    if (!empresaId) {
+      setProductos([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
-        if (error) {
-            console.error('Error al cargar productos:', error);
-            setError('Error al cargar el inventario. Inténtalo de nuevo.');
-            setProductos([]);
+    // Actualizar referencia antes de la llamada
+    lastFetchRef.current = { empresaId, refreshTrigger };
+
+    // Cancela llamada anterior si existía
+    controllerRef.current?.abort?.();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
+    setLoading(true);
+    setError(null);
+
+    // Timeout más corto para response rápida
+    const timeoutId = setTimeout(() => {
+      if (!controller.signal.aborted) {
+        controller.abort();
+      }
+    }, 3000); // Reducido a 3 segundos
+
+    try {
+      const { data, error } = await supabase
+        .from('productos')
+        .select('*')
+        .eq('empresa_id', empresaId)
+        .order('nombre', { ascending: true })
+        .abortSignal?.(controller.signal);
+
+      clearTimeout(timeoutId);
+
+      if (error) {
+        const msg = error?.message || JSON.stringify(error);
+        if (String(msg).toLowerCase().includes('abort')) {
+          // console.warn('[useInventario] abortado por cambio/strictmode');
         } else {
-            setProductos((data || []).map(item => ({
-                ...item,
-                precio_venta: Number(item.precio_venta),
-                precio_costo: Number(item.precio_costo),
-                stock_actual: Number(item.stock_actual),
-                alerta_stock_min: Number(item.alerta_stock_min),
-            })));
+          console.error('❌ [useInventario] error:', msg);
+          setError(msg || 'Error al cargar el inventario.');
+          setProductos([]);
         }
-        setLoading(false);
-    }, [empresaId]);
-
-    // Cargar productos al iniciar el componente
-    useEffect(() => {
-        if (!empresaId) {
-            setProductos([]);
-            setLoading(true);
-            setError(null);
-            return;
+      } else {
+        const mapped = (data || []).map((item) => ({
+          ...item,
+          precio_venta: Number(item.precio_venta),
+          precio_costo: Number(item.precio_costo),
+          stock_actual: Number(item.stock_actual),
+          alerta_stock_min: Number(item.alerta_stock_min),
+        }));
+        // Solo log una vez por carga exitosa
+        if (mapped.length > 0) {
+          console.log('[useInventario] ✅ Productos cargados:', mapped.length);
         }
-        fetchProductos();
-    }, [fetchProductos, refreshTrigger, empresaId]);
+        setProductos(mapped);
+      }
+    } catch (e) {
+      clearTimeout(timeoutId);
+      if (e?.name === 'AbortError') {
+        // Abort silencioso para mejor UX
+      } else {
+        console.error('❌ [useInventario] exception:', e?.message || e);
+        setError(e?.message || String(e));
+        setProductos([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Sin dependencias para evitar re-creación
 
-    // Retorna los datos y la función de refresco
-    return { productos, loading, error, fetchProductos };
+  useEffect(() => {
+    let active = true;
+    
+    (async () => {
+      if (!active) return;
+      await fetchProductos();
+    })();
+    
+    return () => {
+      active = false;
+      controllerRef.current?.abort?.();
+    };
+  }, [empresaId, refreshTrigger]); // Solo estas dependencias esenciales
+
+  return { productos, loading, error, fetchProductos };
 };
 
 export default useInventario;

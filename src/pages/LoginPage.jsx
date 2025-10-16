@@ -1,8 +1,8 @@
-// src/pages/LoginPage.jsx
+// src/pages/LoginPage.jsx (FINAL)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useAuth from '../hooks/useAuth'; 
+import useAuth from '../hooks/useAuth.jsx'; // Asegúrate de la extensión
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -14,15 +14,16 @@ const LoginPage = () => {
 
     // Redirigir si la sesión se establece
     useEffect(() => {
-        if (!isBootstrapping && session) {
-            // Redirigir al Inventario, que es la página principal de la aplicación
+        // 🛑 Redirigir solo si el bootstrapping terminó y hay sesión.
+        if (!isBootstrapping && session) { 
+            // Redirigir al Inventario, que es la página principal
             navigate('/inventario', { replace: true });
         }
     }, [session, isBootstrapping, navigate]);
 
     // Opcional: Mostrar mensaje de carga si el hook aún está verificando la sesión
     if (isBootstrapping) {
-         return <div>Verificando sesión...</div>;
+         return <div style={{height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>Verificando sesión...</div>;
     }
     
     // Si ya tiene sesión, no renderizar nada (la redirección ya está en useEffect)
@@ -34,10 +35,14 @@ const LoginPage = () => {
         e.preventDefault();
         setError(null);
 
+        console.log('🔑 Intentando login para:', email);
         const { error: loginError } = await login(email, password);
 
         if (loginError) {
+            console.error('❌ Error de login:', loginError);
             setError(loginError.message);
+        } else {
+            console.log('✅ Login exitoso, esperando redirección...');
         }
         // Si no hay error, el useEffect se encargará de la redirección.
     };
@@ -72,7 +77,6 @@ const LoginPage = () => {
                 {error && <p style={styles.error}>{error}</p>}
 
                 <p style={styles.registerPrompt}>
-                    {/* CRÍTICO: La ruta /register ahora está protegida, solo el administrador debe usarla. */}
                     ¿Eres el desarrollador? Accede a la ruta <a href="/register">/register</a>.
                 </p>
 

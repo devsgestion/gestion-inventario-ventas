@@ -4,9 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
 import ProductoForm from '../components/inventario/ProductoForm';
 import ProductosLista from '../components/inventario/ProductosLista'; 
-import useAuth from '../hooks/useAuth';
+import useAuth from '../hooks/useAuth.jsx';
 import { formatCurrencyCOP } from '../utils/formatters';
 import './InventarioPage.css';
+
+// =========================================================================
+// 1. COMPONENTE DE REPORTES (Interno de la Página)
+// =========================================================================
 
 const ReportesResumen = ({ empresaId }) => {
     const [reporte, setReporte] = useState(null);
@@ -30,16 +34,21 @@ const ReportesResumen = ({ empresaId }) => {
             setLoading(false);
         };
 
+        // Solo cargamos si tenemos el ID. Esto es robusto porque el padre controla la renderización.
         if (empresaId) {
             fetchReporte();
         } else {
             setReporte(null);
+            setLoading(false); 
         }
     }, [empresaId]);
 
-    if (!empresaId) return <div className="loading-state">Cargando datos de la empresa...</div>;
+    // Validación estricta: Si la ID no llega, no se renderizan datos.
+    if (!empresaId) return <div className="empty-state">No hay datos de la empresa.</div>;
     if (loading) return <div className="loading-state">Cargando resumen de ventas...</div>;
-    if (!reporte) return <div className="empty-state">No hay datos de ventas disponibles.</div>;
+    
+    // Si la carga terminó y no hay reporte (o es cero)
+    if (!reporte || reporte.total_ventas === 0) return <div className="empty-state">Aún no hay ventas registradas.</div>;
 
     return (
         <div className="reporte-grid">
@@ -59,26 +68,74 @@ const ReportesResumen = ({ empresaId }) => {
     );
 };
 
+// =========================================================================
+// 2. PÁGINA PRINCIPAL
+// =========================================================================
+
 const InventarioPage = () => {
-    const { perfil, logout, isBootstrapping } = useAuth(); 
+    const { perfil, logout, isBootstrapping, isLoading } = useAuth(); 
     
-    const [mostrarFormulario, setMostrarFormulario] = useState(false); // Lo cambiamos a false por defecto ahora que el inventario está visible
+    const [mostrarFormulario, setMostrarFormulario] = useState(false); 
     const [refreshKey, setRefreshKey] = useState(0); 
+    
+    // Extracción de la ID de la empresa (si existe)
+    const empresaId = perfil?.empresa_id;
+    const isDataReady = !!empresaId && !isBootstrapping;
+
+    // Detector de página colgada
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && isBootstrapping) {
+                // Si volvemos a la página y sigue en bootstrap, hay problema
+                setTimeout(() => {
+                    if (isBootstrapping) {
+                        console.error('🚨 Página colgada en bootstrap - refresh automático');
+                        window.location.reload();
+                    }
+                }, 2000);
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [isBootstrapping]);
 
     const handleProductSaved = () => {
         setRefreshKey(prevKey => prevKey + 1);
         setMostrarFormulario(false);
     };
 
-    if (isBootstrapping) {
+    // 🛑 MANEJO DE ESTADOS GLOBALES (CRÍTICO para evitar el cuelgue) 🛑
+    // Si la carga inicial de la aplicación aún está en curso, mostramos un solo spinner.
+    if (isBootstrapping || isLoading) {
         return (
-            <div className="loading-state">Cargando inventario...</div>
+            <div className="loading-state">
+                <p>Cargando aplicación...</p>
+                <button 
+                    onClick={() => window.location.reload()} 
+                    style={{
+                        marginTop: '15px', 
+                        padding: '8px 16px', 
+                        backgroundColor: '#ff6b6b', 
+                        color: 'white', 
+                        border: 'none', 
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    🔄 Forzar Recarga
+                </button>
+            </div>
         );
     }
-
-    if (!perfil || !perfil.empresa_id) {
+    
+    // Si terminó la carga y no hay perfil o empresaId (FALLO DE PERFIL/RLS)
+    if (!perfil || !empresaId) {
         return (
-            <div className="empty-state">No se pudo cargar la empresa asociada al usuario.</div>
+            <div className="empty-state">
+                <p>No se pudo cargar la información de la empresa.</p>
+                <button onClick={logout} className="btn btn-primary">Cerrar Sesión e Intentar de Nuevo</button>
+            </div>
         );
     }
 
@@ -113,25 +170,36 @@ const InventarioPage = () => {
                         {mostrarFormulario ? '✕ Ocultar Formulario' : '+ Crear Nuevo Producto'}
                     </button>
 
-                    {/* Formulario de Ingreso de Productos */}
+                    {/* Formulario de Ingreso de Productos: Renderizado Condicional */}
                     {mostrarFormulario && (
                         <div style={{ marginTop: '2rem' }}>
-                            <ProductoForm empresaId={perfil?.empresa_id} onProductSaved={handleProductSaved} />
+                            {/* CRÍTICO: Solo renderizar si los datos están listos */}
+                            {isDataReady && <ProductoForm empresaId={empresaId} onProductSaved={handleProductSaved} />}
                         </div>
                     )}
                 </section>
 
-                {/* Lista de Productos */}
-                <section className="content-section">
-                    <h3 className="section-title">📦 Inventario Actual</h3>
-                    <ProductosLista key={refreshKey} empresaId={perfil.empresa_id} refreshKey={refreshKey} /> 
-                </section>
+                {/* 🛑 SECCIONES DE DATOS: Renderizado Estricto 🛑 */}
+                {isDataReady ? (
+                    <>
+                        {/* Lista de Productos */}
+                        <section className="content-section">
+                            <h3 className="section-title">📦 Inventario Actual</h3>
+                            <ProductosLista empresaId={empresaId} refreshKey={refreshKey} /> 
+                        </section>
 
-                {/* Resumen de Ventas */}
-                <section className="content-section">
-                    <h3 className="section-title">📊 Resumen de Ventas</h3>
-                    <ReportesResumen empresaId={perfil.empresa_id} />
-                </section>
+                        {/* Resumen de Ventas */}
+                        <section className="content-section">
+                            <h3 className="section-title">📊 Resumen de Ventas</h3>
+                            <ReportesResumen empresaId={empresaId} refreshKey={refreshKey} />
+                        </section>
+                    </>
+                ) : (
+                    // Estado de espera si isDataReady es false (solo debería ser breve)
+                    <div className="loading-state" style={{ padding: '40px', textAlign: 'center' }}>
+                        Esperando datos de la empresa para cargar los módulos...
+                    </div>
+                )}
             </main>
         </div>
     );
