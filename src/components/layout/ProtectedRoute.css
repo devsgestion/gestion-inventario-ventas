@@ -1,0 +1,63 @@
+/* ===== PROTECTED ROUTE LAYOUT ===== */
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-bg-main);
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px; /* Coincide con el ancho del sidebar */
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: margin-left var(--transition-normal);
+}
+
+/* ===== LOADING CONTAINER ===== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--color-bg-main);
+  gap: var(--spacing-4);
+}
+
+.loading-container p {
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  margin: 0;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 260px; /* Sidebar más compacto en tablet */
+  }
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    margin-top: 0; /* El sidebar se convierte en horizontal */
+  }
+}
+
+/* ===== PARA SIDEBAR MINI (futuro) ===== */
+.app-layout.sidebar-mini .main-content {
+  margin-left: 80px;
+}
+
+/* ===== TRANSICIONES SUAVES ===== */
+@media (prefers-reduced-motion: reduce) {
+  .main-content {
+    transition: none;
+  }
+}

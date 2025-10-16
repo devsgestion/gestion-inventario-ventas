@@ -1,0 +1,9 @@
+/* ===== IMPORTACIONES DEL SISTEMA DE DISEÑO ===== */
+@import './styles/globals.css';
+@import './styles/components.css';
+
+/* ===== CONFIGURACIÓN ESPECÍFICA DE LA APLICACIÓN ===== */
+#root {
+  width: 100%;
+  height: 100vh;
+}
