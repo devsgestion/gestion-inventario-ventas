@@ -84,14 +84,10 @@ const LoginPage = () => {
                     
                     {error && <p className="c-auth-error">{error}</p>}
 
-                    <p className="c-auth-prompt">
-                        ¿Eres el desarrollador? Accede a la ruta <a href="/register">/register</a>.
-                    </p>
-
                 </form>
             </div>
         </div>
     );
 };
-
+ 
 export default LoginPage;
