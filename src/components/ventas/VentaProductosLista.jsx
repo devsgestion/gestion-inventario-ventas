@@ -61,7 +61,6 @@ const VentaProductosLista = ({ empresaId, onAddToCart, isCajaAbierta }) => {
     if (error) return <div className="alert alert-error">Error: {error}</div>;
 
     return (
-        // DEBE USAR 'card' para que sea un elemento grid válido
         <div className="card c-product-list">
             <h4 className="card-title c-product-list__title">Productos Disponibles (Stock &gt; 0)</h4>
             <input 
@@ -71,7 +70,13 @@ const VentaProductosLista = ({ empresaId, onAddToCart, isCajaAbierta }) => {
                 onChange={(e) => setSearch(e.target.value)}
                 className="form-input c-product-list__search-input"
                 disabled={!isCajaAbierta}
+                maxLength={40}
             />
+            {search.length > 0 && productosFiltrados.length === 0 && (
+                <span className="c-form-message c-form-message--error u-mb-md">
+                    No se encontraron productos con ese criterio.
+                </span>
+            )}
             <div className="c-product-list__items">
                 {productosFiltrados.map(p => (
                     <div 

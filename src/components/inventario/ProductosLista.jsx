@@ -107,7 +107,10 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted }) => {
                         >
                             <td className="c-data-table__cell">{p.codigo_referencia}</td>
                             <td className="c-data-table__cell">{p.nombre}</td>
-                            <td className="c-data-table__cell">{p.stock_actual}</td>
+                            {/* Celda de stock con icono de alerta si está bajo */}
+                            <td className={`c-data-table__cell${p.stock_actual <= p.alerta_stock_min ? ' c-data-table__cell--stock-alert' : ''}`}>
+                                {p.stock_actual}
+                            </td>
                             <td className="c-data-table__cell" onClick={() => setEditingId(p.id)}>
                                 {editingId === p.id ? (
                                     <input 

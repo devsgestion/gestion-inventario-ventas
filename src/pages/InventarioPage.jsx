@@ -64,7 +64,7 @@ const ReportesResumen = ({ empresaId, refreshKey, perfil }) => {
 
 const InventarioPage = () => {
     const { perfil, logout, isBootstrapping, isLoading } = useAuth(); 
-    const [mostrarFormulario, setMostrarFormulario] = useState(false); 
+    const [mostrarFormulario, setMostrarFormulario] = useState(false); // 💡 Control del MODAL
     const [refreshKey, setRefreshKey] = useState(0);
 
     const empresaId = perfil?.empresa_id;
@@ -72,11 +72,15 @@ const InventarioPage = () => {
 
     const handleProductSaved = () => {
         setRefreshKey(prevKey => prevKey + 1);
-        setMostrarFormulario(false);
         if (window.refreshCajaStatus) {
             window.refreshCajaStatus();
         }
         window.dispatchEvent(new Event('caja-status-changed'));
+        // setMostrarFormulario(false); // Eliminado: El form modal se encarga de cerrarse al guardar
+    };
+
+    const handleCloseForm = () => {
+        setMostrarFormulario(false);
     };
 
     useEffect(() => {
@@ -129,27 +133,29 @@ const InventarioPage = () => {
                     <ReportesResumen empresaId={empresaId} refreshKey={refreshKey} perfil={perfil} />
                 </section>
 
-                {/* Sección de Acciones */}
-                <section className="c-card">
-                    <button 
-                        onClick={() => setMostrarFormulario(!mostrarFormulario)}
-                        className="btn btn-primary btn-success btn-full"
-                        style={{ maxWidth: '300px' }}
-                    >
-                        {mostrarFormulario ? '✕ Ocultar Formulario' : '+ Crear Nuevo Producto'}
-                    </button>
-                    {mostrarFormulario && (
-                        <div className="u-mt-lg">
-                            {isDataReady && <ProductoForm empresaId={empresaId} onProductSaved={handleProductSaved} />}
-                        </div>
-                    )}
-                </section>
-
                 {/* Lista de Productos */}
                 <section className="c-card">
-                    <h3 className="c-card__title">📦 Inventario Actual</h3>
+                    <div className="u-flex u-justify-between u-align-center u-mb-lg">
+                        <h3 className="c-card__title">📦 Inventario Actual</h3>
+                        <button 
+                            onClick={() => setMostrarFormulario(true)}
+                            className="btn btn-primary btn-success btn-new-product-action"
+                            style={{ minWidth: 180 }}
+                        >
+                            + Crear Nuevo Producto
+                        </button>
+                    </div>
                     <ProductosLista empresaId={empresaId} refreshKey={refreshKey} /> 
                 </section>
+
+                {/* 💡 MODAL: Renderizado condicional del formulario */}
+                {mostrarFormulario && isDataReady && (
+                    <ProductoForm 
+                        empresaId={empresaId} 
+                        onProductSaved={handleProductSaved} 
+                        onClose={handleCloseForm}
+                    />
+                )}
             </main>
         </div>
     );

@@ -102,3 +102,31 @@
 .c-auth-prompt a:hover {
     text-decoration: underline;
 }
+
+/* Modo claro para el login/register */
+.theme-light .c-auth-container {
+    background: var(--color-surface-100);
+    color: var(--color-text-high);
+}
+.theme-light .c-auth-card {
+    background: var(--color-surface-200);
+    color: var(--color-text-high);
+    box-shadow: 0 4px 16px rgba(52,152,219,0.08);
+}
+.theme-light .c-form-input {
+    background: var(--color-surface-300);
+    color: var(--color-text-high);
+    border: 1px solid var(--color-border);
+}
+.theme-light .btn {
+    background: var(--color-brand);
+    color: var(--color-text-on-dark);
+}
+.theme-light .c-auth-error {
+    color: var(--color-danger);
+    background: #fff1f0;
+    border: 1px solid #ffa39e;
+    border-radius: 4px;
+    padding: 6px 12px;
+    margin-top: 10px;
+}

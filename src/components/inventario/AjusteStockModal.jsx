@@ -93,23 +93,20 @@ const AjusteStockModal = ({ producto, onClose, onStockAdjusted }) => {
         <div className="c-modal-overlay">
             <div className="c-modal-content">
                 <div className="c-modal-header">
-                    <h2 className="c-modal-title u-mb-xs"> {/* Añadimos margen inferior al título */}
+                    <h2 className="c-modal-title u-mb-xs">
                         <span role="img" aria-label="ajuste">🔧</span> Ajustar Stock
                     </h2>
-                    {/* Subtítulo o nombre del producto */}
                     <p className="c-modal-subtitle">
                         Producto: <span style={{color: 'var(--color-brand)', fontWeight: 600}}>{producto.nombre}</span>
                     </p>
                 </div>
                 
                 <div className="c-modal-body">
-                    {/* Usamos la nueva clase para destacar el stock actual */}
                     <p className="c-modal-current-stock u-mb-lg">
                         Stock Actual: <b>{producto.stock_actual}</b> unidades
                     </p>
                     
                     <form onSubmit={handleAjuste} className="c-form">
-                        
                         <div className="c-form-group">
                             <label className="c-form-label">Cantidad a Sumar/Restar:</label>
                             <p className="c-form-message c-form-message--help u-mb-xs">(Ej: 5 para sumar, -3 para restar)</p>
@@ -118,9 +115,12 @@ const AjusteStockModal = ({ producto, onClose, onStockAdjusted }) => {
                                 value={cantidadAjuste} 
                                 onChange={(e) => setCantidadAjuste(e.target.value)} 
                                 required 
-                                className="c-form-input"
+                                className={`c-form-input${error && error.toLowerCase().includes('cantidad') ? ' c-form-input--error' : ''}`}
                                 placeholder="Ej: 5 o -3"
                             />
+                            {error && error.toLowerCase().includes('cantidad') && (
+                                <span className="c-form-message c-form-message--error">{error}</span>
+                            )}
                         </div>
                         
                         <div className="c-form-group">
@@ -132,11 +132,17 @@ const AjusteStockModal = ({ producto, onClose, onStockAdjusted }) => {
                                 value={razon} 
                                 onChange={(e) => setRazon(e.target.value)} 
                                 required 
-                                className="c-form-input"
+                                className={`c-form-input${error && error.toLowerCase().includes('razón') ? ' c-form-input--error' : ''}`}
                             />
+                            {error && error.toLowerCase().includes('razón') && (
+                                <span className="c-form-message c-form-message--error">{error}</span>
+                            )}
                         </div>
                         
-                        {error && <p className="c-form-message c-form-message--error">{error}</p>}
+                        {/* Mensaje de error general */}
+                        {error && !error.toLowerCase().includes('cantidad') && !error.toLowerCase().includes('razón') && (
+                            <p className="c-form-message c-form-message--error">{error}</p>
+                        )}
 
                         <div className="c-modal-footer">
                             <button 

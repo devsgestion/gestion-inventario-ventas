@@ -10,7 +10,6 @@ const CarritoDeVentas = ({ carrito, onUpdateCart, isCajaAbierta }) => {
     const total = subtotal * (1 + ivaRate);
 
     return (
-        // 💡 REVISIÓN: Quita la clase 'card' de aquí si el padre ya la tiene
         <div className="c-cart">
             <h4 className="c-cart__title">Detalle de la Venta ({carrito.length} ítems)</h4>
             <div className="c-cart__items">
@@ -20,19 +19,28 @@ const CarritoDeVentas = ({ carrito, onUpdateCart, isCajaAbierta }) => {
                         <div className="c-cart__item-info">
                             <strong>{item.nombre}</strong>
                             <p className="form-help" style={{ color: 'var(--color-text-light-muted)' }}>
-                                {formatCurrencyCOP(item.precio_venta)} x {item.cantidad} 
-                                <span style={{ fontWeight: 'bold', marginLeft: '8px' }}>= {formatCurrencyCOP(item.precio_venta * item.cantidad)}</span> {/* Total por línea */}
+                                {formatCurrencyCOP(item.precio_venta)} x {item.cantidad}
+                                {/* Solo muestra el total por línea si la cantidad es mayor a 1 */}
+                                {item.cantidad > 1 && (
+                                    <span style={{ fontWeight: 'bold', marginLeft: '8px' }}>
+                                        = {formatCurrencyCOP(item.precio_venta * item.cantidad)}
+                                    </span>
+                                )}
                             </p>
                         </div>
                         <div className="c-cart__item-actions">
                             <input
                                 type="number"
-                                min="0" /* Permitir 0 para eliminar */
+                                min="0"
                                 value={item.cantidad}
-                                onChange={(e) => onUpdateCart(item.id, Number.parseInt(e.target.value, 10))}
+                                onChange={(e) => {
+                                    const val = Number.parseInt(e.target.value, 10);
+                                    if (val < 0 || val > item.stock_actual) return;
+                                    onUpdateCart(item.id, val);
+                                }}
                                 className="form-input c-cart__quantity-input"
-                                disabled={!isCajaAbierta} /* Deshabilitado si la caja está cerrada */
-                                max={item.stock_actual} /* Limitar la cantidad al stock */
+                                disabled={!isCajaAbierta}
+                                max={item.stock_actual}
                             />
                             <button 
                                 onClick={() => onUpdateCart(item.id, 0)} 
@@ -42,11 +50,21 @@ const CarritoDeVentas = ({ carrito, onUpdateCart, isCajaAbierta }) => {
                                 ✕
                             </button>
                         </div>
+                        {item.cantidad > item.stock_actual && (
+                            <span className="c-form-message c-form-message--error">
+                                Máximo permitido: {item.stock_actual}
+                            </span>
+                        )}
                     </div>
                 ))}
             </div>
             <div className="c-cart__totals">
-                <p className="form-help" style={{ color: 'var(--color-text-light-muted)' }}>Subtotal: <strong>{formatCurrencyCOP(subtotal)}</strong></p>
+                {/* Solo muestra el subtotal si hay más de un producto en el carrito */}
+                {carrito.length > 1 && (
+                    <p className="form-help" style={{ color: 'var(--color-text-light-muted)' }}>
+                        Subtotal: <strong>{formatCurrencyCOP(subtotal)}</strong>
+                    </p>
+                )}
                 <h3 className="c-cart__total-amount">Total a Pagar: {formatCurrencyCOP(total)}</h3>
             </div>
         </div>

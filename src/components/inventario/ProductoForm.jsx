@@ -1,57 +1,109 @@
-// src/components/inventario/ProductoForm.jsx
+// src/components/inventario/ProductoForm.jsx (FINAL con Grilla y RHF/UX)
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { supabase } from '../../api/supabaseClient';
 import { formatCurrencyCOP, parseDecimal, parseInteger } from '../../utils/formatters';
+// 💡 CRÍTICO: Importar Controller para inputs de dinero con formato
+import { useForm, Controller } from 'react-hook-form'; 
 import '../../styles/inventario.css';
 
-const ProductoForm = ({ empresaId, onProductSaved }) => {
+// =========================================================================
+// 💡 COMPONENTE CUSTOM: Input de Dinero con Formato COP (UX Mejorada)
+// =========================================================================
+const CurrencyInput = ({ field, placeholder, disabled, label }) => {
+    // Estado interno para la cadena formateada que el usuario ve
+    const [displayValue, setDisplayValue] = useState(field.value ? formatCurrencyCOP(field.value) : '');
 
-    const [formData, setFormData] = useState({
-        codigo_referencia: '',
-        nombre: '',
-        stock_actual: '0',
-        precio_costo: '0',
-        precio_venta: '0',
-        alerta_stock_min: '5',
-    });
+    const handleChange = (e) => {
+        // 1. Limpiar la entrada a solo números (si es posible)
+        const rawValue = e.target.value.replace(/[^\d]/g, ''); 
+        const numericValue = rawValue ? parseInt(rawValue, 10) : 0;
+        
+        // 2. Actualizar RHF (el valor REAL es el número)
+        field.onChange(numericValue);
+        
+        // 3. Actualizar el estado de visualización (el formato COP)
+        if (rawValue) {
+            setDisplayValue(formatCurrencyCOP(numericValue));
+        } else {
+            setDisplayValue('');
+        }
+    };
     
-    const [loading, setLoading] = useState(false);
+    // 💡 UX: Al hacer focus, muestra el valor crudo y selecciona todo para escribir encima
+    const handleFocus = (e) => {
+        const numericValue = field.value || '';
+        // Muestra el número sin formato (ej: 12000) o vacío
+        setDisplayValue(numericValue.toString()); 
+        e.target.select(); // Selecciona todo el texto
+    };
+
+    // 💡 UX: Al perder el focus, si hay valor, formatea de nuevo
+    const handleBlur = (e) => {
+        if (field.value) {
+            setDisplayValue(formatCurrencyCOP(field.value));
+        } else {
+            // Asegurarse de que RHF reciba 0 si el campo queda vacío
+            field.onChange(0);
+            setDisplayValue('');
+        }
+        field.onBlur(e);
+    };
+
+    return (
+        <div className="c-form-group">
+            <label className="c-form-label" htmlFor={field.name}>{label}</label>
+            <input
+                id={field.name}
+                type="text" // Debe ser "text" para el formateo visual
+                inputMode="numeric"
+                placeholder={placeholder}
+                disabled={disabled}
+                className="c-form-input"
+                value={displayValue}
+                onChange={handleChange}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+            />
+        </div>
+    );
+};
+
+
+// =========================================================================
+// 💡 COMPONENTE PRINCIPAL: ProductoForm
+// =========================================================================
+
+const ProductoForm = ({ empresaId, onProductSaved, onClose }) => {
+    
+    const { control, register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+        defaultValues: {
+            // CRÍTICO: Dejar los campos numéricos vacíos para que la UX de 'escribir encima' funcione
+            codigo_referencia: '',
+            nombre: '',
+            stock_actual: '', 
+            precio_costo: '', 
+            precio_venta: '',
+            alerta_stock_min: '5',
+        }
+    });
+
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value,
-        }));
-    };
-
-    const handlePrecioChange = (e) => {
-        const { name, value } = e.target;
-        const raw = value.replace(/[^\d]/g, '');
-        setFormData(prev => ({
-            ...prev,
-            [name]: raw
-        }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const onSubmit = async (formData) => {
         setError(null);
         setSuccess(null);
-        setLoading(true);
-
+        
         if (!empresaId) {
-            setError('Error de autenticación: No se encontró la Empresa ID.');
-            setLoading(false);
+            setError('Error: No se encontró la Empresa ID.');
             return;
         }
 
         const productToInsert = {
             ...formData,
             empresa_id: empresaId,
+            // Asegurar que los valores vacíos se conviertan a 0 o al valor de default
             stock_actual: parseInteger(formData.stock_actual, 0),
             precio_costo: parseDecimal(formData.precio_costo, 0),
             precio_venta: parseDecimal(formData.precio_venta, 0),
@@ -66,130 +118,144 @@ const ProductoForm = ({ empresaId, onProductSaved }) => {
             console.error(insertError);
             setError(`Error al guardar producto: ${insertError.message}`);
         } else {
-            setSuccess('¡Producto guardado exitosamente!');
-            if (onProductSaved) {
-                onProductSaved();
-            }
-            setFormData({
-                codigo_referencia: '',
-                nombre: '',
-                stock_actual: '0',
-                precio_costo: '0',
-                precio_venta: '0',
-                alerta_stock_min: '5',
-            });
+            setSuccess('¡Producto guardado exitosamente! Cerrando...');
+            onProductSaved();
+            setTimeout(onClose, 1000);
         }
-        setLoading(false);
     };
 
     return (
-        <div className="c-card" style={{ maxWidth: '450px' }}> {/* Se eliminó inventario-form-container, usando c-card */}
-            <h3 className="c-card__title">
-                {success ? success : 'Crear/Ingresar Inventario Inicial'}
-            </h3>
-            {!empresaId && <p className="c-form-message c-form-message--help">Cargando datos de la empresa...</p>}
-            
-            <form onSubmit={handleSubmit} className="c-form">
-                
-                <div className="c-form-group">
-                    <label className="c-form-label">Referencia (Interna):</label>
-                    <input
-                        type="text"
-                        name="codigo_referencia"
-                        value={formData.codigo_referencia}
-                        onChange={handleChange}
-                        required
-                        disabled={!empresaId || loading}
-                        className="c-form-input"
-                        placeholder="Ej: REF-001"
-                    />
+        <div className="c-modal-overlay">
+            <div className="c-modal-content">
+                <div className="c-modal-header">
+                    <h2 className="c-modal-title">
+                        <span role="img" aria-label="new">➕</span> Ingresar Nuevo Producto
+                    </h2>
+                    {/* 💡 Botón de cierre en la esquina */}
+                    <button onClick={onClose} className="c-modal-close-btn" disabled={isSubmitting}>
+                        ✕
+                    </button>
                 </div>
                 
-                <div className="c-form-group">
-                    <label className="c-form-label">Nombre del Producto:</label>
-                    <input
-                        type="text"
-                        name="nombre"
-                        value={formData.nombre}
-                        onChange={handleChange}
-                        required
-                        disabled={!empresaId || loading}
-                        className="c-form-input"
-                        placeholder="Ej: Camisa Polo"
-                    />
+                <div className="c-modal-body">
+                    {success && <p className="c-form-message c-form-message--success u-mb-md">{success}</p>}
+                    {error && <p className="c-form-message c-form-message--error u-mb-md">{error}</p>}
+                    
+                    <form onSubmit={handleSubmit(onSubmit)}>
+                        
+                        {/* 💡 APLICAMOS LA CLASE DE GRILLA DE DOS COLUMNAS */}
+                        <div className="c-form--grid">
+                            
+                            {/* Nombre del Producto */}
+                            <div className="c-form-group">
+                                <label className="c-form-label" htmlFor="nombre">Nombre del Producto:</label>
+                                <input
+                                    id="nombre"
+                                    type="text"
+                                    placeholder="Ej: Camisa Polo"
+                                    disabled={isSubmitting || !empresaId}
+                                    className="c-form-input"
+                                    {...register("nombre", { required: "El nombre es obligatorio" })}
+                                />
+                                {errors.nombre && <p className="c-form-message c-form-message--error">{errors.nombre.message}</p>}
+                            </div>
+                            
+                            {/* Código de Referencia */}
+                            <div className="c-form-group">
+                                <label className="c-form-label" htmlFor="codigo_referencia">Referencia (Interna):</label>
+                                <input
+                                    id="codigo_referencia"
+                                    type="text"
+                                    placeholder="Ej: REF-001"
+                                    disabled={isSubmitting || !empresaId}
+                                    className="c-form-input"
+                                    {...register("codigo_referencia")}
+                                />
+                            </div>
+                            
+                            {/* Stock Inicial */}
+                            <div className="c-form-group">
+                                <label className="c-form-label" htmlFor="stock_actual">Stock Inicial:</label>
+                                <input
+                                    id="stock_actual"
+                                    type="number"
+                                    placeholder="0"
+                                    disabled={isSubmitting || !empresaId}
+                                    className="c-form-input"
+                                    {...register("stock_actual", { 
+                                        valueAsNumber: true,
+                                        min: { value: 0, message: "El stock debe ser ≥ 0" }
+                                    })}
+                                />
+                                {errors.stock_actual && <p className="c-form-message c-form-message--error">{errors.stock_actual.message}</p>}
+                            </div>
+                            
+                            {/* Alerta Stock Mínimo */}
+                            <div className="c-form-group">
+                                <label className="c-form-label" htmlFor="alerta_stock_min">Alerta Stock Mínimo:</label>
+                                <input
+                                    id="alerta_stock_min"
+                                    type="number"
+                                    placeholder="5"
+                                    disabled={isSubmitting || !empresaId}
+                                    className="c-form-input"
+                                    {...register("alerta_stock_min", { 
+                                        valueAsNumber: true,
+                                        min: { value: 0, message: "El mínimo debe ser ≥ 0" }
+                                    })}
+                                />
+                                {errors.alerta_stock_min && <p className="c-form-message c-form-message--error">{errors.alerta_stock_min.message}</p>}
+                            </div>
+
+                            {/* Precio de Costo (Custom Currency Input) */}
+                            <Controller
+                                name="precio_costo"
+                                control={control}
+                                rules={{ required: "Costo es obligatorio", min: { value: 0, message: "El costo debe ser ≥ 0" } }}
+                                render={({ field }) => (
+                                    <CurrencyInput 
+                                        field={field} 
+                                        label="Precio de Costo:"
+                                        placeholder="0"
+                                        disabled={isSubmitting || !empresaId}
+                                    />
+                                )}
+                            />
+                            {errors.precio_costo && <p className="c-form-message c-form-message--error u-mt-xs">{errors.precio_costo.message}</p>}
+                            
+                            {/* Precio de Venta (Custom Currency Input) */}
+                            <Controller
+                                name="precio_venta"
+                                control={control}
+                                rules={{ required: "Precio de venta es obligatorio", min: { value: 0.1, message: "Debe ser mayor a cero" } }}
+                                render={({ field }) => (
+                                    <CurrencyInput 
+                                        field={field} 
+                                        label="Precio de Venta:"
+                                        placeholder="0"
+                                        disabled={isSubmitting || !empresaId}
+                                    />
+                                )}
+                            />
+                            {errors.precio_venta && <p className="c-form-message c-form-message--error u-mt-xs">{errors.precio_venta.message}</p>}
+                            
+                        </div> {/* FIN c-form--grid */}
+
+                        <div className="c-modal-footer">
+                            <button type="button" onClick={onClose} disabled={isSubmitting} className="btn btn-secondary">
+                                Cancelar
+                            </button>
+                            <button 
+                                type="submit" 
+                                disabled={isSubmitting || !empresaId} 
+                                className="btn btn-primary btn-success"
+                            >
+                                {isSubmitting ? 'Guardando...' : 'Guardar Producto'}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                
-                <div className="c-form-group">
-                    <label className="c-form-label">Stock Inicial (Unidades Actuales):</label>
-                    <input
-                        type="number"
-                        name="stock_actual"
-                        value={formData.stock_actual}
-                        onChange={handleChange}
-                        required
-                        min="0"
-                        disabled={!empresaId || loading}
-                        className="c-form-input"
-                        placeholder="Ej: 10"
-                    />
-                </div>
-                
-                <div className="c-form-group">
-                    <label className="c-form-label">Precio de Costo:</label>
-                    <input
-                        type="text"
-                        name="precio_costo"
-                        // El formateo se mantiene, asegurando que el input type="text" funcione con el formateo visual
-                        value={formData.precio_costo ? formatCurrencyCOP(parseInt(formData.precio_costo, 10) || 0) : ''}
-                        onChange={handlePrecioChange}
-                        required
-                        disabled={!empresaId || loading}
-                        className="c-form-input"
-                        inputMode="numeric"
-                        placeholder="$ 0"
-                        autoComplete="off"
-                    />
-                </div>
-                
-                <div className="c-form-group">
-                    <label className="c-form-label">Precio de Venta:</label>
-                    <input
-                        type="text"
-                        name="precio_venta"
-                        value={formData.precio_venta ? formatCurrencyCOP(parseInt(formData.precio_venta, 10) || 0) : ''}
-                        onChange={handlePrecioChange}
-                        required
-                        disabled={!empresaId || loading}
-                        className="c-form-input"
-                        inputMode="numeric"
-                        placeholder="$ 0"
-                        autoComplete="off"
-                    />
-                </div>
-                
-                <div className="c-form-group">
-                    <label className="c-form-label">Alerta Stock Mínimo:</label>
-                    <input
-                        type="number"
-                        name="alerta_stock_min"
-                        value={formData.alerta_stock_min}
-                        onChange={handleChange}
-                        min="1"
-                        disabled={!empresaId || loading}
-                        className="c-form-input"
-                        placeholder="Ej: 5"
-                    />
-                </div>
-                
-                <button 
-                    type="submit" 
-                    disabled={loading || !empresaId} 
-                    className="btn btn-primary btn-success btn-full" /* Usamos btn-success y btn-full (100% width) */
-                >
-                    {loading ? 'Guardando...' : 'Guardar Producto'}
-                </button>
-            </form>
-            {error && <p className="c-form-message c-form-message--error u-mt-lg">{error}</p>}
+            </div>
         </div>
     );
 };

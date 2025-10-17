@@ -1,6 +1,6 @@
 /*
   ==============================================
-  📦 MÓDULO: INVENTARIO (BEM Naming Convention & UX Refactor)
+  📦 MÓDULO: INVENTARIO (FINAL - Contiene Modal Grilla)
   ==============================================
   Prioridad: Legibilidad tabular, Consistencia en Modo Oscuro, Centrado de Layout.
 */
@@ -69,9 +69,28 @@
 }
 .c-header-main__company {
   color: var(--color-brand);
-  font-style: italic;
-  font-size: 1.5rem; 
+  font-style: normal;
+  font-size: 1.5rem;
   margin-left: var(--space-sm);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px rgba(52, 152, 219, 0.15);
+  background: linear-gradient(90deg, #3498db 0%, #2ecc71 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  /* 💡 FIX: Asegura que el span no tenga color heredado de padre */
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Opcional: Si el gradiente no se ve, fuerza el color de texto en modo claro */
+body.theme-light .c-header-main__company {
+  background: linear-gradient(90deg, #3498db 0%, #2ecc71 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: inherit;
 }
 
 /* Bloque: Estadísticas de Reporte */
@@ -159,6 +178,13 @@
   user-select: none;
 }
 
+/* Encabezado de tabla: Mejor contraste en modo claro */
+body.theme-light .c-data-table__header-cell {
+  background-color: #eaf1fb; /* Fondo azul claro */
+  color: #2c3e50;            /* Texto oscuro */
+  border-bottom: 2px solid var(--color-brand);
+}
+
 /* Celdas de Datos */
 .c-data-table__cell {
   padding: var(--space-sm) var(--space-md); /* Más padding lateral */
@@ -170,14 +196,28 @@
 
 /* Usabilidad: Hover de fila para legibilidad */
 .c-data-table__row:hover .c-data-table__cell {
-    background-color: #273A50; /* Hover sutil */
+    background-color: #273A50; /* Hover sutil para dark */
+}
+
+/* Mejor hover para modo claro: fondo azul claro y texto oscuro */
+body.theme-light .c-data-table__row:hover .c-data-table__cell {
+    background-color: #eaf1fb !important;
+    color: #2c3e50 !important;
+}
+
+/* Si tienes filas con clase especial (por ejemplo, seleccionadas), puedes ajustar así: */
+body.theme-light .c-data-table__row--low-stock:hover .c-data-table__cell {
+    background-color: #fffbe6 !important;
+    color: #b26a00 !important;
 }
 
 /* Modificador: Fila de Stock Bajo (Low Stock - MEJORA CLAVE) */
 .c-data-table__row--low-stock .c-data-table__cell {
-    background-color: rgba(243, 156, 18, 0.08); /* Warning suave (Naranja) */
-    color: var(--color-text-high); 
-    border-bottom: 1px solid rgba(243, 156, 18, 0.2); 
+    background-color: #fffbe6 !important; /* Amarillo claro, modo claro y oscuro */
+    color: #b26a00 !important;            /* Texto naranja oscuro */
+    border-bottom: 1px solid #ffe58f;
+    font-weight: 600;
+    position: relative;
 }
 .c-data-table__row--low-stock:hover .c-data-table__cell {
     background-color: rgba(243, 156, 18, 0.15); 
@@ -186,6 +226,35 @@
     /* Mantiene el botón estándar, no lo tiñe de rojo */
     border-color: var(--color-warning);
     color: var(--color-warning);
+}
+
+/* Icono de alerta en la celda de stock bajo */
+.c-data-table__cell--stock-alert {
+    position: relative;
+    padding-left: 28px !important;
+}
+.c-data-table__cell--stock-alert::before {
+    content: "⚠️";
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1em;
+    color: #b26a00;
+}
+
+/* Botón de Ajustar en fila de stock bajo: más visible */
+.c-data-table__row--low-stock .c-btn-table-action {
+    background-color: #ffe58f !important;
+    color: #b26a00 !important;
+    border-color: #b26a00 !important;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(243,156,18,0.08);
+}
+.c-data-table__row--low-stock .c-btn-table-action:hover {
+    background-color: #f39c12 !important;
+    color: #fff !important;
+    border-color: #f39c12 !important;
 }
 
 /* Componente: Input de Edición Rápida */
@@ -221,31 +290,43 @@
 
 
 /* ---------------------------------------------------- */
-/* 3. COMPONENTE: FORMULARIO (c-form)         */
+/* 3. COMPONENTE: FORMULARIO (c-form) Y GRILLA (NUEVO)          */
 /* ---------------------------------------------------- */
 
-.c-form-group { margin-bottom: var(--space-md); }
-.c-form-label {
-  font-weight: 600;
-  color: var(--color-text-high);
-  display: block;
-  margin-bottom: var(--space-xs);
+.c-form--grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
 }
+@media (max-width: 768px) {
+    .c-form--grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+}
+.c-form-input-with-help {
+    margin-bottom: 0;
+}
+.c-form-input-help-value {
+    display: none;
+}
+
 .c-form-input {
-  width: 100%;
-  padding: var(--space-sm);
-  border: 1px solid var(--color-border); 
-  border-radius: var(--border-radius-sm);
-  background-color: var(--color-surface-300);
-  color: var(--color-text-high);
-  transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    padding: var(--space-sm);
+    border: 1px solid var(--color-border); 
+    border-radius: var(--border-radius-sm);
+    background-color: var(--color-surface-200); /* CRÍTICO: surface-200 para inputs en modal */
+    color: var(--color-text-high);
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 .c-form-input:focus {
-  border-color: var(--color-brand);
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.5);
-  outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.5);
+    outline: none;
 }
-.btn-full { /* Modificador de botón de ancho completo (se mantiene por ser útil) */
+.btn-full {
     width: 100%;
     padding: var(--space-md) var(--space-lg);
     margin-top: var(--space-md);
@@ -258,185 +339,72 @@
 /* ---------------------------------------------------- */
 
 .c-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.75);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
-
-.c-modal-content {
-  background-color: var(--color-surface-200);
-  padding: var(--space-xl); /* Más padding para mejor diseño */
-  border-radius: var(--border-radius-lg);
-  max-width: 480px; 
-  width: 90%;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Sombra más profunda */
-}
-
-.c-modal-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    margin-bottom: var(--space-lg); 
-    border-bottom: 1px solid var(--color-surface-300);
-    padding-bottom: var(--space-sm);
+    z-index: 2000;
 }
 
-.c-modal-title {
-  color: var(--color-brand);
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
-}
-.c-modal-title span[role="img"] {
-    margin-right: var(--space-sm);
-}
-
-.c-modal-footer {
-    margin-top: var(--space-xl); 
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-sm);
-}
-
-/* ---------------------------------------------------- */
-/* 5. COMPONENTE: ALERTAS Y MENSAJES (c-alert)       */
-/* ---------------------------------------------------- */
-
-.c-alert {
-  display: flex;
-  align-items: center;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--border-radius-md);
-  margin-bottom: var(--space-md);
-  font-size: 0.9rem;
-}
-
-.c-alert--warning {
-  background-color: rgba(243, 156, 18, 0.15); 
-  border: 1px solid var(--color-warning);
-  color: var(--color-warning);
-}
-
-.c-alert--error {
-  background-color: rgba(231, 76, 60, 0.15);
-  border: 1px solid var(--color-danger);
-  color: var(--color-danger);
-}
-
-/* Alerta de Stock Mínimo (Visible en ProductosLista) */
-.c-alert-stock-notification {
-    background-color: rgba(243, 156, 18, 0.15); /* Fondo de advertencia suave */
-    border: 1px solid var(--color-warning);
-    color: var(--color-warning); /* Texto naranja para destacar */
-    font-weight: 600;
-    padding: var(--space-md) var(--space-lg);
-    justify-content: space-between;
-    gap: var(--space-md);
-}
-
-.c-alert__filter-btn {
-    /* Botón de filtro dentro de la alerta */
-    background-color: transparent; 
-    border: 1px solid var(--color-warning);
-    color: var(--color-warning);
-    padding: 6px 12px;
-    font-size: 0.8rem;
-    border-radius: var(--border-radius-sm);
-}
-.c-alert__filter-btn:hover {
-    background-color: var(--color-warning);
-    color: var(--color-text-on-dark);
-}
-
-.c-form-message {
-  font-size: 0.85rem;
-  margin-top: var(--space-xs);
-  display: block;
-}
-
-.c-form-message--help {
-  color: var(--color-text-medium);
-}
-
-.c-form-message--error {
-  color: var(--color-danger);
-  font-weight: 600;
-}
-
-/*
-  ==============================================
-  📦 MÓDULO: INVENTARIO - AJUSTE DE MODAL (c-modal)
-  ==============================================
-*/
-
-/* ---------------------------------------------------- */
-/* 4. COMPONENTE: MODAL (AjusteStockModal.jsx)          */
-/* ---------------------------------------------------- */
-
-.c-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.75); /* Fondo oscuro semitransparente */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-  /* Animación suave al abrir/cerrar */
-  opacity: 1; /* Esto asume que el JS maneja la clase 'is-hidden' o similar */
-  transition: opacity 0.3s ease;
-}
-/* .c-modal-overlay.is-hidden { opacity: 0; pointer-events: none; } */
-
-
+/* MODAL DE AJUSTE DE STOCK: Mejoras visuales y espaciales */
 .c-modal-content {
-  background-color: var(--color-surface-200); /* Fondo de tarjeta para el modal */
-  padding: var(--space-xl) var(--space-xl) var(--space-lg); /* Padding generoso */
-  border-radius: var(--border-radius-lg);
-  max-width: 480px; /* Ancho cómodo para el contenido */
-  width: 90%;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Sombra más profunda para destacar */
-  transform: translateY(0); /* Base para animación de entrada */
-  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-  /* Al cerrar, puedes hacer: transform: translateY(-20px); opacity: 0; */
+    background-color: var(--color-surface-300); /* CRÍTICO: surface-300 para fondo modal */
+    padding: var(--space-xl) var(--space-lg) var(--space-lg);
+    border-radius: var(--border-radius-lg);
+    max-width: 420px; /* Menos ancho para formularios simples */
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
 }
 
-/* Encabezado del Modal */
 .c-modal-header {
     display: flex;
-    flex-direction: column; /* Apilar título y descripción */
-    align-items: flex-start; /* Alinear al inicio */
-    margin-bottom: var(--space-lg); /* Espacio después del header */
-    padding-bottom: var(--space-md); /* Espacio antes del borde */
-    border-bottom: 1px solid var(--color-surface-300); /* Separador sutil */
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: var(--space-md); /* Menos espacio para formularios cortos */
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-surface-200);
+    position: relative;
+}
+
+/* 💡 NUEVO: Botón de Cierre Absoluto (La 'X') */
+.c-modal-close-btn {
+    position: absolute;
+    top: var(--space-md);
+    right: 0;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--color-text-medium);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+}
+.c-modal-close-btn:hover {
+    color: var(--color-danger);
+    transform: scale(1.1);
 }
 
 .c-modal-title {
-  color: var(--color-text-high); /* Color de texto principal para el título */
-  font-size: 1.8rem; /* Tamaño de fuente más grande */
-  font-weight: 700;
-  margin: 0;
-  line-height: 1.2; /* Mejor espaciado de línea */
-}
-.c-modal-title span[role="img"] {
-    margin-right: var(--space-sm);
-    color: var(--color-brand); /* Color de marca para el icono */
+    color: var(--color-text-high);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    margin-bottom: var(--space-xs);
 }
 
 /* Descripción o subtítulo del modal */
 .c-modal-subtitle {
     font-size: 1rem;
-    color: var(--color-text-medium);
-    margin-top: var(--space-xs); /* Espacio debajo del título */
+    color: var(--color-brand);
+    font-weight: 600;
+    margin-bottom: var(--space-md);
 }
 
 /* Body del Modal (Contenedor de Formulario) */
@@ -448,28 +416,24 @@
 
 /* Footer del Modal (Contenedor de Botones) */
 .c-modal-footer {
-    margin-top: var(--space-xl); /* Mayor separación con el cuerpo del formulario */
+    margin-top: var(--space-lg);
     display: flex;
     justify-content: flex-end; /* Alinear botones a la derecha */
-    gap: var(--space-sm); /* Espacio entre botones */
+    gap: var(--space-md); /* Espacio entre botones */
 }
 
 /* Mejora: Estado de stock actual */
 .c-modal-current-stock {
-    font-size: 1rem;
-    color: var(--color-text-high);
-    margin-bottom: var(--space-md);
-    padding: var(--space-sm) var(--space-md);
-    background-color: var(--color-surface-300);
-    border-radius: var(--border-radius-sm);
-    border: 1px solid var(--color-border);
-    display: inline-block; /* Para que ocupe solo el ancho de su contenido */
-}
-.c-modal-current-stock b {
-    color: var(--color-brand); /* Destacar el número */
     font-size: 1.1rem;
+    color: var(--color-success);
+    background: var(--color-surface-300);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-success);
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-lg);
+    text-align: center;
+    font-weight: 700;
 }
-
 
 /* ---------------------------------------------------- */
 /* 5. COMPONENTE: ALERTAS Y MENSAJES (c-alert) - (si se usan dentro del modal)*/
@@ -482,4 +446,49 @@
     border: 1px solid var(--color-danger);
     border-radius: var(--border-radius-sm);
     text-align: center;
+}
+
+/* src/styles/inventario.css */
+
+/* ... (Todo tu CSS existente) ... */
+
+/* Nueva clase opcional para inputs con error */
+.c-form-input--error {
+    border-color: var(--color-danger);
+    background-color: rgba(231, 76, 60, 0.08);
+}
+
+/* Encabezado de sección/tarjeta: Mejor contraste en modo claro */
+body.theme-light .c-card__title,
+body.theme-light .c-header-main__title {
+  color: #2c3e50;
+  border-bottom: 1.5px solid var(--color-brand);
+}
+
+/* Encabezado de alertas y mensajes */
+body.theme-light .c-alert--warning {
+  background-color: #fffbe6;
+  color: #b26a00;
+  border-color: #ffe58f;
+}
+body.theme-light .c-alert--error {
+  background-color: #fff1f0;
+  color: #a8071a;
+  border-color: #ffa39e;
+}
+
+/* Mejorar el botón Cancelar en el modal */
+.btn.btn-secondary {
+    background-color: var(--color-surface-300);
+    color: var(--color-text-high);
+    border: 1px solid var(--color-surface-200);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+/* Hover para modo oscuro y claro */
+.btn.btn-secondary:hover,
+.btn.btn-secondary:focus-visible {
+    background-color: var(--color-danger);
+    color: var(--color-text-on-dark);
+    border-color: var(--color-danger);
 }

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth.jsx';
+import { useTheme } from '../hooks/useTheme'; // Importa el hook de tema
 // 💡 Importar el nuevo CSS
 import '../styles/AuthForms.css'; 
 
@@ -11,6 +12,7 @@ const LoginPage = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const { login, session, isLoading, isBootstrapping } = useAuth();
+    const { theme } = useTheme(); // Obtiene el tema actual
     const navigate = useNavigate();
 
     // Redirigir si la sesión se establece
@@ -43,7 +45,7 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="c-auth-container">
+        <div className={`c-auth-container ${theme === 'light' ? 'theme-light' : ''}`}>
             <div className="c-auth-card">
                 <h2 className="c-auth-header">Iniciar Sesión en GestiON</h2>
                 

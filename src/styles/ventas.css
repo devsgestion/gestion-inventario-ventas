@@ -355,3 +355,36 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Toast/Alerta flotante de éxito */
+.c-toast {
+    position: fixed;
+    top: 32px;
+    right: 32px;
+    z-index: 3000;
+    min-width: 220px;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--border-radius-md);
+    font-size: 1.1rem;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(52,152,219,0.08);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    opacity: 0.98;
+    animation: toastFadeIn 0.3s;
+}
+.c-toast--success {
+    background: var(--color-success);
+    color: var(--color-text-on-dark);
+}
+.c-toast--error {
+    background: var(--color-danger);
+    color: var(--color-text-on-dark);
+    border-left: 6px solid #fff;
+    box-shadow: 0 4px 16px rgba(231,76,60,0.15);
+}
+@keyframes toastFadeIn {
+    from { opacity: 0; transform: translateY(-20px);}
+    to { opacity: 0.98; transform: translateY(0);}
+}
