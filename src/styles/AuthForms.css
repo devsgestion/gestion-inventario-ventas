@@ -1,0 +1,104 @@
+/*
+  ==============================================
+  🔑 AUTH FORMS (Login & Register)
+  ==============================================
+  Diseño de formulario centrado, limpio, y temático.
+*/
+
+/* --- 1. Contenedor Principal (Centrado) --- */
+.c-auth-container {
+    /* 💡 Centrado Vertical y Horizontal a Pantalla Completa */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: var(--space-xl);
+    
+    /* El background es manejado por el <body> (var(--color-surface-100)) */
+}
+
+/* --- 2. Tarjeta del Formulario (Contiene el contenido) --- */
+.c-auth-card {
+    /* Usa la estética de tarjeta consistente */
+    background-color: var(--color-surface-200);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-base);
+    padding: var(--space-xl);
+    max-width: 420px; /* Ancho cómodo para formularios */
+    width: 100%;
+    
+    /* Animación de entrada sutil */
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 3. Título y Estilos Base --- */
+.c-auth-header {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-brand); /* Destacar la marca */
+    margin-bottom: var(--space-lg);
+}
+
+.c-auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md); /* Espacio entre grupos de formulario */
+}
+
+/* --- 4. Elementos del Formulario --- */
+
+/* Los estilos de .c-form-input, .c-form-group, .c-form-label ya están en index.css. */
+/* Usaremos c-form-input directamente en el JSX. */
+
+/* --- 5. Botón de Acción Principal (Login/Registro) --- */
+.c-auth-button {
+    /* Basado en btn btn-primary btn-full, pero forzando el color */
+    padding: var(--space-md);
+    background-color: var(--color-success); /* Usamos éxito para la acción de ingreso */
+    color: var(--color-text-on-dark);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: var(--space-sm);
+    transition: all 0.2s;
+}
+
+.c-auth-button:disabled, .c-auth-button.is-loading {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* --- 6. Mensajes y Enlaces --- */
+.c-auth-error {
+    color: var(--color-danger);
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid var(--color-danger);
+    padding: var(--space-sm);
+    border-radius: var(--border-radius-sm);
+    margin-top: var(--space-md);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.c-auth-prompt {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--color-text-medium);
+    margin-top: var(--space-lg);
+}
+
+.c-auth-prompt a {
+    color: var(--color-brand);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.c-auth-prompt a:hover {
+    text-decoration: underline;
+}

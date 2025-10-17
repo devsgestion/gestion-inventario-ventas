@@ -1,44 +1,65 @@
 /*
   ==============================================
-  🎨 DESIGN SYSTEM: Global Variables & Base Styles
+  🎨 DESIGN SYSTEM: Global Variables & Base Styles (Theme Definition)
   ==============================================
-  Estructura de Theming (Dark Mode) y Utilidades Esenciales.
 */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
 :root {
   /* --- 1. Paleta de Colores de Estado --- */
-  --color-success: #2ecc71;  /* Éxito / Acción Positiva (Tu color-primary original) */
-  --color-brand: #3498db;    /* Marca Principal / Acciones secundarias (Tu color-secondary original) */
+  --color-success: #2ecc71;  /* Éxito / Acción Positiva */
+  --color-brand: #3498db;    /* Marca Principal / Acciones secundarias */
   --color-warning: #f39c12;  /* Alerta / Stock Bajo */
   --color-danger: #e74c3c;   /* Peligro / Error / Stock Crítico */
   --color-info: #7F8C8D;     /* Información Gris */
   
-  /* --- 2. Colores del Tema (DARK MODE) --- */
-  --color-surface-100: #10172B; /* Fondo más oscuro (Body) */
-  --color-surface-200: #1E2B40; /* Fondo de tarjetas/contenedores (Tu color-bg-card) */
-  --color-surface-300: #18213a; /* Fondo de inputs/elementos interactivos (Tu color-bg-input) */
-  --color-border: #3b4d61;      /* Borde sutil para inputs y divisores */
+  /* --- 2. Colores del Tema (DARK MODE - Default) --- */
+  --color-surface-100: #10172B; /* Fondo más oscuro (Main/Body) */
+  --color-surface-200: #1E2B40; /* Fondo de tarjetas/contenedores */
+  --color-surface-300: #18213a; /* Fondo de inputs/elementos interactivos */
 
-  --color-text-high: #E0E6F0; /* Texto de alto contraste */
-  --color-text-medium: #A0AEC0; /* Texto secundario/muted */
-  --color-text-on-dark: #FFFFFF; /* Texto sobre colores de marca */
+  --color-border: #3b4d61; 
+  
+  --color-text-high: #E0E6F0; 
+  --color-text-medium: #A0AEC0; 
+  --color-text-on-dark: #FFFFFF; 
   
   /* --- 3. Tipografía, Espaciado y Sombra (8pt Grid System) --- */
   --font-family: 'Inter', sans-serif;
-  --space-unit: 8px; /* Base para el espaciado */
-  --space-xs: calc(0.5 * var(--space-unit));  /* 4px */
-  --space-sm: var(--space-unit);             /* 8px */
-  --space-md: calc(2 * var(--space-unit));   /* 16px */
-  --space-lg: calc(3 * var(--space-unit));   /* 24px */
-  --space-xl: calc(5 * var(--space-unit));   /* 40px */
+  --font-size-base: 1rem;
+
+  --space-unit: 8px;
+  --space-xs: calc(0.5 * var(--space-unit));
+  --space-sm: var(--space-unit);
+  --space-md: calc(2 * var(--space-unit));
+  --space-lg: calc(3 * var(--space-unit));
+  --space-xl: calc(5 * var(--space-unit));
 
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
   --border-radius-lg: 10px;
 
   --shadow-base: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* --- LIGHT MODE (Sobrescribe variables cuando body tiene la clase) --- */
+body.theme-light {
+    /* Fondos */
+    --color-surface-100: #f4f6f9;
+    --color-surface-200: #ffffff;
+    --color-surface-300: #edf1f7;
+
+    /* Fronteras y Borders */
+    --color-border: #d3dae3;
+    
+    /* Texto */
+    --color-text-high: #2c3e50;
+    --color-text-medium: #7f8c8d;
+    --color-text-on-dark: #FFFFFF; 
+    
+    /* Sombras más sutiles para el modo claro */
+    --shadow-base: 0 2px 8px rgba(0, 0, 0, 0.1); 
 }
 
 /* Base Reset y Estilos Globales */
@@ -49,10 +70,13 @@
 }
 
 body {
-  font-family: var(--font-family);
-  background-color: var(--color-surface-100);
-  color: var(--color-text-high);
-  line-height: 1.6;
+    /* Estas propiedades son CRÍTICAS para el theming dinámico */
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    background-color: var(--color-surface-100);
+    color: var(--color-text-high);
+    line-height: 1.6;
+    transition: background-color 0.3s, color 0.3s; /* Transición suave entre temas */
 }
 
 /* Componente Base: Button (Reutilizable) */
@@ -88,7 +112,7 @@ body {
   background-color: var(--color-brand);
   color: var(--color-text-on-dark);
 }
-.btn-primary.btn-success { /* Botón principal de éxito (Ej. Crear) */
+.btn-primary.btn-success { 
   background-color: var(--color-success);
 }
 
@@ -98,7 +122,7 @@ body {
   border: 1px solid var(--color-surface-200); 
 }
 .btn-secondary:hover {
-  background-color: #2e3b52;
+  background-color: #2e3b52; /* Valor fijo para hover de oscuro, usar HSLA para modo claro */
 }
 
 /* Modificadores de tamaño de botones */
@@ -110,14 +134,17 @@ body {
 /* Utilidades Comunes (Utility-First) */
 .u-mb-lg { margin-bottom: var(--space-lg); }
 .u-mt-lg { margin-top: var(--space-lg); }
+.u-mb-md { margin-bottom: var(--space-md); }
+.u-mt-md { margin-top: var(--space-md); }
+.u-mb-xl { margin-bottom: var(--space-xl); }
 .u-flex { display: flex; }
 .u-justify-between { justify-content: space-between; }
 .u-justify-end { justify-content: flex-end; }
 .u-align-center { align-items: center; }
+.u-text-success { color: var(--color-success) !important; }
+.u-text-bold { font-weight: 700 !important; }
 
-/* Estilos de Carga Global (usado en InventarioPage) 
-  Se mantiene aquí por ser un estado de aplicación global.
-*/
+/* Estilos de Carga Global */
 .loading-state {
     min-height: 100vh;
     display: flex;
@@ -126,4 +153,47 @@ body {
     align-items: center;
     font-size: 1.2rem;
     color: var(--color-text-high);
+}
+
+/* Componente Formulario (General) */
+.c-form-group { margin-bottom: var(--space-md); }
+.c-form-label {
+  font-weight: 600;
+  color: var(--color-text-high);
+  display: block;
+  margin-bottom: var(--space-xs);
+}
+.c-form-input {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border); 
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-surface-300);
+  color: var(--color-text-high);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.c-form-input:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.5);
+  outline: none;
+}
+.btn-full {
+    width: 100%;
+}
+.c-form-message {
+  font-size: 0.85rem;
+  margin-top: var(--space-xs);
+  display: block;
+}
+.c-form-message--help {
+  color: var(--color-text-medium);
+}
+/* Estilos para mensajes de éxito/error */
+.c-form-message--success {
+    color: var(--color-success);
+    font-weight: 600;
+}
+.c-form-message--error {
+    color: var(--color-danger);
+    font-weight: 600;
 }

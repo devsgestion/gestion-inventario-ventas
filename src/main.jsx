@@ -5,11 +5,14 @@ import App from './App.jsx';
 import './index.css';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
+import { ThemeProvider } from './hooks/useTheme'; // <-- Importa el ThemeProvider
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <AuthProvider>
-      <App />
+      <ThemeProvider> {/* <-- Envuelve aquí */}
+        <App />
+      </ThemeProvider>
     </AuthProvider>
   </BrowserRouter>
 );

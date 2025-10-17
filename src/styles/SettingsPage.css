@@ -1,0 +1,57 @@
+/*
+  ==============================================
+  ⚙️ PÁGINA: CONFIGURACIÓN (SettingsModule.css)
+  ==============================================
+*/
+
+
+.c-settings-grid {
+    display: grid;
+    /* Usa auto-fit para que se adapte bien a móvil/desktop */
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+    gap: var(--space-lg);
+}
+
+/* --- Componente: Tarjeta de Configuración --- */
+.c-settings-card {
+    background-color: var(--color-surface-200);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm); /* Sombra más suave para configuración */
+    padding: var(--space-xl); 
+    border: 1px solid var(--color-border);
+}
+
+.c-settings-card__title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--color-surface-300);
+}
+
+/* --- Selector de Tema --- */
+.c-theme-options {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.c-theme-btn {
+    flex-grow: 1;
+    font-weight: 600;
+    /* Ajustes específicos para el selector */
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--color-border);
+    background-color: var(--color-surface-300);
+    color: var(--color-text-high);
+}
+
+.c-theme-btn.is-active {
+    /* 💡 CRÍTICO: Resaltar el tema activo con el color de marca */
+    border-color: var(--color-brand); 
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); 
+    background-color: var(--color-brand);
+    color: var(--color-text-on-dark);
+}
+.c-theme-btn.is-active:hover {
+    filter: brightness(1.05);
+}
