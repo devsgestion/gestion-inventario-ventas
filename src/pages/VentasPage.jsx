@@ -1,117 +1,218 @@
-// src/pages/VentasPage.jsx
-import React, { useState } from 'react';
+// src/pages/VentasPage.jsx (Refactorizado)
+import React, { useState, useEffect, useCallback } from 'react'; 
 import useAuth from '../hooks/useAuth';
+import useInventario from '../hooks/useInventario'; 
 import VentaProductosLista from '../components/ventas/VentaProductosLista';
 import CarritoDeVentas from '../components/ventas/CarritoDeVentas';
 import { supabase } from '../api/supabaseClient';
 import { formatCurrencyCOP } from '../utils/formatters';
+import '../styles/ventas.css';
+
+const forceInventoryRefresh = () => {
+    if (window.refreshInventory) {
+        window.refreshInventory();
+    }
+};
 
 const VentasPage = () => {
     const { perfil } = useAuth();
-    const [carrito, setCarrito] = useState([]); // Estado del carrito (productos a vender)
+    const empresaId = perfil?.empresa_id;
+    const userId = perfil?.id;
 
-    // 1. Función para añadir un producto al carrito
-    const handleAddToCart = (producto) => {
+    const [carrito, setCarrito] = useState([]);
+    const [loading, setLoading] = useState(false); // Para acciones de CAJA (Abrir/Cerrar)
+    const [isProcessingSale, setIsProcessingSale] = useState(false); // Para el botón de VENTA
+
+    const { 
+        cajaStatus, 
+        isLoadingCaja, 
+        isCajaAbierta, 
+        checkCajaStatus, 
+        abrirCaja, 
+        cerrarCaja 
+    } = useInventario(); 
+
+    // 💡 Performance: Función memoizada
+    const getTodayDate = useCallback(() => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), []);
+
+    // ... (useEffect para window.refreshCajaStatus y checkCajaStatus - sin cambios)
+
+    // Lógica de Estado
+    const total = carrito.reduce((acc, item) => acc + (item.precio_venta * item.cantidad), 0);
+    const isCajaAbiertaHoy = isCajaAbierta && cajaStatus?.fecha_apertura === getTodayDate();
+    const isCheckoutDisabled = carrito.length === 0 || isProcessingSale || !isCajaAbiertaHoy;
+
+
+    // ----------------------------------------------------
+    // CONTROL DE CAJA
+    // ----------------------------------------------------
+    
+    // 💡 Performance: Usar useCallback
+    const handleAbrirCaja = useCallback(async () => {
+        if (!userId) return; setLoading(true);
+        const resultado = await abrirCaja(0); 
+        if (!resultado.success) {
+            alert(`Error al abrir caja: ${resultado.message}`);
+        }
+        setLoading(false);
+    }, [userId, abrirCaja]);
+    
+    // 💡 Performance: Usar useCallback
+    const handleCerrarCaja = useCallback(async () => {
+        if (!userId) return;
+        if (window.confirm('¿Estás seguro de cerrar la caja? Esto finalizará el día de ventas.')) {
+            setLoading(true);
+            const resultado = await cerrarCaja();
+            if (!resultado.success) {
+                alert(`Error al cerrar caja: ${resultado.message}`);
+            }
+            setLoading(false);
+        }
+    }, [userId, cerrarCaja]);
+    
+    // ----------------------------------------------------
+    // LÓGICA DE VENTA Y CARRITO
+    // ----------------------------------------------------
+    
+    // 💡 Performance: Usar useCallback + 🔒 Lógica de Stock
+    const handleAddToCart = useCallback((producto) => {
+        if (!isCajaAbiertaHoy) {
+            alert("🚨 Caja Cerrada. No puedes añadir productos.");
+            return;
+        }
+        
         setCarrito(prevCarrito => {
             const existe = prevCarrito.find(item => item.id === producto.id);
 
             if (existe) {
-                // Si el producto ya está, solo aumentar la cantidad
+                // 🔒 Validación de Stock al incrementar
+                if (existe.cantidad + 1 > producto.stock_actual) {
+                    alert(`Stock insuficiente para ${producto.nombre}. Solo quedan ${producto.stock_actual} unidades.`);
+                    return prevCarrito;
+                }
+                
                 return prevCarrito.map(item =>
                     item.id === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item
                 );
             } else {
-                // Si es nuevo, añadirlo con cantidad 1
-                return [...prevCarrito, { ...producto, cantidad: 1, precio_venta: Number(producto.precio_venta) || 0 }];
+                // 🔒 Validación de Stock inicial
+                if (producto.stock_actual <= 0) {
+                    alert(`El producto ${producto.nombre} no tiene stock disponible.`);
+                    return prevCarrito;
+                }
+                return [...prevCarrito, { 
+                    ...producto, 
+                    cantidad: 1, 
+                    precio_venta: Number(producto.precio_venta) || 0 
+                }];
             }
         });
-    };
+    }, [isCajaAbiertaHoy]);
 
-    // 2. Función para manejar cambios en el carrito (ej. cambio de cantidad o eliminar)
-    const handleUpdateCart = (productoId, nuevaCantidad) => {
+    // 💡 Performance: Usar useCallback + 🔒 Lógica de Stock
+    const handleUpdateCart = useCallback((productoId, nuevaCantidad) => {
+        if (!isCajaAbiertaHoy) return; 
+
         const quantity = Number.parseInt(nuevaCantidad, 10);
+        
         setCarrito(prevCarrito => {
             if (!Number.isFinite(quantity) || quantity <= 0) {
-                // Si la cantidad es 0 o menos, eliminar del carrito
+                 // Si es 0 o inválida, se elimina
                 return prevCarrito.filter(item => item.id !== productoId);
             }
-            // Actualizar la cantidad
+
+            const productoEnLista = prevCarrito.find(item => item.id === productoId);
+            if (!productoEnLista) return prevCarrito;
+
+            // 🔒 Validación de Stock al actualizar
+            if (quantity > productoEnLista.stock_actual) {
+                alert(`Stock insuficiente para ${productoEnLista.nombre}. Máximo permitido: ${productoEnLista.stock_actual}.`);
+                // Ajustar la cantidad al máximo disponible
+                return prevCarrito.map(item =>
+                    item.id === productoId ? { ...item, cantidad: productoEnLista.stock_actual } : item
+                );
+            }
+
             return prevCarrito.map(item =>
                 item.id === productoId ? { ...item, cantidad: quantity } : item
             );
         });
-    };
+    }, [isCajaAbiertaHoy]);
     
-    // 3. Función para finalizar la venta (LÓGICA ACTUALIZADA)
     const handleFinalizarVenta = async () => {
-        if (carrito.length === 0) {
-            alert('El carrito está vacío.');
-            return;
-        }
+        if (isCheckoutDisabled) return;
 
-        const empresaId = perfil?.empresa_id;
-        const userId = perfil?.id;
+        setIsProcessingSale(true); 
 
-        if (!empresaId || !userId) {
-            alert('Error: No se puede identificar la empresa o el usuario.');
-            return;
-        }
-
-        // Mapear el carrito al formato que espera la función RPC
         const itemsParaRPC = carrito.map(item => ({
-            producto_id: item.id,
-            cantidad: item.cantidad,
-            precio_unitario: item.precio_venta
+            producto_id: item.id, cantidad: item.cantidad, precio_unitario: item.precio_venta
         }));
 
-        // Llamada a la función RPC
         const { data, error } = await supabase.rpc('registrar_venta', {
-            p_empresa_id: empresaId,
-            p_usuario_id: userId,
-            p_items: itemsParaRPC
+            p_empresa_id: empresaId, p_usuario_id: userId, p_items: itemsParaRPC
         });
+        
+        setIsProcessingSale(false);
 
         if (error) {
-            console.error('Error al finalizar venta:', error);
-            alert(`Error al registrar la venta. Inténtalo de nuevo. Detalle: ${error.message}`);
+            alert(`Error al registrar la venta. Detalle: ${error.message}`);
         } else {
-            // Venta exitosa
             alert(`Venta registrada exitosamente! Total: ${formatCurrencyCOP(data.total)}`); 
-            setCarrito([]); // Limpiar el carrito
-            
-            // Opcional: Redirigir o refrescar la lista de productos
-            // (La lista en la izquierda se actualizará automáticamente en el próximo ciclo de React/cambio de estado)
+            setCarrito([]); 
+            forceInventoryRefresh(); 
         }
     };
 
+    // Renderizado
+    if (isLoadingCaja || !perfil) {
+        return <div className="loading-state card p-ventas__loading">Cargando estado de la caja...</div>;
+    }
+
+    if (!empresaId) {
+        return <div className="error-state card p-ventas__loading">Error: ID de Empresa no encontrado.</div>
+    }
+
     return (
-        <div style={styles.pageContainer}>
-            <h2 style={styles.header}>Punto de Venta (POS) - {perfil?.empresa?.nombre}</h2>
-            
-            <div style={styles.contentGrid}>
-                {/* Columna Izquierda: Búsqueda y Lista de Productos */}
-                <VentaProductosLista empresaId={perfil?.empresa_id} onAddToCart={handleAddToCart} />
-                
-                {/* Columna Derecha: Carrito y Totales */}
-                <CarritoDeVentas 
-                    carrito={carrito} 
-                    onUpdateCart={handleUpdateCart}
-                    onFinalizarVenta={handleFinalizarVenta}
+        <div className="m-inventory-layout p-ventas">
+            <header className="card p-ventas__header">
+                <h2 className="card-title p-ventas__title">Punto de Venta (POS) - {perfil?.empresa?.nombre}</h2>
+                <div className="p-ventas__controls">
+                    {isCajaAbiertaHoy ? (
+                        <button onClick={handleCerrarCaja} disabled={loading} className="btn btn-error">
+                            {loading ? 'Cerrando...' : 'Cerrar Caja'}
+                        </button>
+                    ) : (
+                        <button onClick={handleAbrirCaja} disabled={loading} className="btn btn-success">
+                            Abrir Caja / Iniciar Día
+                        </button>
+                    )}
+                </div>
+            </header>
+            <div className="p-ventas__grid">
+                {/* Este DEBE ser un c-card / card */}
+                <VentaProductosLista 
+                    empresaId={empresaId} 
+                    onAddToCart={handleAddToCart} 
+                    isCajaAbierta={isCajaAbiertaHoy}
                 />
+                <div className="card p-ventas__carrito-section">
+                    <CarritoDeVentas 
+                        carrito={carrito} 
+                        onUpdateCart={handleUpdateCart}
+                        isCajaAbierta={isCajaAbiertaHoy}
+                    />
+                    <button
+                        onClick={handleFinalizarVenta}
+                        disabled={isCheckoutDisabled} 
+                        className={`btn btn-primary btn-lg btn-full p-ventas__checkout-button`}
+                    >
+                        {isProcessingSale ? 'Procesando...' : `Finalizar Venta (${formatCurrencyCOP(total)})`}
+                    </button>
+                    {!isCajaAbiertaHoy && <p className="p-ventas__closed-box-alert">❌ La venta está bloqueada. Abre la caja para continuar.</p>}
+                </div>
             </div>
         </div>
     );
-};
-
-const styles = {
-    pageContainer: { padding: '20px' },
-    header: { marginBottom: '30px' },
-    contentGrid: {
-        display: 'grid',
-        gridTemplateColumns: '2fr 1fr', // 2/3 para productos, 1/3 para carrito
-        gap: '20px',
-        minHeight: '600px'
-    }
 };
 
 export default VentasPage;

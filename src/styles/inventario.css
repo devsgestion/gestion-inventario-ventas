@@ -1,0 +1,485 @@
+/*
+  ==============================================
+  📦 MÓDULO: INVENTARIO (BEM Naming Convention & UX Refactor)
+  ==============================================
+  Prioridad: Legibilidad tabular, Consistencia en Modo Oscuro, Centrado de Layout.
+*/
+
+/* ---------------------------------------------------- */
+/* 1. LAYOUT DE PÁGINA Y ESTRUCTURA (m-inventory-layout, c-card)*/
+/* ---------------------------------------------------- */
+
+/* Ajuste de Layout Principal: Mantener el sidebar y centrar el contenido principal */
+.m-inventory-layout {
+  /* Offset del Sidebar (240px) */
+  margin-left: 240px; 
+  /* Espaciado del contenido */
+  padding: var(--space-lg) var(--space-xl); 
+  min-height: 100vh;
+  
+  /* Centrado: Limita el ancho máximo del contenido */
+  max-width: 1400px; 
+  margin-right: auto; /* Centra el contenido después del margin-left fijo */
+}
+
+/* 📱 Responsive para el Layout (Eliminar offset en móvil/tablet) */
+@media (max-width: 1024px) {
+  .m-inventory-layout {
+    margin-left: 0; 
+    padding: var(--space-md);
+    max-width: 100%;
+  }
+}
+
+
+/* Bloque: Tarjeta/Contenedor base */
+.c-card {
+  background-color: var(--color-surface-200);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-base);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+/* Título de Sección */
+.c-card__title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+  color: var(--color-text-high);
+  /* Ajuste de diseño: Borde sutil para armonía */
+  border-bottom: 1px solid var(--color-brand); 
+  display: inline-block;
+  padding-bottom: var(--space-xs);
+}
+
+/* Bloque: Encabezado */
+.c-header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-surface-300);
+}
+.c-header-main__title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-text-high);
+}
+.c-header-main__company {
+  color: var(--color-brand);
+  font-style: italic;
+  font-size: 1.5rem; 
+  margin-left: var(--space-sm);
+}
+
+/* Bloque: Estadísticas de Reporte */
+.c-report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-lg);
+}
+.c-report-grid__stat {
+    padding: var(--space-md);
+    background-color: var(--color-surface-300);
+    border-radius: var(--border-radius-md);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); 
+}
+.c-report-grid__title {
+    color: var(--color-text-medium);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-xs);
+}
+.c-report-grid__value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-brand); 
+}
+
+/* Botón principal de acción (Crear Producto) */
+.btn-new-product-action {
+    background-color: var(--color-success);
+    color: var(--color-text-on-dark);
+    font-size: 1rem;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 4px 6px rgba(46, 204, 113, 0.3); 
+    /* Esta clase debe aplicarse al botón fuera de c-header-main */
+    margin-bottom: var(--space-xl); 
+}
+
+/* Estados de carga/vacío */
+.c-state-message {
+    padding: var(--space-xl);
+    text-align: center;
+    color: var(--color-text-medium);
+    background-color: var(--color-surface-300);
+    border-radius: var(--border-radius-lg);
+}
+
+
+/* ---------------------------------------------------- */
+/* 2. COMPONENTE: TABLA DE DATOS (ProductosLista.jsx)          */
+/* ---------------------------------------------------- */
+
+.c-data-table-wrapper {
+  overflow-x: auto; 
+  padding: var(--space-sm);
+  /* Scrollbar estético para navegadores basados en Webkit */
+  /* Scrollbar para Chrome, Edge, Safari */
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-surface-300);
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: var(--color-surface-200);
+  }
+}
+
+.c-data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 1px;
+  font-size: 0.9rem;
+  min-width: 900px; 
+}
+
+/* Encabezado */
+.c-data-table__header-cell {
+  background-color: #2e3b52; /* Color específico del encabezado para el Dark Mode */
+  color: var(--color-text-on-dark);
+  padding: var(--space-md) var(--space-sm);
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-brand);
+  user-select: none;
+}
+
+/* Celdas de Datos */
+.c-data-table__cell {
+  padding: var(--space-sm) var(--space-md); /* Más padding lateral */
+  color: var(--color-text-high);
+  background-color: var(--color-surface-200); 
+  border-bottom: 1px solid var(--color-surface-300);
+  vertical-align: middle;
+}
+
+/* Usabilidad: Hover de fila para legibilidad */
+.c-data-table__row:hover .c-data-table__cell {
+    background-color: #273A50; /* Hover sutil */
+}
+
+/* Modificador: Fila de Stock Bajo (Low Stock - MEJORA CLAVE) */
+.c-data-table__row--low-stock .c-data-table__cell {
+    background-color: rgba(243, 156, 18, 0.08); /* Warning suave (Naranja) */
+    color: var(--color-text-high); 
+    border-bottom: 1px solid rgba(243, 156, 18, 0.2); 
+}
+.c-data-table__row--low-stock:hover .c-data-table__cell {
+    background-color: rgba(243, 156, 18, 0.15); 
+}
+.c-data-table__row--low-stock .c-data-table__cell .c-btn-table-action {
+    /* Mantiene el botón estándar, no lo tiñe de rojo */
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+}
+
+/* Componente: Input de Edición Rápida */
+.c-inline-edit-input {
+  padding: 4px 6px;
+  width: 95%;
+  border: 1px solid var(--color-brand);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-surface-300);
+  color: var(--color-text-high);
+  font-size: inherit;
+  transition: box-shadow 0.2s;
+}
+.c-inline-edit-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-brand);
+}
+
+/* Componente: Botón de Acción en Tabla ("Ajustar") */
+.c-btn-table-action {
+    background-color: transparent; 
+    border: 1px solid var(--color-brand);
+    color: var(--color-brand);
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.c-btn-table-action:hover {
+    background-color: var(--color-brand);
+    color: var(--color-text-on-dark);
+}
+
+
+/* ---------------------------------------------------- */
+/* 3. COMPONENTE: FORMULARIO (c-form)         */
+/* ---------------------------------------------------- */
+
+.c-form-group { margin-bottom: var(--space-md); }
+.c-form-label {
+  font-weight: 600;
+  color: var(--color-text-high);
+  display: block;
+  margin-bottom: var(--space-xs);
+}
+.c-form-input {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border); 
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-surface-300);
+  color: var(--color-text-high);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.c-form-input:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.5);
+  outline: none;
+}
+.btn-full { /* Modificador de botón de ancho completo (se mantiene por ser útil) */
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    margin-top: var(--space-md);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* ---------------------------------------------------- */
+/* 4. COMPONENTE: MODAL (c-modal)          */
+/* ---------------------------------------------------- */
+
+.c-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.c-modal-content {
+  background-color: var(--color-surface-200);
+  padding: var(--space-xl); /* Más padding para mejor diseño */
+  border-radius: var(--border-radius-lg);
+  max-width: 480px; 
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Sombra más profunda */
+}
+
+.c-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg); 
+    border-bottom: 1px solid var(--color-surface-300);
+    padding-bottom: var(--space-sm);
+}
+
+.c-modal-title {
+  color: var(--color-brand);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+.c-modal-title span[role="img"] {
+    margin-right: var(--space-sm);
+}
+
+.c-modal-footer {
+    margin-top: var(--space-xl); 
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+}
+
+/* ---------------------------------------------------- */
+/* 5. COMPONENTE: ALERTAS Y MENSAJES (c-alert)       */
+/* ---------------------------------------------------- */
+
+.c-alert {
+  display: flex;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--space-md);
+  font-size: 0.9rem;
+}
+
+.c-alert--warning {
+  background-color: rgba(243, 156, 18, 0.15); 
+  border: 1px solid var(--color-warning);
+  color: var(--color-warning);
+}
+
+.c-alert--error {
+  background-color: rgba(231, 76, 60, 0.15);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* Alerta de Stock Mínimo (Visible en ProductosLista) */
+.c-alert-stock-notification {
+    background-color: rgba(243, 156, 18, 0.15); /* Fondo de advertencia suave */
+    border: 1px solid var(--color-warning);
+    color: var(--color-warning); /* Texto naranja para destacar */
+    font-weight: 600;
+    padding: var(--space-md) var(--space-lg);
+    justify-content: space-between;
+    gap: var(--space-md);
+}
+
+.c-alert__filter-btn {
+    /* Botón de filtro dentro de la alerta */
+    background-color: transparent; 
+    border: 1px solid var(--color-warning);
+    color: var(--color-warning);
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border-radius: var(--border-radius-sm);
+}
+.c-alert__filter-btn:hover {
+    background-color: var(--color-warning);
+    color: var(--color-text-on-dark);
+}
+
+.c-form-message {
+  font-size: 0.85rem;
+  margin-top: var(--space-xs);
+  display: block;
+}
+
+.c-form-message--help {
+  color: var(--color-text-medium);
+}
+
+.c-form-message--error {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/*
+  ==============================================
+  📦 MÓDULO: INVENTARIO - AJUSTE DE MODAL (c-modal)
+  ==============================================
+*/
+
+/* ---------------------------------------------------- */
+/* 4. COMPONENTE: MODAL (AjusteStockModal.jsx)          */
+/* ---------------------------------------------------- */
+
+.c-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75); /* Fondo oscuro semitransparente */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  /* Animación suave al abrir/cerrar */
+  opacity: 1; /* Esto asume que el JS maneja la clase 'is-hidden' o similar */
+  transition: opacity 0.3s ease;
+}
+/* .c-modal-overlay.is-hidden { opacity: 0; pointer-events: none; } */
+
+
+.c-modal-content {
+  background-color: var(--color-surface-200); /* Fondo de tarjeta para el modal */
+  padding: var(--space-xl) var(--space-xl) var(--space-lg); /* Padding generoso */
+  border-radius: var(--border-radius-lg);
+  max-width: 480px; /* Ancho cómodo para el contenido */
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Sombra más profunda para destacar */
+  transform: translateY(0); /* Base para animación de entrada */
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  /* Al cerrar, puedes hacer: transform: translateY(-20px); opacity: 0; */
+}
+
+/* Encabezado del Modal */
+.c-modal-header {
+    display: flex;
+    flex-direction: column; /* Apilar título y descripción */
+    align-items: flex-start; /* Alinear al inicio */
+    margin-bottom: var(--space-lg); /* Espacio después del header */
+    padding-bottom: var(--space-md); /* Espacio antes del borde */
+    border-bottom: 1px solid var(--color-surface-300); /* Separador sutil */
+}
+
+.c-modal-title {
+  color: var(--color-text-high); /* Color de texto principal para el título */
+  font-size: 1.8rem; /* Tamaño de fuente más grande */
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2; /* Mejor espaciado de línea */
+}
+.c-modal-title span[role="img"] {
+    margin-right: var(--space-sm);
+    color: var(--color-brand); /* Color de marca para el icono */
+}
+
+/* Descripción o subtítulo del modal */
+.c-modal-subtitle {
+    font-size: 1rem;
+    color: var(--color-text-medium);
+    margin-top: var(--space-xs); /* Espacio debajo del título */
+}
+
+/* Body del Modal (Contenedor de Formulario) */
+.c-modal-body {
+    /* No necesita muchos estilos aquí, el formulario ya los tiene */
+    padding-top: var(--space-sm); /* Un poco de espacio extra */
+}
+
+
+/* Footer del Modal (Contenedor de Botones) */
+.c-modal-footer {
+    margin-top: var(--space-xl); /* Mayor separación con el cuerpo del formulario */
+    display: flex;
+    justify-content: flex-end; /* Alinear botones a la derecha */
+    gap: var(--space-sm); /* Espacio entre botones */
+}
+
+/* Mejora: Estado de stock actual */
+.c-modal-current-stock {
+    font-size: 1rem;
+    color: var(--color-text-high);
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-surface-300);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--color-border);
+    display: inline-block; /* Para que ocupe solo el ancho de su contenido */
+}
+.c-modal-current-stock b {
+    color: var(--color-brand); /* Destacar el número */
+    font-size: 1.1rem;
+}
+
+
+/* ---------------------------------------------------- */
+/* 5. COMPONENTE: ALERTAS Y MENSAJES (c-alert) - (si se usan dentro del modal)*/
+/* ---------------------------------------------------- */
+/* Aseguramos que los errores del formulario dentro del modal se vean bien */
+.c-modal-body .c-form-message--error {
+    margin-top: var(--space-md);
+    padding: var(--space-sm);
+    background-color: rgba(231, 76, 60, 0.1);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--border-radius-sm);
+    text-align: center;
+}

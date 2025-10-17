@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { supabase } from '../../api/supabaseClient';
-import { parseDecimal, parseInteger } from '../../utils/formatters';
+import { formatCurrencyCOP, parseDecimal, parseInteger } from '../../utils/formatters';
+import '../../styles/inventario.css';
 
 const ProductoForm = ({ empresaId, onProductSaved }) => {
 
-    // 2. Estado del formulario
     const [formData, setFormData] = useState({
         codigo_referencia: '',
         nombre: '',
@@ -28,6 +28,15 @@ const ProductoForm = ({ empresaId, onProductSaved }) => {
         }));
     };
 
+    const handlePrecioChange = (e) => {
+        const { name, value } = e.target;
+        const raw = value.replace(/[^\d]/g, '');
+        setFormData(prev => ({
+            ...prev,
+            [name]: raw
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -40,32 +49,27 @@ const ProductoForm = ({ empresaId, onProductSaved }) => {
             return;
         }
 
-        // 3. Crear el objeto de inserción
         const productToInsert = {
             ...formData,
-            empresa_id: empresaId, // <--- CLAVE DEL SAAS: Insertar el tenant_id
-            // Asegurar que stock y precios son números enteros/decimales válidos
+            empresa_id: empresaId,
             stock_actual: parseInteger(formData.stock_actual, 0),
             precio_costo: parseDecimal(formData.precio_costo, 0),
             precio_venta: parseDecimal(formData.precio_venta, 0),
             alerta_stock_min: parseInteger(formData.alerta_stock_min, 5),
         };
 
-        // 4. Insertar en Supabase
         const { error: insertError } = await supabase
             .from('productos')
-            .insert([productToInsert]); // El RLS se encargará de verificar el empresa_id
+            .insert([productToInsert]);
 
         if (insertError) {
             console.error(insertError);
             setError(`Error al guardar producto: ${insertError.message}`);
         } else {
             setSuccess('¡Producto guardado exitosamente!');
-            // Llamar a la función padre para refrescar la lista
             if (onProductSaved) {
                 onProductSaved();
             }
-            // Limpiar formulario para el próximo producto
             setFormData({
                 codigo_referencia: '',
                 nombre: '',
@@ -78,55 +82,116 @@ const ProductoForm = ({ empresaId, onProductSaved }) => {
         setLoading(false);
     };
 
-    // Estilos básicos y estructura del formulario
     return (
-        <div style={styles.container}>
-            <h3>{success ? success : 'Crear/Ingresar Inventario Inicial'}</h3>
-            {!empresaId && <p style={styles.info}>Cargando datos de la empresa...</p>}
-            <form onSubmit={handleSubmit} style={styles.form}>
+        <div className="c-card" style={{ maxWidth: '450px' }}> {/* Se eliminó inventario-form-container, usando c-card */}
+            <h3 className="c-card__title">
+                {success ? success : 'Crear/Ingresar Inventario Inicial'}
+            </h3>
+            {!empresaId && <p className="c-form-message c-form-message--help">Cargando datos de la empresa...</p>}
+            
+            <form onSubmit={handleSubmit} className="c-form">
                 
-                <label>Referencia (Interna):</label>
-                <input type="text" name="codigo_referencia" value={formData.codigo_referencia} 
-                       onChange={handleChange} required disabled={!empresaId || loading} style={styles.input} />
-
-          <label>Nombre del Producto:</label>
-          <input type="text" name="nombre" value={formData.nombre} 
-              onChange={handleChange} required disabled={!empresaId || loading} style={styles.input} />
+                <div className="c-form-group">
+                    <label className="c-form-label">Referencia (Interna):</label>
+                    <input
+                        type="text"
+                        name="codigo_referencia"
+                        value={formData.codigo_referencia}
+                        onChange={handleChange}
+                        required
+                        disabled={!empresaId || loading}
+                        className="c-form-input"
+                        placeholder="Ej: REF-001"
+                    />
+                </div>
                 
-          <label>Stock Inicial (Unidades Actuales):</label>
-          <input type="number" name="stock_actual" value={formData.stock_actual} 
-              onChange={handleChange} required min="0" disabled={!empresaId || loading} style={styles.input} />
+                <div className="c-form-group">
+                    <label className="c-form-label">Nombre del Producto:</label>
+                    <input
+                        type="text"
+                        name="nombre"
+                        value={formData.nombre}
+                        onChange={handleChange}
+                        required
+                        disabled={!empresaId || loading}
+                        className="c-form-input"
+                        placeholder="Ej: Camisa Polo"
+                    />
+                </div>
                 
-          <label>Precio de Costo:</label>
-          <input type="number" name="precio_costo" value={formData.precio_costo} 
-              onChange={handleChange} required min="0.00" step="0.01" disabled={!empresaId || loading} style={styles.input} />
+                <div className="c-form-group">
+                    <label className="c-form-label">Stock Inicial (Unidades Actuales):</label>
+                    <input
+                        type="number"
+                        name="stock_actual"
+                        value={formData.stock_actual}
+                        onChange={handleChange}
+                        required
+                        min="0"
+                        disabled={!empresaId || loading}
+                        className="c-form-input"
+                        placeholder="Ej: 10"
+                    />
+                </div>
                 
-          <label>Precio de Venta:</label>
-          <input type="number" name="precio_venta" value={formData.precio_venta} 
-              onChange={handleChange} required min="0.00" step="0.01" disabled={!empresaId || loading} style={styles.input} />
+                <div className="c-form-group">
+                    <label className="c-form-label">Precio de Costo:</label>
+                    <input
+                        type="text"
+                        name="precio_costo"
+                        // El formateo se mantiene, asegurando que el input type="text" funcione con el formateo visual
+                        value={formData.precio_costo ? formatCurrencyCOP(parseInt(formData.precio_costo, 10) || 0) : ''}
+                        onChange={handlePrecioChange}
+                        required
+                        disabled={!empresaId || loading}
+                        className="c-form-input"
+                        inputMode="numeric"
+                        placeholder="$ 0"
+                        autoComplete="off"
+                    />
+                </div>
                 
-          <label>Alerta Stock Mínimo:</label>
-          <input type="number" name="alerta_stock_min" value={formData.alerta_stock_min} 
-              onChange={handleChange} min="1" disabled={!empresaId || loading} style={styles.input} />
-
-          <button type="submit" disabled={loading || !empresaId} style={styles.button}>
+                <div className="c-form-group">
+                    <label className="c-form-label">Precio de Venta:</label>
+                    <input
+                        type="text"
+                        name="precio_venta"
+                        value={formData.precio_venta ? formatCurrencyCOP(parseInt(formData.precio_venta, 10) || 0) : ''}
+                        onChange={handlePrecioChange}
+                        required
+                        disabled={!empresaId || loading}
+                        className="c-form-input"
+                        inputMode="numeric"
+                        placeholder="$ 0"
+                        autoComplete="off"
+                    />
+                </div>
+                
+                <div className="c-form-group">
+                    <label className="c-form-label">Alerta Stock Mínimo:</label>
+                    <input
+                        type="number"
+                        name="alerta_stock_min"
+                        value={formData.alerta_stock_min}
+                        onChange={handleChange}
+                        min="1"
+                        disabled={!empresaId || loading}
+                        className="c-form-input"
+                        placeholder="Ej: 5"
+                    />
+                </div>
+                
+                <button 
+                    type="submit" 
+                    disabled={loading || !empresaId} 
+                    className="btn btn-primary btn-success btn-full" /* Usamos btn-success y btn-full (100% width) */
+                >
                     {loading ? 'Guardando...' : 'Guardar Producto'}
                 </button>
             </form>
-            {error && <p style={styles.error}>{error}</p>}
+            {error && <p className="c-form-message c-form-message--error u-mt-lg">{error}</p>}
         </div>
     );
-};
-
-// Estilos rápidos para el MVP
-const styles = {
-    container: { border: '1px solid #ccc', padding: '20px', borderRadius: '8px', maxWidth: '400px', margin: '20px auto' },
-    form: { display: 'flex', flexDirection: 'column', gap: '10px' },
-    input: { padding: '8px', borderRadius: '4px', border: '1px solid #ddd' },
-    button: { padding: '10px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' },
-    error: { color: 'red', marginTop: '10px', fontWeight: 'bold' },
-    info: { color: '#64748b', marginTop: '5px' },
-    // ... otros estilos si deseas usar los de LoginPage
 };
 
 export default ProductoForm;

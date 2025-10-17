@@ -1,64 +1,134 @@
-// src/components/inventario/ProductosLista.jsx (versión actualizada)
+// src/components/inventario/ProductosLista.jsx
 
 import React, { useState } from 'react';
 import useInventario from '../../hooks/useInventario';
 import AjusteStockModal from './AjusteStockModal';
 import { formatCurrencyCOP } from '../../utils/formatters';
+import { supabase } from '../../api/supabaseClient'; 
+import '../../styles/inventario.css';
 
 const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted }) => {
-    // Usar el hook para obtener los datos
-    const { productos, loading, error, fetchProductos } = useInventario(empresaId, refreshKey);
+    const { productos, loading, error, fetchProductos, productosBajoStock } = useInventario(empresaId, refreshKey);
 
-    // Estado para controlar el modal y qué producto se está ajustando
     const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+    const [editingId, setEditingId] = useState(null);
+    // 🛑 NUEVO ESTADO: Controla si la tabla debe mostrar solo las alertas
+    const [mostrarSoloAlertas, setMostrarSoloAlertas] = useState(false); 
+    
+    // --- Lógica de Filtro ---
+    const productosFiltrados = mostrarSoloAlertas 
+        ? productos.filter(p => p.stock_actual <= p.alerta_stock_min)
+        : productos;
+        
+    const countTotal = productos.length;
+    const countAlertas = productosBajoStock.length;
 
-    // useEffect para re-cargar cuando la clave del padre cambie
-    // NOTA: Esto ya está manejado en useInventario, pero lo podemos forzar si es necesario.
+    // 🛑 FUNCIÓN CRÍTICA: Actualización de precio en línea (mantenemos la lógica) 🛑
+    const handlePriceUpdate = async (productId, newPriceString) => {
+        // ... (Tu lógica de handlePriceUpdate se mantiene aquí) ...
+        const newPrice = parseFloat(newPriceString);
 
-    if (loading) return <p>Cargando inventario...</p>;
-    if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
+        if (isNaN(newPrice) || newPrice <= 0) {
+            alert("Introduce un precio de venta válido.");
+            setEditingId(null);
+            return;
+        }
 
-    if (productos.length === 0) {
-        return <p>Aún no tienes productos en tu inventario. ¡Usa el formulario para ingresar el stock inicial!</p>;
-    }
+        setEditingId(null); 
+
+        const { error } = await supabase
+            .from('productos')
+            .update({ precio_venta: newPrice })
+            .eq('id', productId); 
+
+        if (error) {
+            console.error("Error al actualizar precio:", error);
+            alert("No se pudo actualizar el precio. Intenta de nuevo.");
+        } else {
+            fetchProductos(); 
+        }
+    };
     
     // Función para cerrar el modal y limpiar el estado
     const handleCloseModal = () => setProductoSeleccionado(null);
 
     // Función que se ejecuta después de ajustar el stock
     const handleStockAdjusted = () => {
-        fetchProductos(); // Forzar la recarga de datos después del ajuste
-        if (onProductAdjusted) {
-             onProductAdjusted(); // Llamar a la función padre si existe
-        }
+        fetchProductos(); 
+        if (onProductAdjusted) onProductAdjusted(); 
     };
 
+    const AlertaStockMinimo = () => {
+        if (countAlertas === 0) return null;
+        return (
+            <div className="c-alert c-alert--warning c-alert-stock-notification">
+                <span className="u-mr-sm">⚠️</span>
+                <span className="c-alert__message">
+                    ¡ALERTA! Tienes <b>{countAlertas} {countAlertas === 1 ? 'producto' : 'productos'}</b> con Stock Mínimo. Reabastecimiento urgente.
+                </span>
+                <button 
+                    onClick={() => setMostrarSoloAlertas(!mostrarSoloAlertas)}
+                    className="btn c-alert__filter-btn"
+                >
+                    {mostrarSoloAlertas ? 'Ver Todo el Inventario' : `Ver Solo ${countAlertas} Alertas`}
+                </button>
+            </div>
+        );
+    };
+
+    if (loading) return <p className="c-state-message c-card">Cargando inventario...</p>;
+    if (error) return <p className="c-alert c-alert--error">Error: {error}</p>;
+    if (countTotal === 0) {
+        return <p className="c-state-message c-card">Aún no tienes productos en tu inventario. ¡Usa el formulario para ingresar el stock inicial!</p>;
+    }
+
     return (
-        <div style={styles.tableContainer}>
-            <p>Mostrando {productos.length} referencias</p>
-            <table style={styles.table}>
+        <div className="c-data-table-wrapper">
+            <AlertaStockMinimo />
+            <p className="c-form-message c-form-message--help u-mb-lg">
+                Mostrando {productosFiltrados.length} de {countTotal} referencias
+            </p>
+            <table className="c-data-table">
                 <thead>
                     <tr>
-                        <th style={styles.th}>Ref.</th>
-                        <th style={styles.th}>Nombre</th>
-                        <th style={styles.th}>Stock Actual</th>
-                        <th style={styles.th}>Precio Venta</th>
-                        <th style={styles.th}>Alerta Mín.</th>
-                        <th style={styles.th}>Acciones</th>
+                        <th className="c-data-table__header-cell">Ref.</th>
+                        <th className="c-data-table__header-cell">Nombre</th>
+                        <th className="c-data-table__header-cell">Stock Actual</th>
+                        <th className="c-data-table__header-cell">Precio Venta</th> 
+                        <th className="c-data-table__header-cell">Alerta Mín.</th>
+                        <th className="c-data-table__header-cell">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {productos.map((p) => (
-                        <tr key={p.id} style={p.stock_actual <= p.alerta_stock_min ? styles.lowStockRow : {}}>
-                            <td style={styles.td}>{p.codigo_referencia}</td>
-                            <td style={styles.td}>{p.nombre}</td>
-                            <td style={styles.td}>{p.stock_actual}</td>
-                            <td style={styles.td}>{formatCurrencyCOP(p.precio_venta)}</td>
-                            <td style={styles.td}>{p.alerta_stock_min}</td>
-                            <td style={styles.td}>
+                    {productosFiltrados.map((p) => (
+                        <tr 
+                            key={p.id} 
+                            className={p.stock_actual <= p.alerta_stock_min ? 'c-data-table__row--low-stock' : ''}
+                        >
+                            <td className="c-data-table__cell">{p.codigo_referencia}</td>
+                            <td className="c-data-table__cell">{p.nombre}</td>
+                            <td className="c-data-table__cell">{p.stock_actual}</td>
+                            <td className="c-data-table__cell" onClick={() => setEditingId(p.id)}>
+                                {editingId === p.id ? (
+                                    <input 
+                                        type="number"
+                                        defaultValue={p.precio_venta}
+                                        onBlur={(e) => handlePriceUpdate(p.id, e.target.value)}
+                                        onKeyDown={(e) => { 
+                                            if (e.key === 'Enter') e.target.blur();
+                                        }}
+                                        className="c-inline-edit-input"
+                                        autoFocus
+                                    />
+                                ) : (
+                                    <>{formatCurrencyCOP(p.precio_venta)}</>
+                                )}
+                            </td>
+                            <td className="c-data-table__cell">{p.alerta_stock_min}</td>
+                            <td className="c-data-table__cell">
                                 <button 
-                                    onClick={() => setProductoSeleccionado(p)} // <-- Abrir modal con el producto
-                                    style={styles.actionButton}
+                                    onClick={() => setProductoSeleccionado(p)}
+                                    className="btn btn-primary btn-sm c-btn-table-action"
                                 >
                                     Ajustar
                                 </button>
@@ -67,8 +137,6 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted }) => {
                     ))}
                 </tbody>
             </table>
-            
-            {/* Mostrar el Modal si hay un producto seleccionado */}
             {productoSeleccionado && (
                 <AjusteStockModal 
                     producto={productoSeleccionado}
@@ -78,16 +146,6 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted }) => {
             )}
         </div>
     );
-};
-
-// Estilos que faltan y causan el error:
-const styles = {
-    tableContainer: { overflowX: 'auto' },
-    table: { width: '100%', borderCollapse: 'collapse', marginTop: '15px', fontSize: '14px' },
-    th: { border: '1px solid #ddd', padding: '10px', textAlign: 'left', backgroundColor: '#f2f2f2' },
-    td: { border: '1px solid #ddd', padding: '10px' },
-    lowStockRow: { backgroundColor: '#ffe5e5' }, // Resaltar stock bajo
-    actionButton: { padding: '5px 10px', fontSize: '12px', cursor: 'pointer' }
 };
 
 export default ProductosLista;

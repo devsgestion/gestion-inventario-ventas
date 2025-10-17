@@ -1,13 +1,13 @@
 // src/components/inventario/AjusteStockModal.jsx
+
 import React, { useState } from 'react';
 import { supabase } from '../../api/supabaseClient';
 import useAuth from '../../hooks/useAuth';
 import { parseInteger } from '../../utils/formatters';
+import '../../styles/inventario.css'; // Asegúrate de importar el CSS
 
-// Este componente se usa para editar el stock de un producto específico.
 const AjusteStockModal = ({ producto, onClose, onStockAdjusted }) => {
-    const { perfil } = useAuth(); // <--- ASEGÚRATE DE IMPORTAR ESTO Y USARLO
-    // Usamos el stock_actual del producto como valor inicial
+    const { perfil } = useAuth();
     const [cantidadAjuste, setCantidadAjuste] = useState(''); 
     const [razon, setRazon] = useState('');
     const [loading, setLoading] = useState(false);
@@ -21,12 +21,17 @@ const AjusteStockModal = ({ producto, onClose, onStockAdjusted }) => {
         const ajusteNumerico = parseInteger(cantidadAjuste, Number.NaN);
 
         if (!Number.isFinite(ajusteNumerico) || ajusteNumerico === 0) {
-            setError('Ingresa una cantidad válida a sumar o restar.');
+            setError('Ingresa una cantidad válida para sumar o restar (no puede ser 0).');
             setLoading(false);
             return;
         }
 
-        // Obtener la empresaId y userId
+        if (!razon.trim()) { // Validar que la razón no esté vacía
+            setError('La razón del ajuste es obligatoria.');
+            setLoading(false);
+            return;
+        }
+
         const empresaId = perfil?.empresa_id;
         const userId = perfil?.id;
 
@@ -36,30 +41,35 @@ const AjusteStockModal = ({ producto, onClose, onStockAdjusted }) => {
             return;
         }
 
-        // 1. Calcular el nuevo stock
         const nuevoStock = producto.stock_actual + ajusteNumerico;
-
-        // Iniciar Transacción (Podríamos usar un RPC, pero para el MVP usaremos dos llamadas)
         
-        // 2. Insertar el Movimiento (PRIORIDAD: la trazabilidad)
+        // Opcional: Validar que el stock no sea negativo si no está permitido
+        if (nuevoStock < 0) {
+            setError('El stock resultante no puede ser negativo.');
+            setLoading(false);
+            return;
+        }
+
+        // 1. Insertar el Movimiento
         const { error: movError } = await supabase
             .from('movimientos_inventario')
             .insert([{
                 empresa_id: empresaId,
                 producto_id: producto.id,
                 usuario_id: userId,
-                tipo_movimiento: ajusteNumerico > 0 ? 'RECEPCION' : 'AJUSTE',
+                tipo_movimiento: ajusteNumerico > 0 ? 'RECEPCION' : 'AJUSTE', // o 'SALIDA' si es venta, 'DEVOLUCION'
                 cantidad_cambio: ajusteNumerico,
                 razon: razon,
             }]);
 
         if (movError) {
+            console.error("Error al registrar movimiento:", movError);
             setError(`Error al registrar movimiento: ${movError.message}`);
             setLoading(false);
             return;
         }
 
-        // 3. Ejecutar la actualización en Supabase (Solo si el movimiento se registró)
+        // 2. Ejecutar la actualización del stock
         const { error: updateError } = await supabase
             .from('productos')
             .update({ stock_actual: nuevoStock })
@@ -68,10 +78,9 @@ const AjusteStockModal = ({ producto, onClose, onStockAdjusted }) => {
             .select();
 
         if (updateError) {
-            // En un sistema real, aquí revertirías el movimiento, pero para el MVP:
+            console.error("Error al actualizar stock:", updateError);
             setError(`Error al actualizar stock: ${updateError.message}`);
         } else {
-            // Éxito
             onStockAdjusted();
             setCantidadAjuste('');
             setRazon('');
@@ -81,55 +90,76 @@ const AjusteStockModal = ({ producto, onClose, onStockAdjusted }) => {
     };
 
     return (
-        <div style={styles.modalOverlay}>
-            <div style={styles.modalContent}>
-                <h3>Ajustar Stock de: {producto.nombre}</h3>
-                <p>Stock Actual: {producto.stock_actual} unidades</p>
-                <form onSubmit={handleAjuste} style={styles.form}>
-                    <label>Cantidad a Sumar/Restar (Ej: 5 o -3):</label>
-                    <input 
-                        type="number" 
-                        value={cantidadAjuste} 
-                        onChange={(e) => setCantidadAjuste(e.target.value)} 
-                        required 
-                        style={styles.input}
-                    />
+        <div className="c-modal-overlay">
+            <div className="c-modal-content">
+                <div className="c-modal-header">
+                    <h2 className="c-modal-title u-mb-xs"> {/* Añadimos margen inferior al título */}
+                        <span role="img" aria-label="ajuste">🔧</span> Ajustar Stock
+                    </h2>
+                    {/* Subtítulo o nombre del producto */}
+                    <p className="c-modal-subtitle">
+                        Producto: <span style={{color: 'var(--color-brand)', fontWeight: 600}}>{producto.nombre}</span>
+                    </p>
+                </div>
+                
+                <div className="c-modal-body">
+                    {/* Usamos la nueva clase para destacar el stock actual */}
+                    <p className="c-modal-current-stock u-mb-lg">
+                        Stock Actual: <b>{producto.stock_actual}</b> unidades
+                    </p>
+                    
+                    <form onSubmit={handleAjuste} className="c-form">
+                        
+                        <div className="c-form-group">
+                            <label className="c-form-label">Cantidad a Sumar/Restar:</label>
+                            <p className="c-form-message c-form-message--help u-mb-xs">(Ej: 5 para sumar, -3 para restar)</p>
+                            <input 
+                                type="number" 
+                                value={cantidadAjuste} 
+                                onChange={(e) => setCantidadAjuste(e.target.value)} 
+                                required 
+                                className="c-form-input"
+                                placeholder="Ej: 5 o -3"
+                            />
+                        </div>
+                        
+                        <div className="c-form-group">
+                            <label className="c-form-label">Razón del Ajuste:</label>
+                            <p className="c-form-message c-form-message--help u-mb-xs">(Obligatorio para inventario y trazabilidad)</p>
+                            <input 
+                                type="text" 
+                                placeholder="Ej: Inventario físico, Mercancía recibida, Error"
+                                value={razon} 
+                                onChange={(e) => setRazon(e.target.value)} 
+                                required 
+                                className="c-form-input"
+                            />
+                        </div>
+                        
+                        {error && <p className="c-form-message c-form-message--error">{error}</p>}
 
-                    <label>Razón del Ajuste (Obligatorio para inventario):</label>
-                    <input 
-                        type="text" 
-                        placeholder="Ej: Inventario físico o Mercancía recibida"
-                        value={razon} 
-                        onChange={(e) => setRazon(e.target.value)} 
-                        required 
-                        style={styles.input}
-                    />
-
-                    <div style={styles.buttonGroup}>
-                        <button type="button" onClick={onClose} disabled={loading} style={styles.cancelButton}>
-                            Cancelar
-                        </button>
-                        <button type="submit" disabled={loading} style={styles.adjustButton}>
-                            {loading ? 'Aplicando...' : 'Aplicar Ajuste'}
-                        </button>
-                    </div>
-                </form>
-                {error && <p style={styles.error}>{error}</p>}
+                        <div className="c-modal-footer">
+                            <button 
+                                type="button" 
+                                onClick={onClose} 
+                                disabled={loading} 
+                                className="btn btn-secondary"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                type="submit" 
+                                disabled={loading} 
+                                className="btn btn-primary btn-success"
+                            >
+                                {loading ? 'Aplicando...' : 'Aplicar Ajuste'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     );
-};
-
-// Estilos básicos para el Modal
-const styles = {
-    modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
-    modalContent: { backgroundColor: 'white', padding: '30px', borderRadius: '8px', maxWidth: '400px', width: '90%', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' },
-    form: { display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' },
-    input: { padding: '8px', borderRadius: '4px', border: '1px solid #ddd' },
-    buttonGroup: { display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' },
-    cancelButton: { padding: '10px', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', backgroundColor: 'white' },
-    adjustButton: { padding: '10px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-    error: { color: 'red', marginTop: '10px', fontWeight: 'bold' }
 };
 
 export default AjusteStockModal;

@@ -1,0 +1,357 @@
+/*
+  ==============================================
+  🛒 MÓDULO: VENTAS (Punto de Venta) Y HISTORIAL DE CAJA
+  ==============================================
+  Asegura: Layouts de dos columnas y consistencia tabular.
+*/
+
+/* ---------------------------------------------------- */
+/* P-VENTAS: Página Principal (VentasPage.jsx) */
+/* ---------------------------------------------------- */
+.p-ventas {
+    padding-top: 0; 
+}
+
+.p-ventas__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-surface-300);
+}
+
+.p-ventas__title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--color-text-high);
+}
+
+.p-ventas__controls {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.p-ventas__grid {
+    /* Estructura de dos columnas 2/3 y 1/3 */
+    grid-template-columns: 2fr 1fr; 
+    gap: var(--space-md); 
+    min-height: 80vh; 
+    display: grid;
+}
+
+/* 💡 COLUMNA 1: Lista de Productos (Fondo Estándar) */
+.c-product-list {
+    padding: var(--space-lg);
+    background-color: var(--color-surface-200); 
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-base);
+}
+
+/* 💡 COLUMNA 2: Contenedor del Carrito (Fondo Resaltado para Checkout) */
+.p-ventas__carrito-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0; 
+    background-color: var(--color-surface-300); 
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-base);
+}
+
+.p-ventas__checkout-button {
+    font-size: 1.2rem;
+    padding: var(--space-md) var(--space-lg);
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: var(--border-radius-md); 
+    margin-top: var(--space-md);
+    
+    background-color: var(--color-success);
+    color: var(--color-text-on-dark);
+}
+.p-ventas__checkout-button:hover {
+    filter: brightness(1.15);
+}
+.p-ventas__checkout-button[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: var(--color-success);
+}
+
+.p-ventas__closed-box-alert {
+    color: var(--color-danger);
+    margin-top: var(--space-sm);
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+/* ---------------------------------------------------- */
+/* C-PRODUCT-LIST: Lista de Productos */
+/* ---------------------------------------------------- */
+.c-product-list { min-width: 0; display: flex; flex-direction: column; }
+
+.c-product-list__search-input {
+    font-size: 1rem;
+    padding: var(--space-sm); 
+    margin-bottom: var(--space-lg); 
+    border: 1px solid var(--color-border);
+}
+
+/* 💡 CRÍTICO: La lista de ítems para el scroll */
+.c-product-list__items {
+    max-height: 50vh; 
+    overflow-y: auto;
+    
+    /* FIX SCROLLBAR: Neutraliza el padding horizontal de la tarjeta para full width */
+    margin-left: calc(-1 * var(--space-lg));
+    margin-right: calc(-1 * var(--space-lg));
+    padding-left: var(--space-lg); 
+    padding-right: var(--space-lg);
+}
+
+/* Item de Producto - Diseño limpio y enfocado */
+.c-product-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-surface-300);
+    transition: background-color 0.15s;
+    cursor: default;
+}
+
+.c-product-card:hover { background-color: var(--color-surface-300); }
+
+.c-product-card__info {
+    flex-grow: 1;
+    padding-right: var(--space-md);
+    white-space: normal; 
+    font-size: 1rem;
+}
+
+.c-product-card__info strong { color: var(--color-text-high); display: block; }
+
+.c-product-card__info .form-help {
+    color: var(--color-text-medium);
+    font-size: 0.85rem;
+}
+.c-product-card__info .form-help strong {
+    color: var(--color-brand); 
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.c-product-card button { display: block; }
+
+
+/* ---------------------------------------------------- */
+/* C-CART: Carrito de Ventas */
+/* ---------------------------------------------------- */
+.c-cart {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; 
+    padding: var(--space-lg); 
+    background-color: transparent; 
+}
+
+.c-cart__title {
+    font-size: 1.3rem;
+    color: var(--color-text-high);
+    margin-bottom: var(--space-md);
+}
+
+.c-cart__items {
+    flex-grow: 1;
+    border-bottom: 1px solid var(--color-surface-200); 
+    padding-bottom: var(--space-md);
+    margin-bottom: var(--space-md);
+    max-height: 50vh; 
+    overflow-y: auto;
+}
+
+.c-cart__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px dotted var(--color-surface-300);
+}
+
+.c-cart__item-info {
+    white-space: normal; 
+    flex-basis: 60%;
+    padding-right: var(--space-sm);
+}
+
+.c-cart__item-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-basis: 40%;
+    justify-content: flex-end;
+}
+
+.c-cart__quantity-input {
+    width: 45px; 
+    padding: 3px;
+    text-align: center;
+}
+
+.c-cart__totals {
+    padding: var(--space-md) 0 0 0;
+    border-top: 1px solid var(--color-surface-200);
+}
+
+.c-cart__total-amount {
+    margin: var(--space-sm) 0;
+    font-size: 2em; 
+    color: var(--color-success);
+    font-weight: 900;
+}
+
+
+/* ---------------------------------------------------- */
+/* P-HISTORIAL-CAJA: HistorialCajaPage.jsx (Diseño Final) */
+/* ---------------------------------------------------- */
+
+.p-page-layout { padding-top: var(--space-xl); }
+
+/* 💡 NUEVO: Contenedor para el resumen global de Totales */
+.p-historial-caja__global-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.p-historial-caja__summary-item {
+    /* Utiliza c-card para el estilo y luego modifica los colores de badge */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+}
+.p-historial-caja__summary-item strong {
+    font-weight: 700;
+    margin-right: var(--space-sm);
+}
+.p-historial-caja__summary-item.badge-success {
+    background-color: var(--color-success);
+    color: var(--color-text-on-dark);
+}
+.p-historial-caja__summary-item.badge-info {
+    background-color: var(--color-brand);
+    color: var(--color-text-on-dark);
+}
+
+
+.p-historial-caja__grid {
+    grid-template-columns: 1fr 3fr;
+    gap: var(--space-lg);
+    display: grid;
+}
+
+.p-historial-caja__sidebar { 
+    display: flex; 
+    flex-direction: column;
+}
+
+/* Wrapper para la lista scrollable de ítems de cierre */
+.p-historial-caja__items-list {
+    flex-grow: 1; 
+    max-height: 500px; 
+    overflow-y: auto;
+    
+    /* Neutraliza el padding del c-card para el scroll interno */
+    margin: var(--space-sm) calc(-1 * var(--space-lg)) 0 calc(-1 * var(--space-lg));
+    padding: 0 var(--space-lg);
+}
+
+
+.p-historial-caja__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    margin-bottom: var(--space-sm);
+    border-radius: var(--border-radius-sm);
+    transition: all 0.15s;
+    background-color: var(--color-surface-200); 
+    cursor: pointer;
+    border: 1px solid transparent;
+    user-select: none;
+}
+
+.p-historial-caja__item:hover { 
+    background-color: var(--color-surface-300); 
+    border-color: var(--color-brand);
+}
+
+.p-historial-caja__item.is-selected {
+    background-color: var(--color-brand);
+    color: var(--color-text-on-dark);
+    border-color: var(--color-brand);
+}
+.p-historial-caja__item.is-selected span {
+    color: var(--color-text-on-dark) !important;
+}
+
+.p-historial-caja__footer {
+    margin-top: var(--space-xl);
+    display: flex;
+    gap: var(--space-lg);
+    justify-content: flex-start; 
+}
+.p-historial-caja__badge-total {
+    font-size: 1.2rem; 
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--border-radius-md);
+    font-weight: 700;
+}
+
+
+/* ---------------------------------------------------- */
+/* C-DATA-TABLE (Ajuste para Historial) */
+/* ---------------------------------------------------- */
+.c-data-table-wrapper {
+    overflow-x: auto; 
+    padding: 0; 
+    margin: var(--space-sm) calc(-1 * var(--space-lg));
+}
+
+.c-data-table {
+    table-layout: auto; /* Permite que la columna Producto se ajuste */
+    width: 100%; 
+    min-width: 600px; /* Mínimo para el scroll horizontal */
+}
+.c-data-table thead {
+    background-color: var(--color-surface-300); 
+}
+.c-data-table th {
+    font-weight: 600;
+    color: var(--color-text-medium);
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-surface-300);
+    text-align: left;
+}
+.c-data-table td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-surface-300);
+}
+
+
+/* ---------------------------------------------------- */
+/* R-VENTAS: Responsive Design */
+/* ---------------------------------------------------- */
+@media (max-width: 900px) {
+    .p-ventas__grid, .p-historial-caja__grid, .p-historial-caja__global-summary {
+        grid-template-columns: 1fr;
+    }
+}

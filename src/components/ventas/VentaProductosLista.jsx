@@ -1,15 +1,15 @@
-// src/components/ventas/VentaProductosLista.jsx
+// src/components/ventas/VentaProductosLista.jsx (Refactorizado)
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../api/supabaseClient';
 import { formatCurrencyCOP } from '../../utils/formatters';
+import '../../styles/ventas.css';
 
-const VentaProductosLista = ({ empresaId, onAddToCart }) => {
+const VentaProductosLista = ({ empresaId, onAddToCart, isCajaAbierta }) => {
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [error, setError] = useState(null);
 
-    // Obtiene los productos (el RLS se encarga de filtrar por empresa)
     useEffect(() => {
         const fetchProductos = async () => {
             if (!empresaId) {
@@ -45,55 +45,58 @@ const VentaProductosLista = ({ empresaId, onAddToCart }) => {
         fetchProductos();
     }, [empresaId]);
 
-    // Filtrar productos basado en la búsqueda
     const productosFiltrados = productos.filter(p => 
         p.nombre.toLowerCase().includes(search.toLowerCase()) || 
         (p.codigo_referencia || '').toLowerCase().includes(search.toLowerCase())
-    ).filter(p => p.stock_actual > 0); // Solo mostrar productos con stock > 0
+    ).filter(p => p.stock_actual > 0); 
 
-    if (loading) return <div>Cargando productos...</div>;
-    if (error) return <div style={{ color: 'red' }}>Error: {error}</div>;
+    const handleClickProducto = (producto) => {
+        if (!isCajaAbierta) {
+            return; 
+        }
+        onAddToCart(producto);
+    };
+
+    if (loading) return <div className="loading-state card p-ventas__loading">Cargando productos...</div>;
+    if (error) return <div className="alert alert-error">Error: {error}</div>;
 
     return (
-        <div style={styles.listaContainer}>
-            <h4>Productos Disponibles (Stock &gt; 0)</h4>
+        // DEBE USAR 'card' para que sea un elemento grid válido
+        <div className="card c-product-list">
+            <h4 className="card-title c-product-list__title">Productos Disponibles (Stock &gt; 0)</h4>
             <input 
                 type="text" 
                 placeholder="Buscar por nombre o referencia..." 
                 value={search} 
                 onChange={(e) => setSearch(e.target.value)}
-                style={styles.searchInput}
+                className="form-input c-product-list__search-input"
+                disabled={!isCajaAbierta}
             />
-            
-            <div style={styles.productList}>
+            <div className="c-product-list__items">
                 {productosFiltrados.map(p => (
-                    <div key={p.id} style={styles.productCard}>
-                        <div style={{ flexGrow: 1 }}>
-                            <strong>{p.nombre}</strong> ({p.codigo_referencia})
-                            <p style={styles.details}>Stock: {p.stock_actual} | Precio: {formatCurrencyCOP(p.precio_venta)}</p>
+                    <div 
+                        key={p.id} 
+                        className={`c-product-card ${!isCajaAbierta ? 'is-disabled' : ''}`}
+                    >
+                        <div className="c-product-card__info">
+                            <strong>{p.nombre}</strong> <span className="form-help">({p.codigo_referencia})</span>
+                            <p className="form-help">
+                                Stock: {p.stock_actual} | Precio: <span style={{ fontWeight: 'bold' }}>{formatCurrencyCOP(p.precio_venta)}</span>
+                            </p>
                         </div>
                         <button 
                             onClick={() => onAddToCart(p)}
-                            style={styles.addButton}
+                            className="btn btn-primary btn-sm"
+                            disabled={!isCajaAbierta}
                         >
                             Añadir
                         </button>
                     </div>
                 ))}
-                {productosFiltrados.length === 0 && <p>No se encontraron productos con ese nombre/referencia o sin stock.</p>}
+                {productosFiltrados.length === 0 && <p className="empty-state">No se encontraron productos con ese nombre/referencia o sin stock.</p>}
             </div>
         </div>
     );
-};
-
-// ... Estilos de la lista ...
-const styles = {
-    listaContainer: { padding: '15px', border: '1px solid #ddd', borderRadius: '8px' },
-    searchInput: { width: '100%', padding: '10px', marginBottom: '15px', borderRadius: '4px', border: '1px solid #ccc' },
-    productList: { maxHeight: '500px', overflowY: 'auto' },
-    productCard: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', borderBottom: '1px solid #eee' },
-    details: { margin: '5px 0 0', fontSize: '12px', color: '#555' },
-    addButton: { padding: '8px 12px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }
 };
 
 export default VentaProductosLista;

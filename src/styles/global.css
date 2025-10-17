@@ -1,0 +1,129 @@
+/*
+  ==============================================
+  🎨 DESIGN SYSTEM: Global Variables & Base Styles
+  ==============================================
+  Estructura de Theming (Dark Mode) y Utilidades Esenciales.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+  /* --- 1. Paleta de Colores de Estado --- */
+  --color-success: #2ecc71;  /* Éxito / Acción Positiva (Tu color-primary original) */
+  --color-brand: #3498db;    /* Marca Principal / Acciones secundarias (Tu color-secondary original) */
+  --color-warning: #f39c12;  /* Alerta / Stock Bajo */
+  --color-danger: #e74c3c;   /* Peligro / Error / Stock Crítico */
+  --color-info: #7F8C8D;     /* Información Gris */
+  
+  /* --- 2. Colores del Tema (DARK MODE) --- */
+  --color-surface-100: #10172B; /* Fondo más oscuro (Body) */
+  --color-surface-200: #1E2B40; /* Fondo de tarjetas/contenedores (Tu color-bg-card) */
+  --color-surface-300: #18213a; /* Fondo de inputs/elementos interactivos (Tu color-bg-input) */
+  --color-border: #3b4d61;      /* Borde sutil para inputs y divisores */
+
+  --color-text-high: #E0E6F0; /* Texto de alto contraste */
+  --color-text-medium: #A0AEC0; /* Texto secundario/muted */
+  --color-text-on-dark: #FFFFFF; /* Texto sobre colores de marca */
+  
+  /* --- 3. Tipografía, Espaciado y Sombra (8pt Grid System) --- */
+  --font-family: 'Inter', sans-serif;
+  --space-unit: 8px; /* Base para el espaciado */
+  --space-xs: calc(0.5 * var(--space-unit));  /* 4px */
+  --space-sm: var(--space-unit);             /* 8px */
+  --space-md: calc(2 * var(--space-unit));   /* 16px */
+  --space-lg: calc(3 * var(--space-unit));   /* 24px */
+  --space-xl: calc(5 * var(--space-unit));   /* 40px */
+
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 10px;
+
+  --shadow-base: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Base Reset y Estilos Globales */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-surface-100);
+  color: var(--color-text-high);
+  line-height: 1.6;
+}
+
+/* Componente Base: Button (Reutilizable) */
+.btn {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Usabilidad/Accesibilidad: Feedback visual */
+.btn:hover {
+  filter: brightness(1.15); 
+}
+.btn:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+}
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Modificadores de botones */
+.btn-primary {
+  background-color: var(--color-brand);
+  color: var(--color-text-on-dark);
+}
+.btn-primary.btn-success { /* Botón principal de éxito (Ej. Crear) */
+  background-color: var(--color-success);
+}
+
+.btn-secondary {
+  background-color: var(--color-surface-300); 
+  color: var(--color-text-high);
+  border: 1px solid var(--color-surface-200); 
+}
+.btn-secondary:hover {
+  background-color: #2e3b52;
+}
+
+/* Modificadores de tamaño de botones */
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+/* Utilidades Comunes (Utility-First) */
+.u-mb-lg { margin-bottom: var(--space-lg); }
+.u-mt-lg { margin-top: var(--space-lg); }
+.u-flex { display: flex; }
+.u-justify-between { justify-content: space-between; }
+.u-justify-end { justify-content: flex-end; }
+.u-align-center { align-items: center; }
+
+/* Estilos de Carga Global (usado en InventarioPage) 
+  Se mantiene aquí por ser un estado de aplicación global.
+*/
+.loading-state {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    color: var(--color-text-high);
+}

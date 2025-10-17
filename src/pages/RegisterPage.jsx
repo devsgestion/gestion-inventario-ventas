@@ -53,47 +53,35 @@ const RegisterPage = () => {
     };
 
     return (
-        <div style={styles.container}>
-            <h2 style={styles.header}>Registro de Nueva Empresa</h2>
-            <form onSubmit={handleRegister} style={styles.form}>
-                
-                {/* Campos de la Empresa y el Usuario */}
-                <input type="text" placeholder="Nombre de tu Negocio" value={nombreEmpresa}
-                    onChange={(e) => setNombreEmpresa(e.target.value)} required style={styles.input} />
-
-                <input type="text" placeholder="Tu Nombre (Admin)" value={nombreUsuario}
-                    onChange={(e) => setNombreUsuario(e.target.value)} required style={styles.input} />
-
-                {/* Campos de Autenticación */}
-                <input type="email" placeholder="Correo (Será tu usuario)" value={email}
-                    onChange={(e) => setEmail(e.target.value)} required style={styles.input} />
-                
-                <input type="password" placeholder="Contraseña" value={password}
-                    onChange={(e) => setPassword(e.target.value)} required style={styles.input} />
-                
-                <button type="submit" style={styles.button} disabled={loading}>
+        <div className="card" style={{ maxWidth: 420, margin: '60px auto' }}>
+            <h2 className="card-title" style={{ textAlign: 'center' }}>Registro de Nueva Empresa</h2>
+            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div className="form-group">
+                    <input type="text" placeholder="Nombre de tu Negocio" value={nombreEmpresa}
+                        onChange={(e) => setNombreEmpresa(e.target.value)} required className="form-input" />
+                </div>
+                <div className="form-group">
+                    <input type="text" placeholder="Tu Nombre (Admin)" value={nombreUsuario}
+                        onChange={(e) => setNombreUsuario(e.target.value)} required className="form-input" />
+                </div>
+                <div className="form-group">
+                    <input type="email" placeholder="Correo (Será tu usuario)" value={email}
+                        onChange={(e) => setEmail(e.target.value)} required className="form-input" />
+                </div>
+                <div className="form-group">
+                    <input type="password" placeholder="Contraseña" value={password}
+                        onChange={(e) => setPassword(e.target.value)} required className="form-input" />
+                </div>
+                <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
                     {loading ? 'Registrando...' : 'Crear Cuenta'}
                 </button>
-                
-                {error && <p style={styles.error}>{error}</p>}
-                
-                <p style={styles.loginPrompt}>
+                {error && <p className="form-error">{error}</p>}
+                <p className="form-help" style={{ textAlign: 'center', marginTop: 12 }}>
                     ¿Ya tienes cuenta? <a href="/login">Inicia Sesión</a>
                 </p>
             </form>
         </div>
     );
 };
-
-// Estilos (usa los mismos estilos de tu LoginPage para coherencia)
-const styles = {
-    container: { display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '50px' },
-    header: { marginBottom: '20px' },
-    form: { display: 'flex', flexDirection: 'column', width: '320px', gap: '15px' },
-    input: { padding: '12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px' },
-    button: { padding: '12px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '16px', fontWeight: 600 },
-    error: { color: '#dc2626', fontWeight: 500, textAlign: 'center' },
-    loginPrompt: { marginTop: '10px', fontSize: '14px', textAlign: 'center' },
-}; 
 
 export default RegisterPage;

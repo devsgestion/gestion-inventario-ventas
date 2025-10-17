@@ -19,13 +19,13 @@ const EmpresaSettings = () => {
 
     // 🛑 1. MANEJAR CARGA Y DATOS NULOS AQUÍ 🛑
     if (isBootstrapping) {
-        return <div style={{padding: '20px'}}>Cargando configuración de la empresa...</div>;
+        return <div className="loading-state card">Cargando configuración de la empresa...</div>;
     }
 
     // 🛑 CRITICAL CHECK 🛑: If the data exists, but the JOIN failed.
     if (!perfil || !perfil.empresa || !perfil.empresa.nombre) {
         // This is the fallback that currently shows:
-        return <div style={{padding: '20px'}}>Error: No se pudo cargar el perfil de la empresa.</div>;
+        return <div className="error-state card">Error: No se pudo cargar el perfil de la empresa.</div>;
     }
     
     // ... if we get here, the data is safe to use: perfil.empresa.nombre
@@ -52,24 +52,24 @@ const EmpresaSettings = () => {
     };
 
     return (
-        <div style={{ padding: '20px' }}>
-            {/* La línea problemática ahora es segura */}
-            <h2>Configuración de la Empresa</h2>
-            <p>Aquí puedes personalizar los datos de tu negocio: {perfil.empresa.nombre}</p>
-
-            <form onSubmit={handleSave} style={{ maxWidth: '400px', marginTop: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '5px' }}>Nombre Actual de la Empresa:</label>
-                <input
-                    type="text"
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    required
-                    style={{ width: '100%', padding: '10px', marginBottom: '15px', borderRadius: '4px', border: '1px solid #ccc' }}
-                />
-                <button type="submit" disabled={loading} style={{ padding: '10px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+        <div className="card" style={{ maxWidth: 420, margin: '60px auto' }}>
+            <h2 className="card-title">Configuración de la Empresa</h2>
+            <p className="form-help">Aquí puedes personalizar los datos de tu negocio: <b>{perfil.empresa.nombre}</b></p>
+            <form onSubmit={handleSave} style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div className="form-group">
+                    <label className="form-label">Nombre Actual de la Empresa:</label>
+                    <input
+                        type="text"
+                        value={nombre}
+                        onChange={(e) => setNombre(e.target.value)}
+                        required
+                        className="form-input"
+                    />
+                </div>
+                <button type="submit" disabled={loading} className="btn btn-primary btn-full">
                     {loading ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
-                {success && <p style={{ color: 'green', marginTop: '10px' }}>{success}</p>}
+                {success && <p className="form-success">{success}</p>}
             </form>
         </div>
     );
