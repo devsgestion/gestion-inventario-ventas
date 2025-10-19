@@ -115,6 +115,7 @@ const HistorialCajaPage = () => {
                                             <th className="c-data-table__header-cell">Unidades</th>
                                             <th className="c-data-table__header-cell">Precio Unit.</th>
                                             <th className="c-data-table__header-cell">Total</th>
+                                            <th className="c-data-table__header-cell">Notas</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -123,9 +124,22 @@ const HistorialCajaPage = () => {
                                                 <td className="c-data-table__cell">{item.nombre_producto}</td>
                                                 <td className="c-data-table__cell">{item.referencia}</td>
                                                 <td className="c-data-table__cell">{item.cantidad_vendida}</td>
-                                                <td className="c-data-table__cell">{formatCurrencyCOP(item.precio_unitario)}</td>
+                                                <td className="c-data-table__cell">
+                                                    {formatCurrencyCOP(item.precio_unitario)}
+                                                    {item.precio_modificado && (
+                                                        <span className="u-text-success" style={{ fontSize: '0.9em', marginLeft: 6 }}>
+                                                            (Modificado)
+                                                        </span>
+                                                    )}
+                                                </td>
                                                 <td className="c-data-table__cell u-text-success u-text-bold">
                                                     {formatCurrencyCOP(item.total_linea)}
+                                                </td>
+                                                <td className="c-data-table__cell">
+                                                    {/* Muestra nota si el precio fue modificado */}
+                                                    {item.precio_modificado
+                                                        ? `Precio modificado en venta`
+                                                        : ''}
                                                 </td>
                                             </tr>
                                         ))}

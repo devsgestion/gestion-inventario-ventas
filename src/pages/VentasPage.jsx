@@ -84,57 +84,48 @@ const VentasPage = () => {
     // LÓGICA DE VENTA Y CARRITO
     // ----------------------------------------------------
     
+    // 🛑 NUEVA FUNCIÓN: Modificar Precio de un Ítem en el Carrito 🛑
+    const handleUpdatePriceInCart = useCallback((cartItemId, nuevoPrecioString) => {
+        const nuevoPrecio = Math.max(0, parseFloat(nuevoPrecioString) || 0);
+        setCarrito(prevCarrito => prevCarrito.map(item =>
+            item.cartItemId === cartItemId ? { ...item, precio_venta: nuevoPrecio } : item
+        ));
+    }, []);
+
     // 💡 Performance: Usar useCallback + 🔒 Lógica de Stock
+    const generateUniqueCartId = () => Math.random().toString(36).substring(2, 9);
+
     const handleAddToCart = useCallback((producto) => {
         if (!isCajaAbiertaHoy) {
             alert("🚨 Caja Cerrada. No puedes añadir productos.");
             return;
         }
-
-        setCarrito(prevCarrito => {
-            const existe = prevCarrito.find(item => item.id === producto.id);
-
-            if (existe) {
-                // 🔒 Validación de Stock al incrementar
-                if (existe.cantidad + 1 > producto.stock_actual) {
-                    // Mostrar mensaje visual en vez de alert
-                    setStockErrorMsg(`Stock insuficiente para ${producto.nombre}. Solo quedan ${producto.stock_actual} unidades.`);
-                    setTimeout(() => setStockErrorMsg(''), 2500);
-                    return prevCarrito;
-                }
-
-                return prevCarrito.map(item =>
-                    item.id === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item
-                );
-            } else {
-                // 🔒 Validación de Stock inicial
-                if (producto.stock_actual <= 0) {
-                    setStockErrorMsg(`El producto ${producto.nombre} no tiene stock disponible.`);
-                    setTimeout(() => setStockErrorMsg(''), 2500);
-                    return prevCarrito;
-                }
-                return [...prevCarrito, { 
-                    ...producto, 
-                    cantidad: 1, 
-                    precio_venta: Number(producto.precio_venta) || 0 
-                }];
+        // NO BUSCAMOS existencias, siempre creamos una nueva línea.
+        setCarrito(prevCarrito => [
+            ...prevCarrito,
+            {
+                ...producto,
+                // CRÍTICO: Usamos un ID único para la línea del carrito (temporal)
+                cartItemId: generateUniqueCartId(),
+                cantidad: 1,
+                precio_venta: Number(producto.precio_venta) || 0
             }
-        });
+        ]);
     }, [isCajaAbiertaHoy]);
 
     // 💡 Performance: Usar useCallback + 🔒 Lógica de Stock
-    const handleUpdateCart = useCallback((productoId, nuevaCantidad) => {
+    const handleUpdateCart = useCallback((cartItemId, nuevaCantidad) => {
         if (!isCajaAbiertaHoy) return; 
 
         const quantity = Number.parseInt(nuevaCantidad, 10);
 
         setCarrito(prevCarrito => {
             if (!Number.isFinite(quantity) || quantity <= 0) {
-                // Si es 0 o inválida, se elimina
-                return prevCarrito.filter(item => item.id !== productoId);
+                // Si es 0 o inválida, se elimina usando cartItemId
+                return prevCarrito.filter(item => item.cartItemId !== cartItemId);
             }
 
-            const productoEnLista = prevCarrito.find(item => item.id === productoId);
+            const productoEnLista = prevCarrito.find(item => item.cartItemId === cartItemId);
             if (!productoEnLista) return prevCarrito;
 
             // 🔒 Validación de Stock al actualizar
@@ -143,12 +134,12 @@ const VentasPage = () => {
                 setTimeout(() => setStockErrorMsg(''), 2500);
                 // Ajustar la cantidad al máximo disponible
                 return prevCarrito.map(item =>
-                    item.id === productoId ? { ...item, cantidad: productoEnLista.stock_actual } : item
+                    item.cartItemId === cartItemId ? { ...item, cantidad: productoEnLista.stock_actual } : item
                 );
             }
 
             return prevCarrito.map(item =>
-                item.id === productoId ? { ...item, cantidad: quantity } : item
+                item.cartItemId === cartItemId ? { ...item, cantidad: quantity } : item
             );
         });
     }, [isCajaAbiertaHoy]);
@@ -161,16 +152,21 @@ const VentasPage = () => {
         setShowConfirmModal(false);
         if (isCheckoutDisabled) return;
 
-        setIsProcessingSale(true); 
+        setIsProcessingSale(true);
 
+        // CRÍTICO: La función RPC usa los precios del carrito, ya modificados.
         const itemsParaRPC = carrito.map(item => ({
-            producto_id: item.id, cantidad: item.cantidad, precio_unitario: item.precio_venta
+            producto_id: item.id, // ⬅️ Usa la ID original del producto (la clave del inventario)
+            cantidad: item.cantidad, // ⬅️ Usa la cantidad real del ítem (no siempre 1)
+            precio_unitario: item.precio_venta // Precio modificado
         }));
 
         const { data, error } = await supabase.rpc('registrar_venta', {
-            p_empresa_id: empresaId, p_usuario_id: userId, p_items: itemsParaRPC
+            p_empresa_id: empresaId,
+            p_usuario_id: userId,
+            p_items: itemsParaRPC
         });
-        
+
         setIsProcessingSale(false);
 
         if (error) {
@@ -178,8 +174,8 @@ const VentasPage = () => {
         } else {
             setShowSuccessAlert(true);
             setTimeout(() => setShowSuccessAlert(false), 2500);
-            setCarrito([]); 
-            forceInventoryRefresh(); 
+            setCarrito([]);
+            forceInventoryRefresh();
         }
     };
 
@@ -222,6 +218,8 @@ const VentasPage = () => {
                     <CarritoDeVentas 
                         carrito={carrito} 
                         onUpdateCart={handleUpdateCart}
+                        // 🛑 PASAR LA NUEVA FUNCIÓN DE EDICIÓN 🛑
+                        onUpdatePrice={handleUpdatePriceInCart} 
                         isCajaAbierta={isCajaAbiertaHoy}
                     />
                     <button
