@@ -106,10 +106,10 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                     {productosFiltrados.map((p) => (
                         <tr 
                             key={p.id} 
-                            className={p.stock_actual <= p.alerta_stock_min ? 'c-data-table__row--low-stock' : ''}
+                            className={`c-data-table__row ${p.stock_actual <= p.alerta_stock_min ? 'c-data-table__row--low-stock' : ''}`}
                         >
                             <td className="c-data-table__cell">{p.codigo_referencia}</td>
-                            <td className="c-data-table__cell">{p.nombre}</td>
+                            <td className="c-data-table__cell c-data-table__cell--name">{p.nombre}</td>
                             <td className={`c-data-table__cell${p.stock_actual <= p.alerta_stock_min ? ' c-data-table__cell--stock-alert' : ''}`}>
                                 {p.stock_actual}
                             </td>
@@ -134,21 +134,22 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                 {formatCurrencyCOP(p.precio_costo)}
                             </td>
                             <td className="c-data-table__cell">{p.alerta_stock_min}</td>
-                            <td className="c-data-table__cell u-flex u-gap-sm">
-                                {/* 🛑 BOTÓN 1: REGISTRAR COMPRA (Llama a la prop onRegisterStock) 🛑 */}
-                                <button 
-                                    onClick={() => onRegisterStock(p)}
-                                    className="btn btn-info btn-sm c-btn-table-action"
-                                >
-                                    Comprar
-                                </button>
-                                {/* BOTÓN 2: AJUSTAR STOCK (Manejo de errores/inventario manual) */}
-                                <button 
-                                    onClick={() => setProductoSeleccionado(p)}
-                                    className="btn btn-secondary btn-sm c-btn-table-action"
-                                >
-                                    Ajustar
-                                </button>
+                            {/* 🛑 MODIFICADO: Usar las nuevas clases para alineación 🛑 */}
+                            <td className="c-data-table__cell c-data-table__cell--actions">
+                                <div className="c-actions-container">
+                                    <button 
+                                        onClick={() => onRegisterStock(p)}
+                                        className="btn btn-info btn-sm c-btn-table-action"
+                                    >
+                                        Comprar
+                                    </button>
+                                    <button 
+                                        onClick={() => setProductoSeleccionado(p)}
+                                        className="btn btn-secondary btn-sm c-btn-table-action"
+                                    >
+                                        Ajustar
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}
