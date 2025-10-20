@@ -7,7 +7,8 @@ import { formatCurrencyCOP } from '../../utils/formatters';
 import { supabase } from '../../api/supabaseClient'; 
 import '../../styles/inventario.css';
 
-const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted }) => {
+// 🛑 MODIFICACIÓN AQUÍ: Recibir la nueva prop 🛑
+const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegisterStock }) => {
     const { productos, loading, error, fetchProductos, productosBajoStock } = useInventario(empresaId, refreshKey);
 
     const [productoSeleccionado, setProductoSeleccionado] = useState(null);
@@ -95,8 +96,10 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted }) => {
                         <th className="c-data-table__header-cell">Nombre</th>
                         <th className="c-data-table__header-cell">Stock Actual</th>
                         <th className="c-data-table__header-cell">Precio Venta</th> 
+                        {/* 🛑 NUEVA COLUMNA: Precio de Costo (CPP) 🛑 */}
+                        <th className="c-data-table__header-cell">Costo (CPP)</th> 
                         <th className="c-data-table__header-cell">Alerta Mín.</th>
-                        <th className="c-data-table__header-cell">Acciones</th>
+                        <th className="c-data-table__header-cell" style={{minWidth: 200}}>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -107,7 +110,6 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted }) => {
                         >
                             <td className="c-data-table__cell">{p.codigo_referencia}</td>
                             <td className="c-data-table__cell">{p.nombre}</td>
-                            {/* Celda de stock con icono de alerta si está bajo */}
                             <td className={`c-data-table__cell${p.stock_actual <= p.alerta_stock_min ? ' c-data-table__cell--stock-alert' : ''}`}>
                                 {p.stock_actual}
                             </td>
@@ -127,11 +129,23 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted }) => {
                                     <>{formatCurrencyCOP(p.precio_venta)}</>
                                 )}
                             </td>
+                            {/* 🛑 CELDA CPP: Muestra el precio_costo 🛑 */}
+                            <td className="c-data-table__cell c-data-table__cell--cost">
+                                {formatCurrencyCOP(p.precio_costo)}
+                            </td>
                             <td className="c-data-table__cell">{p.alerta_stock_min}</td>
-                            <td className="c-data-table__cell">
+                            <td className="c-data-table__cell u-flex u-gap-sm">
+                                {/* 🛑 BOTÓN 1: REGISTRAR COMPRA (Llama a la prop onRegisterStock) 🛑 */}
+                                <button 
+                                    onClick={() => onRegisterStock(p)}
+                                    className="btn btn-info btn-sm c-btn-table-action"
+                                >
+                                    Comprar
+                                </button>
+                                {/* BOTÓN 2: AJUSTAR STOCK (Manejo de errores/inventario manual) */}
                                 <button 
                                     onClick={() => setProductoSeleccionado(p)}
-                                    className="btn btn-primary btn-sm c-btn-table-action"
+                                    className="btn btn-secondary btn-sm c-btn-table-action"
                                 >
                                     Ajustar
                                 </button>

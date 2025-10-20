@@ -19,7 +19,17 @@ const VentasPage = () => {
     const empresaId = perfil?.empresa_id;
     const userId = perfil?.id;
 
-    const [carrito, setCarrito] = useState([]);
+    // 🛑 MODIFICACIÓN: Inicializa el carrito desde LocalStorage 🛑
+    const [carrito, setCarrito] = useState(() => {
+        const storedItems = localStorage.getItem('carritoVentaActual');
+        try {
+            return storedItems ? JSON.parse(storedItems) : [];
+        } catch (e) {
+            console.error("Error al cargar carrito desde LocalStorage:", e);
+            return [];
+        }
+    });
+
     const [loading, setLoading] = useState(false); // Para acciones de CAJA (Abrir/Cerrar)
     const [isProcessingSale, setIsProcessingSale] = useState(false); // Para el botón de VENTA
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -38,6 +48,17 @@ const VentasPage = () => {
 
     // 💡 Performance: Función memoizada
     const getTodayDate = useCallback(() => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), []);
+
+    // 🛑 CRÍTICO: Guardar el carrito cada vez que carrito cambie 🛑
+    useEffect(() => {
+        if (carrito.length > 0) {
+            // Guardamos el JSON serializado
+            localStorage.setItem('carritoVentaActual', JSON.stringify(carrito));
+        } else {
+            // Si el carrito está vacío, limpiamos la clave
+            localStorage.removeItem('carritoVentaActual');
+        }
+    }, [carrito]); // Dependencia CRÍTICA: carrito
 
     // ... (useEffect para window.refreshCajaStatus y checkCajaStatus - sin cambios)
 
@@ -108,7 +129,9 @@ const VentasPage = () => {
                 // CRÍTICO: Usamos un ID único para la línea del carrito (temporal)
                 cartItemId: generateUniqueCartId(),
                 cantidad: 1,
-                precio_venta: Number(producto.precio_venta) || 0
+                precio_venta: Number(producto.precio_venta) || 0,
+                // 🛑 AJUSTE CRÍTICO: Guardar el precio de costo (CPP) actual 🛑
+                precio_costo: Number(producto.precio_costo) || 0 
             }
         ]);
     }, [isCajaAbiertaHoy]);
@@ -154,11 +177,11 @@ const VentasPage = () => {
 
         setIsProcessingSale(true);
 
-        // CRÍTICO: La función RPC usa los precios del carrito, ya modificados.
         const itemsParaRPC = carrito.map(item => ({
-            producto_id: item.id, // ⬅️ Usa la ID original del producto (la clave del inventario)
-            cantidad: item.cantidad, // ⬅️ Usa la cantidad real del ítem (no siempre 1)
-            precio_unitario: item.precio_venta // Precio modificado
+            producto_id: item.id,
+            cantidad: item.cantidad,
+            precio_unitario: item.precio_venta,
+            costo_unitario: item.precio_costo
         }));
 
         const { data, error } = await supabase.rpc('registrar_venta', {
@@ -172,9 +195,14 @@ const VentasPage = () => {
         if (error) {
             alert(`Error al registrar la venta. Detalle: ${error.message}`);
         } else {
+            // Éxito: Limpiar estado y persistencia
+            setCarrito([]); // Limpia el estado de React
+            
+            // 🛑 CRÍTICO: Limpiar la persistencia 🛑
+            localStorage.removeItem('carritoVentaActual'); 
+            
             setShowSuccessAlert(true);
             setTimeout(() => setShowSuccessAlert(false), 2500);
-            setCarrito([]);
             forceInventoryRefresh();
         }
     };

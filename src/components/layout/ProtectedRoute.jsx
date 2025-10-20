@@ -6,80 +6,75 @@ import Sidebar from './Sidebar';
 import './ProtectedRoute.css';
 
 export default function ProtectedRoute() {
-  const { isBootstrapping, session, perfil, forceFinishBootstrap } = useAuth();
+    const { isBootstrapping, session, perfil, forceFinishBootstrap } = useAuth();
 
-  // SOLO timeout para bootstrap - SIN recovery, SIN re-renders forzados
-  useEffect(() => {
+    // Timeout de emergencia
+    useEffect(() => {
+        if (isBootstrapping) {
+            const timeoutId = setTimeout(() => {
+                console.log('🔴 ProtectedRoute timeout - finalizando bootstrap');
+                forceFinishBootstrap();
+            }, 3000);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [isBootstrapping, forceFinishBootstrap]);
+
     if (isBootstrapping) {
-      const timeoutId = setTimeout(() => {
-        forceFinishBootstrap();
-      }, 1000);
-
-      return () => clearTimeout(timeoutId);
+        return (
+            <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Iniciando aplicación...</p>
+                <button 
+                    onClick={() => window.location.reload()}
+                    style={{
+                        marginTop: '20px', 
+                        padding: '8px 16px', 
+                        backgroundColor: '#3498db', 
+                        color: 'white', 
+                        border: 'none', 
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Recargar si tarda mucho
+                </button>
+            </div>
+        );
     }
-  }, [isBootstrapping, forceFinishBootstrap]);
 
-  // Detector de cuelgue MÁS AGRESIVO - refresh más rápido
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // Refresh MUCHO más rápido si se detecta problema
-        setTimeout(() => {
-          if (document.visibilityState === 'visible' && session && !perfil) {
-            console.error('🚨 Aplicación colgada detectada - refresh inmediato');
-            window.location.reload();
-          }
-        }, 2000); // Reducido de 5 a 2 segundos
-      }
-    };
+    if (!session) {
+        return <Navigate to="/login" replace />;
+    }
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [perfil, session]);
+    if (session && !perfil) {
+        return (
+            <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Cargando perfil...</p>
+                <button 
+                    onClick={() => window.location.reload()}
+                    style={{
+                        marginTop: '20px', 
+                        padding: '8px 16px', 
+                        backgroundColor: '#3498db', 
+                        color: 'white', 
+                        border: 'none', 
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Recargar página
+                </button>
+            </div>
+        );
+    }
 
-  if (isBootstrapping) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Iniciando...</p>
-      </div>
+        <div className="app-layout">
+            <Sidebar />
+            <main className="main-content">
+                <Outlet />
+            </main>
+        </div>
     );
-  }
-
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (session && !perfil) {
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Cargando perfil...</p>
-        <button 
-          onClick={() => window.location.reload()}
-          style={{
-            marginTop: '10px', 
-            padding: '8px 16px', 
-            backgroundColor: '#ff6b6b', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Recargar página
-        </button>
-      </div>
-    );
-  }
-
-  // IMPORTANTE: Sin key={forceRender} para evitar re-renders innecesarios
-  return (
-    <div className="app-layout">
-      <Sidebar />
-      <main className="main-content">
-        <Outlet />
-      </main>
-    </div>
-  );
 }

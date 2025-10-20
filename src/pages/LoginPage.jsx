@@ -47,7 +47,7 @@ const LoginPage = () => {
     return (
         <div className={`c-auth-container ${theme === 'light' ? 'theme-light' : ''}`}>
             <div className="c-auth-card">
-                <h2 className="c-auth-header">Iniciar Sesión en GestiON</h2>
+                <h2 className="c-auth-header">Iniciar Sesión en GestionDevs</h2>
                 
                 <form onSubmit={handleSubmit} className="c-auth-form">
                     

@@ -23,11 +23,17 @@ const SettingsModuleCard = ({ title, children, successMessage }) => (
 
 const EmpresaSettings = () => {
     const { perfil, reloadProfile, isBootstrapping } = useAuth();
-    const { theme, setAppTheme } = useTheme(); // 💡 Hook para gestionar el tema
+    const { theme, setAppTheme } = useTheme();
     
     const [nombre, setNombre] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
+    
+    // 🛑 CONFIGURACIONES SIMPLIFICADAS - Solo documentos 🛑
+    const [configuraciones, setConfiguraciones] = useState({
+        formato_facturas: 'simple'
+    });
+
     const empresaId = perfil?.empresa_id;
 
     useEffect(() => {
@@ -63,8 +69,28 @@ const EmpresaSettings = () => {
         setLoading(false);
     };
 
+    // 🛑 FUNCIÓN SIMPLIFICADA: Solo para documentos 🛑
+    const handleSaveConfiguraciones = async (campo, valor) => {
+        setLoading(true);
+        
+        const { error } = await supabase
+            .from('configuraciones_empresa')
+            .upsert({
+                empresa_id: empresaId,
+                [campo]: valor
+            }, { onConflict: 'empresa_id' });
+
+        if (error) {
+            alert(`Error al guardar configuración: ${error.message}`);
+        } else {
+            setConfiguraciones(prev => ({ ...prev, [campo]: valor }));
+            setSuccess(`Configuración de ${campo} actualizada!`);
+            setTimeout(() => setSuccess(''), 3000);
+        }
+        setLoading(false);
+    };
+
     return (
-        // Usamos m-inventory-layout para el offset del sidebar y centrado estético.
         <div className="m-inventory-layout c-settings-page"> 
             <h1 className="c-page-header__title u-mb-xl">Ajustes del Sistema y Empresa</h1>
 
@@ -93,7 +119,6 @@ const EmpresaSettings = () => {
                     </form>
                 </SettingsModuleCard>
 
-
                 {/* --- 2. CONFIGURACIÓN DE APARIENCIA (Modo Claro/Oscuro) --- */}
                 <SettingsModuleCard title="Apariencia y Tema">
                     <p className="c-form-message c-form-message--help u-mb-md">
@@ -119,12 +144,24 @@ const EmpresaSettings = () => {
                         </div>
                     </div>
                 </SettingsModuleCard>
-                
-                {/* --- 3. Módulo Futuro --- */}
-                <SettingsModuleCard title="Próximos Ajustes (Placeholder)">
-                    <p className="c-form-message c-form-message--help">
-                        Aquí se añadirán configuraciones avanzadas. Por ejemplo, ajuste de tasas de IVA, roles de usuario, o integración de hardware POS.
-                    </p>
+
+                {/* --- 3. FORMATOS Y DOCUMENTOS --- */}
+                <SettingsModuleCard title="📄 Documentos y Facturas">
+                    <div className="c-form-group">
+                        <label className="c-form-label">Formato de Facturas:</label>
+                        <select 
+                            value={configuraciones.formato_facturas}
+                            onChange={(e) => handleSaveConfiguraciones('formato_facturas', e.target.value)}
+                            className="c-form-input"
+                        >
+                            <option value="simple">Simple (Ticket básico)</option>
+                            <option value="detallado">Detallado (Con IVA)</option>
+                            <option value="empresarial">Empresarial (Logo + Info fiscal)</option>
+                        </select>
+                    </div>
+                    <button className="btn btn-secondary btn-full u-mt-md">
+                        🖨️ Configurar Impresora
+                    </button>
                 </SettingsModuleCard>
             </div>
         </div>

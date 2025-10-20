@@ -26,13 +26,15 @@ function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/404" element={<NotFoundPage />} />
 
-                {/* Rutas Protegidas GENERALES (El core del software) */}
+                {/* Rutas Protegidas GENERALES */}
                 <Route element={<ProtectedRoute />}>
-                    <Route path="/" element={<InventarioPage />} /> 
+                    
+                    {/* 🛑 CAMBIO CRÍTICO: La raíz (/) ahora solo redirige 🛑 */}
+                    <Route path="/" element={<Navigate to="/ventas" replace />} /> 
+
                     <Route path="/inventario" element={<InventarioPage />} />
                     <Route path="/ventas" element={<VentasPage />} />
                     <Route path="/settings" element={<EmpresaSettings />} /> 
-                    {/* 🛑 NUEVA RUTA PROTEGIDA para el Historial 🛑 */}
                     <Route path="/historial" element={<HistorialCajaPage />} />
                 </Route>
                 
