@@ -1,5 +1,5 @@
 // src/pages/VentasPage.jsx (Refactorizado)
-import React, { useState, useEffect, useCallback } from 'react'; 
+import React, { useState, useEffect, useCallback, useRef } from 'react'; 
 import useAuth from '../hooks/useAuth';
 import useInventario from '../hooks/useInventario'; 
 import VentaProductosLista from '../components/ventas/VentaProductosLista';
@@ -7,6 +7,8 @@ import CarritoDeVentas from '../components/ventas/CarritoDeVentas';
 import { supabase } from '../api/supabaseClient';
 import { formatCurrencyCOP } from '../utils/formatters';
 import '../styles/ventas.css';
+import { useReactToPrint } from 'react-to-print';
+import FacturaTicket from '../components/FacturaTicket'; // Importar el componente de ticket
 
 const forceInventoryRefresh = () => {
     if (window.refreshInventory) {
@@ -171,6 +173,36 @@ const VentasPage = () => {
         setShowConfirmModal(true);
     };
 
+    // 1. Crear una referencia para el componente de ticket
+    const componentRef = useRef();
+    
+    // 🛑 NUEVO ESTADO: Para los datos de la última venta
+    const [datosUltimaVenta, setDatosUltimaVenta] = useState(null);
+    const [ventaFinalizada, setVentaFinalizada] = useState(false);
+
+    // 2. Función handlePrint usando el hook
+    const handlePrint = useReactToPrint({
+        content: () => componentRef.current,
+        documentTitle: `Factura_${new Date().toISOString().split('T')[0]}`,
+        pageStyle: `
+            @page { 
+                size: ${localStorage.getItem('paper_width') || '80mm'} 200mm; 
+                margin: 0; 
+            }
+            @media print {
+                body { -webkit-print-color-adjust: exact; }
+            }
+        `,
+        onAfterPrint: () => {
+            // Opcional: Limpiar el estado después de imprimir
+            const copies = parseInt(localStorage.getItem('print_copies')) || 1;
+            if (copies === 1) {
+                setVentaFinalizada(false);
+                setDatosUltimaVenta(null);
+            }
+        }
+    });
+
     const confirmarFinalizarVenta = async () => {
         setShowConfirmModal(false);
         if (isCheckoutDisabled) return;
@@ -195,15 +227,37 @@ const VentasPage = () => {
         if (error) {
             alert(`Error al registrar la venta. Detalle: ${error.message}`);
         } else {
-            // Éxito: Limpiar estado y persistencia
-            setCarrito([]); // Limpia el estado de React
-            
-            // 🛑 CRÍTICO: Limpiar la persistencia 🛑
-            localStorage.removeItem('carritoVentaActual'); 
+            // 🛑 PREPARAR DATOS PARA IMPRESIÓN 🛑
+            const ventaParaImprimir = {
+                fecha: new Date(),
+                numero: data.venta_id?.slice(-8) || 'N/A',
+                total: total,
+                utilidad: carrito.reduce((acc, item) => acc + ((item.precio_venta - item.precio_costo) * item.cantidad), 0),
+                vendedor: perfil.nombre,
+                items: carrito.map(item => ({
+                    nombre: item.nombre,
+                    cantidad: item.cantidad,
+                    precio_unitario: item.precio_venta,
+                    precio_total: item.precio_venta * item.cantidad
+                }))
+            };
+
+            setDatosUltimaVenta(ventaParaImprimir);
+            setVentaFinalizada(true);
+
+            // Éxito: Limpiar carrito
+            setCarrito([]);
+            localStorage.removeItem('carritoVentaActual');
             
             setShowSuccessAlert(true);
             setTimeout(() => setShowSuccessAlert(false), 2500);
             forceInventoryRefresh();
+
+            // 🛑 AUTO-IMPRESIÓN SI ESTÁ HABILITADA 🛑
+            const autoPrint = localStorage.getItem('auto_print') === 'true';
+            if (autoPrint) {
+                setTimeout(() => handlePrint(), 1000); // Delay para asegurar que el componente se renderice
+            }
         }
     };
 
@@ -327,6 +381,59 @@ const VentasPage = () => {
             {stockErrorMsg && (
                 <div className="c-toast c-toast--error">
                     <span>⚠️ {stockErrorMsg}</span>
+                </div>
+            )}
+
+            {/* 🛑 PANEL DE VENTA FINALIZADA 🛑 */}
+            {ventaFinalizada && datosUltimaVenta && (
+                <div className="c-modal-overlay">
+                    <div className="c-modal-content" style={{ maxWidth: '400px' }}>
+                        <div className="c-modal-header">
+                            <h3 className="c-modal-title">✅ ¡Venta Exitosa!</h3>
+                        </div>
+                        <div className="c-modal-body">
+                            <div style={{ 
+                                textAlign: 'center', 
+                                padding: '20px',
+                                backgroundColor: 'var(--color-surface-200)',
+                                borderRadius: '8px',
+                                marginBottom: '20px'
+                            }}>
+                                <p><strong>Total:</strong> {formatCurrencyCOP(datosUltimaVenta.total)}</p>
+                                <p><strong>Utilidad:</strong> {formatCurrencyCOP(datosUltimaVenta.utilidad)}</p>
+                                <p><strong>Venta #:</strong> {datosUltimaVenta.numero}</p>
+                            </div>
+                            
+                            <div className="c-modal-footer">
+                                <button 
+                                    onClick={() => {
+                                        setVentaFinalizada(false);
+                                        setDatosUltimaVenta(null);
+                                    }}
+                                    className="btn btn-secondary"
+                                >
+                                    Cerrar
+                                </button>
+                                <button 
+                                    onClick={handlePrint} 
+                                    className="btn btn-primary btn-success"
+                                >
+                                    🖨️ Imprimir Recibo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* 🛑 RENDERIZAR EL COMPONENTE DE FACTURA OCULTO 🛑 */}
+            {datosUltimaVenta && (
+                <div style={{ display: "none" }}> 
+                     <FacturaTicket 
+                         ref={componentRef} 
+                         ventaData={datosUltimaVenta}
+                         empresaData={perfil.empresa}
+                     />
                 </div>
             )}
         </div>

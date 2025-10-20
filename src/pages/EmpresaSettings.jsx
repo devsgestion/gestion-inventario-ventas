@@ -10,6 +10,8 @@ import '../styles/SettingsPage.css';
 // Importar la lógica de layout si la usas (ej. m-inventory-layout)
 // import '../styles/inventario.css'; 
 
+// Importar el nuevo componente de modal para la impresora
+import PrinterSettingsModal from '../components/PrinterSettingsModal';
 
 // 💡 Componente Wrapper para la tarjeta de configuración
 const SettingsModuleCard = ({ title, children, successMessage }) => (
@@ -28,6 +30,9 @@ const EmpresaSettings = () => {
     const [nombre, setNombre] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
+    
+    // 💡 NUEVO ESTADO PARA EL MODAL DE LA IMPRESORA
+    const [isPrinterModalOpen, setIsPrinterModalOpen] = useState(false);
     
     // 🛑 CONFIGURACIONES SIMPLIFICADAS - Solo documentos 🛑
     const [configuraciones, setConfiguraciones] = useState({
@@ -159,11 +164,26 @@ const EmpresaSettings = () => {
                             <option value="empresarial">Empresarial (Logo + Info fiscal)</option>
                         </select>
                     </div>
-                    <button className="btn btn-secondary btn-full u-mt-md">
+                    {/* 💡 CAMBIO: El botón abre el modal */}
+                    <button 
+                        onClick={() => setIsPrinterModalOpen(true)} // 🛑 ABRIR MODAL
+                        className="btn btn-secondary btn-full u-mt-md"
+                    >
                         🖨️ Configurar Impresora
                     </button>
                 </SettingsModuleCard>
             </div>
+
+            {/* 💡 NUEVO: MODAL DE CONFIGURACIÓN DE IMPRESORA */}
+            {isPrinterModalOpen && (
+                <PrinterSettingsModal 
+                    isOpen={isPrinterModalOpen}
+                    onClose={() => setIsPrinterModalOpen(false)}
+                    empresaId={empresaId}
+                    currentSettings={configuraciones}
+                    onSettingsUpdated={handleSaveConfiguraciones}
+                />
+            )}
         </div>
     );
 };
