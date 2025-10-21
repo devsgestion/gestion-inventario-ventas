@@ -40,30 +40,31 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
 
     // Función de obtención de datos (sin AbortController, delegamos a Realtime)
     const fetchProductos = useCallback(async () => {
-      if (!empresaId) return;
+      if (!empresaId) return;
 
-      setLoading(true);
-      setError(null);
+      setLoading(true);
+      setError(null);
         
-      try {
-        const { data, error } = await supabase
-          .from('productos')
-          .select('*')
-          .eq('empresa_id', empresaId)
-          .order('nombre', { ascending: true });
+      try {
+        // 🛑 ARREGLO: Query más simple sin filtros complejos 🛑
+        const { data, error } = await supabase
+          .from('productos')
+          .select('*')
+          .eq('empresa_id', empresaId)
+          .order('nombre', { ascending: true });
 
-        if (error) throw error;
-        mapAndSetProducts(data);
+        if (error) throw error;
+        mapAndSetProducts(data);
 
-      } catch (e) {
-        console.error('❌ [useInventario] exception:', e?.message || e);
-        setError(e?.message || String(e));
-        setProductos([]);
-        setProductosBajoStock([]);
-      } finally {
-        setLoading(false);
-      }
-    }, [empresaId, mapAndSetProducts]); 
+      } catch (e) {
+        console.error('❌ [useInventario] exception:', e?.message || e);
+        setError(e?.message || String(e));
+        setProductos([]);
+        setProductosBajoStock([]);
+      } finally {
+        setLoading(false);
+      }
+    }, [empresaId, mapAndSetProducts]); 
 
 
     // ----------------------------------------------------------------------

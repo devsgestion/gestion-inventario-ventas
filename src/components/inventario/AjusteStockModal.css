@@ -1,0 +1,288 @@
+/*
+  ==============================================
+  🔧 COMPONENTE: AjusteStockModal
+  ==============================================
+  Estilos específicos para el modal de ajuste de stock.
+*/
+
+/* Modal base */
+.c-ajuste-stock-modal {
+  background-color: var(--color-surface-300);
+  padding: var(--space-xl) var(--space-lg) var(--space-lg);
+  border-radius: var(--border-radius-lg);
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.c-ajuste-stock-modal__header {
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-surface-200);
+}
+
+.c-ajuste-stock-modal__title {
+  color: var(--color-text-high);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 var(--space-xs) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.c-ajuste-stock-modal__subtitle {
+  font-size: 1rem;
+  color: var(--color-brand);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Indicador de stock actual */
+.c-ajuste-stock-modal__current-stock {
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.1) 0%, rgba(46, 204, 113, 0.05) 100%);
+  border: 2px solid rgba(46, 204, 113, 0.3);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.c-ajuste-stock-modal__current-stock::before {
+  content: "📦";
+  font-size: 1.3rem;
+}
+
+/* Formulario */
+.c-ajuste-stock-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.c-ajuste-stock-modal__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.c-ajuste-stock-modal__label {
+  font-weight: 600;
+  color: var(--color-text-high);
+  margin-bottom: var(--space-sm);
+  font-size: 0.95rem;
+}
+
+.c-ajuste-stock-modal__help {
+  font-size: 0.85rem;
+  color: var(--color-text-medium);
+  margin-bottom: var(--space-sm);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.c-ajuste-stock-modal__help::before {
+  content: "💡";
+  font-size: 0.9rem;
+}
+
+.c-ajuste-stock-modal__input {
+  padding: var(--space-md);
+  border: 2px solid var(--color-surface-300);
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-surface-200);
+  color: var(--color-text-high);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.c-ajuste-stock-modal__input:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.c-ajuste-stock-modal__input--error {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+  background-color: rgba(231, 76, 60, 0.05);
+}
+
+/* Input especial para cantidad con iconos de suma/resta */
+.c-ajuste-stock-modal__quantity-group {
+  position: relative;
+}
+
+.c-ajuste-stock-modal__quantity-input {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.c-ajuste-stock-modal__quantity-helpers {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-sm);
+}
+
+.c-ajuste-stock-modal__quick-btn {
+  background-color: var(--color-surface-200);
+  border: 1px solid var(--color-surface-300);
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.85rem;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.c-ajuste-stock-modal__quick-btn:hover {
+  background-color: var(--color-brand);
+  color: var(--color-text-on-dark);
+  border-color: var(--color-brand);
+}
+
+/* Mensajes de error */
+.c-ajuste-stock-modal__error {
+  background-color: rgba(231, 76, 60, 0.1);
+  color: var(--color-danger);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-md);
+  margin-top: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.9rem;
+}
+
+.c-ajuste-stock-modal__error::before {
+  content: "⚠️";
+  font-size: 1.1rem;
+}
+
+/* Footer */
+.c-ajuste-stock-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-surface-200);
+}
+
+.c-ajuste-stock-modal__btn {
+  padding: var(--space-md) var(--space-xl);
+  border-radius: var(--border-radius-md);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.c-ajuste-stock-modal__btn--cancel {
+  background-color: var(--color-surface-300);
+  color: var(--color-text-high);
+  border: 2px solid var(--color-surface-400);
+}
+
+.c-ajuste-stock-modal__btn--cancel:hover {
+  background-color: var(--color-danger);
+  color: var(--color-text-on-dark);
+  border-color: var(--color-danger);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+}
+
+.c-ajuste-stock-modal__btn--save {
+  background: linear-gradient(135deg, var(--color-success) 0%, #27ae60 100%);
+  color: var(--color-text-on-dark);
+  border: 2px solid var(--color-success);
+  box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
+}
+
+.c-ajuste-stock-modal__btn--save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(46, 204, 113, 0.4);
+}
+
+.c-ajuste-stock-modal__btn--save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Animación de carga */
+.c-ajuste-stock-modal__btn--loading {
+  position: relative;
+  color: transparent;
+}
+
+.c-ajuste-stock-modal__btn--loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin: -8px 0 0 -8px;
+  border: 2px solid transparent;
+  border-top: 2px solid var(--color-text-on-dark);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Modo claro */
+body.theme-light .c-ajuste-stock-modal {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+body.theme-light .c-ajuste-stock-modal__current-stock {
+  background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
+  border-color: rgba(46, 204, 113, 0.3);
+  color: #2d5a3d;
+}
+
+body.theme-light .c-ajuste-stock-modal__input {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+}
+
+body.theme-light .c-ajuste-stock-modal__error {
+  background-color: #fff1f0;
+  border-color: rgba(231, 76, 60, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .c-ajuste-stock-modal {
+    max-width: 95%;
+    margin: var(--space-md);
+  }
+  
+  .c-ajuste-stock-modal__footer {
+    flex-direction: column;
+  }
+  
+  .c-ajuste-stock-modal__btn {
+    width: 100%;
+  }
+}

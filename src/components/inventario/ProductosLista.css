@@ -1,0 +1,745 @@
+/*
+  ==============================================
+  📋 COMPONENTE: ProductosLista
+  ==============================================
+  Estilos específicos para la tabla de productos del inventario.
+*/
+
+/* Wrapper principal */
+.c-productos-lista {
+  background-color: var(--color-surface-200);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg);
+}
+
+/* Wrapper de tabla con scroll */
+.c-productos-lista__table-wrapper {
+  overflow-x: auto; 
+  padding: var(--space-sm);
+  border-radius: var(--border-radius-md);
+}
+
+.c-productos-lista__table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+.c-productos-lista__table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--color-surface-300);
+  border-radius: 4px;
+}
+.c-productos-lista__table-wrapper::-webkit-scrollbar-track {
+  background: var(--color-surface-200);
+}
+
+/* Tabla de productos */
+.c-productos-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 1px;
+  font-size: 0.9rem;
+  min-width: 900px; 
+}
+
+/* Encabezados de tabla */
+.c-productos-table__header {
+  background-color: #2e3b52;
+  color: var(--color-text-on-dark);
+  padding: var(--space-md) var(--space-sm);
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-brand);
+  user-select: none;
+  vertical-align: middle;
+}
+
+/* Ajustes específicos por columna */
+.c-productos-table__header:nth-child(7) { /* Estado */
+  text-align: center;
+  min-width: 100px;
+}
+
+.c-productos-table__header:nth-child(8) { /* Acciones */
+  text-align: center;
+  min-width: 180px;
+}
+
+/* Celda de estado - mejor centrado */
+.c-productos-table__cell:nth-child(7) { /* Estado */
+  text-align: center;
+  vertical-align: middle;
+  padding: var(--space-sm) var(--space-xs);
+}
+
+/* Celda de acciones rediseñada - mejor centrado */
+.c-productos-table__cell--actions {
+  vertical-align: middle !important;
+  height: 60px;
+  padding: var(--space-xs) var(--space-sm) !important;
+  width: 180px; /* Ancho fijo optimizado */
+  text-align: center;
+}
+
+/* Contenedor de acciones - centrado perfecto */
+.c-productos-lista__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centrado perfecto */
+  gap: 6px; /* Gap ligeramente mayor */
+  height: 100%;
+  min-height: 44px;
+  flex-wrap: nowrap;
+  margin: 0 auto; /* Centrado adicional */
+}
+
+/* Botones de acción - tamaño uniforme */
+.c-productos-lista__action-btn {
+  flex-shrink: 0;
+  width: 34px; /* Ligeramente más grande */
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  background-color: var(--color-surface-300);
+  border: 1px solid var(--color-surface-400);
+  color: var(--color-text-medium);
+  padding: 0;
+  font-size: 1rem; /* Iconos más grandes */
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-radius: 8px; /* Más redondeado */
+  cursor: pointer;
+}
+
+.c-productos-lista__action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Variantes de botones por tipo */
+.c-productos-lista__action-btn--comprar {
+  background-color: rgba(52, 152, 219, 0.1);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+.c-productos-lista__action-btn--comprar:hover {
+  background-color: var(--color-brand);
+  color: var(--color-text-on-dark);
+}
+
+.c-productos-lista__action-btn--ajustar {
+  background-color: rgba(156, 39, 176, 0.1);
+  border-color: #9c27b0;
+  color: #9c27b0;
+}
+
+.c-productos-lista__action-btn--ajustar:hover {
+  background-color: #9c27b0;
+  color: var(--color-text-on-dark);
+}
+
+.c-productos-lista__action-btn--toggle {
+  background-color: rgba(243, 156, 18, 0.1);
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.c-productos-lista__action-btn--toggle:hover {
+  background-color: var(--color-warning);
+  color: var(--color-text-on-dark);
+}
+
+.c-productos-lista__action-btn--toggle-active {
+  background-color: rgba(46, 204, 113, 0.1);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.c-productos-lista__action-btn--toggle-active:hover {
+  background-color: var(--color-success);
+  color: var(--color-text-on-dark);
+}
+
+.c-productos-lista__action-btn--delete {
+  background-color: rgba(231, 76, 60, 0.1);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.c-productos-lista__action-btn--delete:hover {
+  background-color: var(--color-danger);
+  color: var(--color-text-on-dark);
+}
+
+/* Estado de producto rediseñado - MÁS COMPACTO */
+.c-productos-lista__status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 12px; /* Más padding horizontal */
+  border-radius: 16px; /* Más redondeado */
+  gap: 4px;
+  min-width: 80px; /* Ancho mínimo mayor */
+  justify-content: center;
+  text-align: center;
+  margin: 0 auto; /* Centrado automático */
+}
+
+.c-productos-lista__status-badge--active {
+  background-color: rgba(46, 204, 113, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(46, 204, 113, 0.4);
+}
+
+.c-productos-lista__status-badge--inactive {
+  background-color: rgba(243, 156, 18, 0.15);
+  color: var(--color-warning);
+  border: 1px solid rgba(243, 156, 18, 0.4);
+}
+
+/* Tooltip para botones pequeños */
+.c-productos-lista__action-btn[title] {
+  position: relative;
+}
+
+.c-productos-lista__action-btn[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Badge de producto inactivo - mejor posicionamiento */
+.c-productos-lista__inactive-badge {
+  display: inline-block;
+  background-color: var(--color-warning);
+  color: var(--color-text-on-dark);
+  font-size: 0.7rem;
+  padding: 2px 8px; /* Más padding */
+  border-radius: 4px;
+  margin-left: var(--space-sm);
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* Filas */
+.c-productos-table__row {
+  height: 60px;
+  transition: background-color 0.2s ease;
+}
+
+.c-productos-table__row:hover .c-productos-table__cell {
+  background-color: #273A50;
+}
+
+/* 🛑 NUEVO: Hover específico para modo claro 🛑 */
+body.theme-light .c-productos-table__row:hover .c-productos-table__cell {
+  background-color: #e8f4fd !important; /* Azul muy claro para hover */
+  color: #1a365d !important; /* Texto más oscuro para contraste */
+  border-bottom-color: #bee3f8 !important;
+}
+
+/* 🛑 MEJORAR: Hover para filas de bajo stock en modo claro 🛑 */
+body.theme-light .c-productos-table__row--low-stock:hover .c-productos-table__cell {
+  background-color: #fef5e7 !important; /* Naranja muy claro */
+  color: #744210 !important; /* Texto más oscuro */
+  border-bottom-color: #f6e05e !important;
+}
+
+/* 🛑 MEJORAR: Hover para filas inactivas en modo claro 🛑 */
+body.theme-light .c-productos-table__row--inactive:hover .c-productos-table__cell {
+  background-color: #f1f5f9 !important; /* Gris muy claro */
+  color: #475569 !important; /* Texto visible */
+  border-bottom-color: #cbd5e1 !important;
+}
+
+/* 🛑 ASEGURAR: Celdas normales en modo claro tienen buen contraste base 🛑 */
+body.theme-light .c-productos-table__cell {
+  background-color: #ffffff !important;
+  color: #1a202c !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+/* 🛑 MEJORAR: Headers en modo claro 🛑 */
+body.theme-light .c-productos-table__header {
+  background-color: #2d3748 !important; /* Más oscuro para mejor contraste */
+  color: #ffffff !important;
+  border-bottom-color: #3182ce !important;
+}
+
+/* 🛑 MEJORAR: Filas de bajo stock en modo claro (sin hover) 🛑 */
+body.theme-light .c-productos-table__row--low-stock .c-productos-table__cell {
+  background-color: #fffbeb !important; /* Amarillo muy suave */
+  color: #92400e !important; /* Marrón oscuro para legibilidad */
+  border-bottom-color: #fbbf24 !important;
+  font-weight: 600;
+}
+
+/* 🛑 MEJORAR: Filas inactivas en modo claro (sin hover) 🛑 */
+body.theme-light .c-productos-table__row--inactive .c-productos-table__cell {
+  background-color: #f8fafc !important;
+  color: #64748b !important;
+  border-bottom-color: #cbd5e1 !important;
+}
+
+/* Alertas de stock */
+.c-productos-lista__stock-alert {
+  position: relative;
+  padding-left: 28px !important;
+}
+
+.c-productos-lista__stock-alert::before {
+  content: "⚠️";
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1em;
+  color: #b26a00;
+}
+
+/* Contenedor de acciones */
+.c-productos-lista__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centrar en lugar de flex-start */
+  gap: 4px; /* Gap muy pequeño */
+  height: 100%;
+  min-height: 44px;
+  flex-wrap: nowrap; /* No permitir wrap */
+}
+
+/* Botones de acción */
+.c-productos-lista__action-btn {
+  flex-shrink: 0;
+  width: 32px; /* Ancho fijo */
+  height: 32px; /* Alto fijo */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  background-color: var(--color-surface-300);
+  border: 1px solid var(--color-surface-400);
+  color: var(--color-text-medium);
+  padding: 0; /* Sin padding interno */
+  font-size: 0.9rem; /* Solo para iconos */
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.c-productos-lista__action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Variantes de botones por tipo */
+.c-productos-lista__action-btn--comprar {
+  background-color: rgba(52, 152, 219, 0.1);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+.c-productos-lista__action-btn--comprar:hover {
+  background-color: var(--color-brand);
+  color: var(--color-text-on-dark);
+}
+
+.c-productos-lista__action-btn--ajustar {
+  background-color: rgba(156, 39, 176, 0.1);
+  border-color: #9c27b0;
+  color: #9c27b0;
+}
+
+.c-productos-lista__action-btn--ajustar:hover {
+  background-color: #9c27b0;
+  color: var(--color-text-on-dark);
+}
+
+.c-productos-lista__action-btn--toggle {
+  background-color: rgba(243, 156, 18, 0.1);
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.c-productos-lista__action-btn--toggle:hover {
+  background-color: var(--color-warning);
+  color: var(--color-text-on-dark);
+}
+
+.c-productos-lista__action-btn--toggle-active {
+  background-color: rgba(46, 204, 113, 0.1);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.c-productos-lista__action-btn--toggle-active:hover {
+  background-color: var(--color-success);
+  color: var(--color-text-on-dark);
+}
+
+.c-productos-lista__action-btn--delete {
+  background-color: rgba(231, 76, 60, 0.1);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.c-productos-lista__action-btn--delete:hover {
+  background-color: var(--color-danger);
+  color: var(--color-text-on-dark);
+}
+
+/* Status badges */
+.c-productos-lista__status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem; /* Más pequeño */
+  font-weight: 600;
+  padding: 3px 8px; /* Menos padding */
+  border-radius: 12px; /* Más redondeado */
+  gap: 4px;
+  min-width: 70px;
+  justify-content: center;
+}
+
+.c-productos-lista__status-badge--active {
+  background-color: rgba(46, 204, 113, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(46, 204, 113, 0.4);
+}
+
+.c-productos-lista__status-badge--inactive {
+  background-color: rgba(243, 156, 18, 0.15);
+  color: var(--color-warning);
+  border: 1px solid rgba(243, 156, 18, 0.4);
+}
+
+/* Input de edición inline */
+.c-productos-lista__inline-edit {
+  padding: 4px 6px;
+  width: 95%;
+  border: 1px solid var(--color-brand);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-surface-300);
+  color: var(--color-text-high);
+  font-size: inherit;
+  transition: box-shadow 0.2s;
+}
+
+.c-productos-lista__inline-edit:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-brand);
+}
+
+/* Información de filtros */
+.c-productos-lista__filters-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm);
+  background-color: var(--color-surface-100);
+  border-radius: var(--border-radius-md);
+}
+
+.c-productos-lista__inactive-counter {
+  font-size: 0.85rem;
+  color: var(--color-warning);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* ---------------------------------------------------- */
+/* MODALES ULTRA COMPACTOS - TODA LA INFO VISIBLE */
+/* ---------------------------------------------------- */
+
+/* Overlay simple */
+.c-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Modal ULTRA compacto */
+.c-modal-content--confirm-action {
+    max-width: 350px !important; /* Más pequeño */
+    width: 90% !important;
+    background: var(--color-surface-200) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+    overflow: visible !important; /* Sin overflow */
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: 90vh !important; /* Limitar altura total */
+}
+
+/* Variante para eliminar */
+.c-modal-content--danger {
+    border-left: 3px solid var(--color-danger) !important;
+}
+
+/* Header MINI */
+.c-modal-content--confirm-action .c-modal-header {
+    background: var(--color-surface-100) !important;
+    padding: 12px 16px !important; /* Padding muy pequeño */
+    border-bottom: 1px solid var(--color-surface-300) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+/* Título MINI */
+.c-modal-content--confirm-action .c-modal-title {
+    margin: 0 !important;
+    font-size: 1rem !important; /* Más pequeño */
+    font-weight: 600 !important;
+    color: var(--color-text-high) !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Botón cerrar MINI */
+.c-modal-content--confirm-action .c-modal-close-btn {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    background: var(--color-surface-300) !important;
+    border: none !important;
+    color: var(--color-text-medium) !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.c-modal-content--confirm-action .c-modal-close-btn:hover {
+    background: var(--color-danger) !important;
+    color: white !important;
+}
+
+/* Contenido MINI */
+.c-modal-content--confirm-action .c-modal-body {
+    padding: 12px 16px !important; /* Padding muy pequeño */
+    flex: 1 !important;
+    overflow: visible !important;
+}
+
+/* Información del producto MINI */
+.c-simple-product-card {
+    background: var(--color-surface-300);
+    padding: 10px 12px; /* Más pequeño */
+    border-radius: 6px;
+    margin-bottom: 12px; /* Menos margen */
+    text-align: center;
+}
+
+.c-simple-product-card--danger {
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.c-simple-product-card h4 {
+    margin: 0 0 6px 0; /* Menos margen */
+    font-size: 0.95rem; /* Más pequeño */
+    color: var(--color-text-high);
+    font-weight: 600;
+}
+
+.c-simple-product-card p {
+    margin: 2px 0; /* Menos margen */
+    font-size: 0.8rem; /* Más pequeño */
+    color: var(--color-text-medium);
+}
+
+/* Mensaje principal MINI */
+.c-simple-message {
+    text-align: center;
+    font-size: 0.85rem; /* Más pequeño */
+    color: var(--color-text-high);
+    line-height: 1.3; /* Más compacto */
+    margin-bottom: 10px; /* Menos margen */
+}
+
+.c-simple-message--danger {
+    color: var(--color-danger);
+    font-weight: 500;
+}
+
+/* Advertencia MINI */
+.c-simple-warning {
+    background: rgba(243, 156, 18, 0.1);
+    border: 1px solid rgba(243, 156, 18, 0.3);
+    border-radius: 6px;
+    padding: 8px; /* Más pequeño */
+    margin: 8px 0; /* Menos margen */
+    text-align: center;
+    font-size: 0.8rem; /* Más pequeño */
+    color: var(--color-warning);
+}
+
+/* Sugerencia MINI */
+.c-simple-suggestion {
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    border-radius: 6px;
+    padding: 8px; /* Más pequeño */
+    margin: 8px 0; /* Menos margen */
+    text-align: center;
+    font-size: 0.8rem; /* Más pequeño */
+    color: var(--color-brand);
+}
+
+/* Footer MINI */
+.c-modal-content--confirm-action .c-modal-footer {
+    padding: 12px 16px !important; /* Padding muy pequeño */
+    border-top: 1px solid var(--color-surface-300) !important;
+    background: var(--color-surface-100) !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 8px !important; /* Gap más pequeño */
+    flex-shrink: 0 !important;
+}
+
+/* Botones MINI */
+.c-modal-content--confirm-action .btn {
+    min-width: 80px; /* Más pequeños */
+    height: 32px; /* Más bajos */
+    font-weight: 600;
+    font-size: 0.8rem; /* Texto más pequeño */
+    padding: 6px 12px; /* Padding pequeño */
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.c-modal-content--confirm-action .btn-secondary {
+    background: var(--color-surface-400);
+    color: var(--color-text-high);
+}
+
+.c-modal-content--confirm-action .btn-secondary:hover {
+    background: var(--color-surface-500);
+}
+
+.c-modal-content--confirm-action .btn-warning {
+    background: var(--color-warning);
+    color: white;
+}
+
+.c-modal-content--confirm-action .btn-warning:hover {
+    background: #e67e22;
+    transform: translateY(-1px);
+}
+
+.c-modal-content--confirm-action .btn-danger {
+    background: var(--color-danger);
+    color: white;
+}
+
+.c-modal-content--confirm-action .btn-danger:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+}
+
+/* Toast MINI */
+.c-toast-simple {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 8px 16px; /* Más pequeño */
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem; /* Más pequeño */
+    z-index: 10000;
+    animation: slideInFromRight 0.3s ease-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.c-toast-simple--success {
+    background: var(--color-success);
+    color: white;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive ULTRA compacto */
+@media (max-width: 768px) {
+    .c-modal-content--confirm-action {
+        max-width: 95% !important;
+        margin: 10px !important;
+    }
+    
+    .c-modal-content--confirm-action .c-modal-header {
+        padding: 10px 12px !important;
+    }
+    
+    .c-modal-content--confirm-action .c-modal-body {
+        padding: 10px 12px !important;
+    }
+    
+    .c-modal-content--confirm-action .c-modal-footer {
+        flex-direction: column !important;
+        padding: 10px 12px !important;
+        gap: 6px !important;
+    }
+    
+    .c-modal-content--confirm-action .btn {
+        width: 100% !important;
+        min-width: auto !important;
+    }
+}
+
+/* Modo claro - ajustes compactos */
+body.theme-light .c-modal-content--confirm-action {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .c-modal-content--confirm-action .c-modal-header {
+    background: #f8fafc !important;
+    border-bottom-color: #e2e8f0 !important;
+}
+
+body.theme-light .c-simple-product-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+body.theme-light .c-modal-content--confirm-action .c-modal-footer {
+    background: #f8fafc !important;
+    border-top-color: #e2e8f0 !important;
+}

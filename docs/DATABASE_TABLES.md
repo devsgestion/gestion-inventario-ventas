@@ -64,6 +64,7 @@ CREATE TABLE public.productos (
     precio_costo NUMERIC(10,2) NOT NULL DEFAULT 0.00,
     precio_venta NUMERIC(10,2) NOT NULL DEFAULT 0.00,
     alerta_stock_min INTEGER NULL DEFAULT 5,
+    activo BOOLEAN NOT NULL DEFAULT true, -- 🛑 NUEVO CAMPO
     created_at TIMESTAMPTZ NULL DEFAULT timezone('utc', now()),
     CONSTRAINT productos_pkey PRIMARY KEY (id),
     CONSTRAINT productos_empresa_id_codigo_referencia_key UNIQUE (empresa_id, codigo_referencia),
@@ -75,6 +76,7 @@ CREATE TABLE public.productos (
 - `precio_costo`: Costo Promedio Ponderado (CPP)
 - `codigo_referencia`: Único por empresa (no globalmente)
 - `descripcion`: Campo opcional para detalles adicionales
+- `activo`: Control de estado del producto (activo/inactivo) 🛑 NUEVO
 - Control de stock con alertas mínimas
 
 ---

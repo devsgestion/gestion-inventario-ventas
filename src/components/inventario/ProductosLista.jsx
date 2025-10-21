@@ -6,20 +6,36 @@ import AjusteStockModal from './AjusteStockModal';
 import { formatCurrencyCOP } from '../../utils/formatters';
 import { supabase } from '../../api/supabaseClient'; 
 import '../../styles/inventario.css';
+import './ProductosLista.css';
 
-// 🛑 MODIFICACIÓN AQUÍ: Recibir la nueva prop 🛑
-const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegisterStock }) => {
+const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegisterStock, mostrarInactivos = false }) => {
     const { productos, loading, error, fetchProductos, productosBajoStock } = useInventario(empresaId, refreshKey);
 
     const [productoSeleccionado, setProductoSeleccionado] = useState(null);
     const [editingId, setEditingId] = useState(null);
-    // 🛑 NUEVO ESTADO: Controla si la tabla debe mostrar solo las alertas
-    const [mostrarSoloAlertas, setMostrarSoloAlertas] = useState(false); 
+    const [mostrarSoloAlertas, setMostrarSoloAlertas] = useState(false);
+    // 🛑 NUEVO ESTADO: Para controlar acciones de eliminar/toggle 🛑
+    const [actionLoading, setActionLoading] = useState(false);
     
-    // --- Lógica de Filtro ---
-    const productosFiltrados = mostrarSoloAlertas 
-        ? productos.filter(p => p.stock_actual <= p.alerta_stock_min)
-        : productos;
+    // 🛑 NUEVOS ESTADOS: Para modales de confirmación 🛑
+    const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [productToAction, setProductToAction] = useState(null);
+
+    // 🛑 NUEVOS ESTADOS: Para toast de éxito 🛑
+    const [showSuccessToast, setShowSuccessToast] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+
+    // --- Lógica de Filtro MEJORADA ---
+    const productosFiltrados = productos.filter(p => {
+        // Filtro de alertas de stock
+        const cumpleAlertas = mostrarSoloAlertas ? (p.stock_actual <= p.alerta_stock_min) : true;
+        
+        // 🛑 ARREGLO: Lógica de filtrado más estricta 🛑
+        const cumpleEstado = mostrarInactivos ? true : (p.activo === true);
+        
+        return cumpleAlertas && cumpleEstado;
+    });
         
     const countTotal = productos.length;
     const countAlertas = productosBajoStock.length;
@@ -59,6 +75,82 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
         if (onProductAdjusted) onProductAdjusted(); 
     };
 
+    // 🛑 NUEVA FUNCIÓN: Toggle de estado activo/inactivo 🛑
+    const handleToggleProducto = (producto) => {
+        setProductToAction(producto);
+        if (producto.activo !== false) {
+            setShowDeactivateModal(true);
+        } else {
+            // Si está inactivo, activar directamente sin confirmación
+            toggleProductoActivo(producto.id, producto.activo);
+        }
+    };
+
+    const toggleProductoActivo = async (productoId, currentStatus) => {
+        const newStatus = !currentStatus;
+        
+        setActionLoading(true);
+        
+        const { error } = await supabase
+            .from('productos')
+            .update({ activo: newStatus })
+            .eq('id', productoId);
+
+        if (error) {
+            alert(`Error al cambiar el estado del producto: ${error.message}`);
+        } else {
+            fetchProductos();
+            
+            // 🛑 MOSTRAR TOAST DE ÉXITO EN LUGAR DE ALERT 🛑
+            const mensaje = newStatus ? 
+                'Producto activado correctamente' :
+                'Producto desactivado correctamente';
+            
+            setSuccessMessage(mensaje);
+            setShowSuccessToast(true);
+            setTimeout(() => setShowSuccessToast(false), 3000);
+        }
+        setActionLoading(false);
+        
+        // Limpiar estados del modal
+        setShowDeactivateModal(false);
+        setProductToAction(null);
+    };
+
+    // 🛑 FUNCIÓN MEJORADA: Eliminar con modal de confirmación 🛑
+    const handleDeleteProducto = (producto) => {
+        setProductToAction(producto);
+        setShowDeleteModal(true);
+    };
+
+    const deleteProducto = async (productoId) => {
+        setActionLoading(true);
+        
+        const { error } = await supabase
+            .from('productos')
+            .delete()
+            .eq('id', productoId);
+
+        if (error) {
+            alert(
+                `❌ No se puede eliminar este producto.\n\n` +
+                `Motivo: El producto tiene registros asociados (ventas, movimientos, etc.)\n\n` +
+                `Solución: Use el botón "Desactivar" para ocultarlo del sistema sin perder el historial.\n\n` +
+                `Error técnico: ${error.message}`
+            );
+        } else {
+            fetchProductos();
+            setSuccessMessage('Producto eliminado permanentemente');
+            setShowSuccessToast(true);
+            setTimeout(() => setShowSuccessToast(false), 3000);
+        }
+        setActionLoading(false);
+        
+        // Limpiar estados del modal
+        setShowDeleteModal(false);
+        setProductToAction(null);
+    };
+
     const AlertaStockMinimo = () => {
         if (countAlertas === 0) return null;
         return (
@@ -84,83 +176,256 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
     }
 
     return (
-        <div className="c-data-table-wrapper">
+        <div className="c-productos-lista">
             <AlertaStockMinimo />
-            <p className="c-form-message c-form-message--help u-mb-lg">
-                Mostrando {productosFiltrados.length} de {countTotal} referencias
-            </p>
-            <table className="c-data-table">
-                <thead>
-                    <tr>
-                        <th className="c-data-table__header-cell">Ref.</th>
-                        <th className="c-data-table__header-cell">Nombre</th>
-                        <th className="c-data-table__header-cell">Stock Actual</th>
-                        <th className="c-data-table__header-cell">Precio Venta</th> 
-                        {/* 🛑 NUEVA COLUMNA: Precio de Costo (CPP) 🛑 */}
-                        <th className="c-data-table__header-cell">Costo (CPP)</th> 
-                        <th className="c-data-table__header-cell">Alerta Mín.</th>
-                        <th className="c-data-table__header-cell" style={{minWidth: 200}}>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {productosFiltrados.map((p) => (
-                        <tr 
-                            key={p.id} 
-                            className={`c-data-table__row ${p.stock_actual <= p.alerta_stock_min ? 'c-data-table__row--low-stock' : ''}`}
-                        >
-                            <td className="c-data-table__cell">{p.codigo_referencia}</td>
-                            <td className="c-data-table__cell c-data-table__cell--name">{p.nombre}</td>
-                            <td className={`c-data-table__cell${p.stock_actual <= p.alerta_stock_min ? ' c-data-table__cell--stock-alert' : ''}`}>
-                                {p.stock_actual}
-                            </td>
-                            <td className="c-data-table__cell" onClick={() => setEditingId(p.id)}>
-                                {editingId === p.id ? (
-                                    <input 
-                                        type="number"
-                                        defaultValue={p.precio_venta}
-                                        onBlur={(e) => handlePriceUpdate(p.id, e.target.value)}
-                                        onKeyDown={(e) => { 
-                                            if (e.key === 'Enter') e.target.blur();
-                                        }}
-                                        className="c-inline-edit-input"
-                                        autoFocus
-                                    />
-                                ) : (
-                                    <>{formatCurrencyCOP(p.precio_venta)}</>
-                                )}
-                            </td>
-                            {/* 🛑 CELDA CPP: Muestra el precio_costo 🛑 */}
-                            <td className="c-data-table__cell c-data-table__cell--cost">
-                                {formatCurrencyCOP(p.precio_costo)}
-                            </td>
-                            <td className="c-data-table__cell">{p.alerta_stock_min}</td>
-                            {/* 🛑 MODIFICADO: Usar las nuevas clases para alineación 🛑 */}
-                            <td className="c-data-table__cell c-data-table__cell--actions">
-                                <div className="c-actions-container">
-                                    <button 
-                                        onClick={() => onRegisterStock(p)}
-                                        className="btn btn-info btn-sm c-btn-table-action"
-                                    >
-                                        Comprar
-                                    </button>
-                                    <button 
-                                        onClick={() => setProductoSeleccionado(p)}
-                                        className="btn btn-secondary btn-sm c-btn-table-action"
-                                    >
-                                        Ajustar
-                                    </button>
-                                </div>
-                            </td>
+            
+            <div className="c-productos-lista__filters-info">
+                <p className="c-form-message c-form-message--help">
+                    Mostrando {productosFiltrados.length} de {countTotal} referencias
+                    {!mostrarInactivos && (
+                        <span style={{ color: 'var(--color-text-medium)', fontStyle: 'italic' }}>
+                            {' '} (solo activos)
+                        </span>
+                    )}
+                </p>
+                
+                {!mostrarInactivos && productos.filter(p => p.activo === false).length > 0 && (
+                    <span className="c-productos-lista__inactive-counter">
+                        📋 {productos.filter(p => p.activo === false).length} productos inactivos ocultos
+                    </span>
+                )}
+            </div>
+
+            <div className="c-productos-lista__table-wrapper">
+                <table className="c-productos-table">
+                    <thead>
+                        <tr>
+                            <th className="c-productos-table__header">Ref.</th>
+                            <th className="c-productos-table__header">Nombre</th>
+                            <th className="c-productos-table__header">Stock Actual</th>
+                            <th className="c-productos-table__header">Precio Venta</th>
+                            <th className="c-productos-table__header">Costo (CPP)</th>
+                            <th className="c-productos-table__header">Alerta Mín.</th>
+                            <th className="c-productos-table__header">Estado</th>
+                            <th className="c-productos-table__header" style={{minWidth: 280}}>Acciones</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {productosFiltrados.map((p) => (
+                            <tr 
+                                key={p.id} 
+                                className={`c-productos-table__row ${p.stock_actual <= p.alerta_stock_min ? 'c-productos-table__row--low-stock' : ''} ${p.activo === false ? 'c-productos-table__row--inactive' : ''}`}
+                            >
+                                <td className="c-productos-table__cell">{p.codigo_referencia}</td>
+                                <td className="c-productos-table__cell c-productos-table__cell--name">
+                                    {p.nombre}
+                                    {p.activo === false && <span className="c-productos-lista__inactive-badge">Inactivo</span>}
+                                </td>
+                                <td className={`c-productos-table__cell${p.stock_actual <= p.alerta_stock_min ? ' c-productos-lista__stock-alert' : ''}`}>
+                                    {p.stock_actual}
+                                </td>
+                                <td className="c-productos-table__cell" onClick={() => setEditingId(p.id)}>
+                                    {editingId === p.id ? (
+                                        <input 
+                                            type="number"
+                                            defaultValue={p.precio_venta}
+                                            onBlur={(e) => handlePriceUpdate(p.id, e.target.value)}
+                                            onKeyDown={(e) => { 
+                                                if (e.key === 'Enter') e.target.blur();
+                                            }}
+                                            className="c-productos-lista__inline-edit"
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <>{formatCurrencyCOP(p.precio_venta)}</>
+                                    )}
+                                </td>
+                                <td className="c-productos-table__cell">
+                                    {formatCurrencyCOP(p.precio_costo)}
+                                </td>
+                                <td className="c-productos-table__cell">{p.alerta_stock_min}</td>
+                                
+                                <td className="c-productos-table__cell">
+                                    <span className={`c-productos-lista__status-badge ${p.activo !== false ? 'c-productos-lista__status-badge--active' : 'c-productos-lista__status-badge--inactive'}`}>
+                                        {p.activo !== false ? '✓' : '⏸'}
+                                    </span>
+                                </td>
+
+                                <td className="c-productos-table__cell c-productos-table__cell--actions">
+                                    <div className="c-productos-lista__actions">
+                                        {p.activo !== false && (
+                                            <>
+                                                <button 
+                                                    onClick={() => onRegisterStock(p)}
+                                                    className="c-productos-lista__action-btn c-productos-lista__action-btn--comprar"
+                                                    disabled={actionLoading}
+                                                    title="Registrar compra"
+                                                >
+                                                    🛒
+                                                </button>
+                                                <button 
+                                                    onClick={() => setProductoSeleccionado(p)}
+                                                    className="c-productos-lista__action-btn c-productos-lista__action-btn--ajustar"
+                                                    disabled={actionLoading}
+                                                    title="Ajustar stock"
+                                                >
+                                                    ⚙️
+                                                </button>
+                                            </>
+                                        )}
+                                        
+                                        <button 
+                                            onClick={() => handleToggleProducto(p)}
+                                            className={`c-productos-lista__action-btn ${p.activo !== false ? 'c-productos-lista__action-btn--toggle' : 'c-productos-lista__action-btn--toggle-active'}`}
+                                            disabled={actionLoading}
+                                            title={p.activo !== false ? 'Desactivar producto' : 'Activar producto'}
+                                        >
+                                            {p.activo !== false ? '⏸' : '▶'}
+                                        </button>
+                                        
+                                        {p.activo === false && (
+                                            <button 
+                                                onClick={() => handleDeleteProducto(p)}
+                                                className="c-productos-lista__action-btn c-productos-lista__action-btn--delete"
+                                                disabled={actionLoading}
+                                                title="Eliminar permanentemente"
+                                            >
+                                                🗑
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            
             {productoSeleccionado && (
                 <AjusteStockModal 
                     producto={productoSeleccionado}
                     onClose={handleCloseModal}
                     onStockAdjusted={handleStockAdjusted}
                 />
+            )}
+
+            {/* 🛑 MODAL SIMPLE: Sin Framer Motion, directo y eficiente 🛑 */}
+            {showDeactivateModal && productToAction && (
+                <div className="c-modal-overlay">
+                    <div className="c-modal-content c-modal-content--confirm-action">
+                        <div className="c-modal-header">
+                            <h3 className="c-modal-title">⏸️ Desactivar Producto</h3>
+                            <button 
+                                onClick={() => setShowDeactivateModal(false)}
+                                className="c-modal-close-btn"
+                                disabled={actionLoading}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        
+                        <div className="c-modal-body">
+                            <div className="c-simple-product-card">
+                                <h4>{productToAction.nombre}</h4>
+                                <p><strong>Referencia:</strong> {productToAction.codigo_referencia}</p>
+                                <p><strong>Stock:</strong> {productToAction.stock_actual} unidades</p>
+                            </div>
+                            
+                            <div className="c-simple-message">
+                                El producto se ocultará del punto de venta pero se conservará todo su historial.
+                            </div>
+                            
+                            <div className="c-simple-warning">
+                                ⚠️ No aparecerá en nuevas ventas
+                            </div>
+                            
+                            <div className="c-simple-suggestion">
+                                ✅ Podrás reactivarlo cuando quieras
+                            </div>
+                        </div>
+                        
+                        <div className="c-modal-footer">
+                            <button 
+                                onClick={() => setShowDeactivateModal(false)}
+                                className="btn btn-secondary"
+                                disabled={actionLoading}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={() => toggleProductoActivo(productToAction.id, productToAction.activo)}
+                                className="btn btn-warning"
+                                disabled={actionLoading}
+                            >
+                                {actionLoading ? 'Desactivando...' : 'Sí, Desactivar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 🛑 MODAL SIMPLE PARA ELIMINAR 🛑 */}
+            {showDeleteModal && productToAction && (
+                <div className="c-modal-overlay">
+                    <div className="c-modal-content c-modal-content--confirm-action c-modal-content--danger">
+                        <div className="c-modal-header">
+                            <h3 className="c-modal-title">🗑️ Eliminar Producto</h3>
+                            <button 
+                                onClick={() => setShowDeleteModal(false)}
+                                className="c-modal-close-btn"
+                                disabled={actionLoading}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        
+                        <div className="c-modal-body">
+                            <div className="c-simple-product-card c-simple-product-card--danger">
+                                <h4>{productToAction.nombre}</h4>
+                                <p><strong>Referencia:</strong> {productToAction.codigo_referencia}</p>
+                                <p><strong>Stock:</strong> {productToAction.stock_actual} unidades</p>
+                            </div>
+                            
+                            <div className="c-simple-message c-simple-message--danger">
+                                ⚠️ <strong>¡ATENCIÓN!</strong><br/>
+                                Esta acción eliminará permanentemente el producto y toda su información.
+                            </div>
+                            
+                            <div className="c-simple-suggestion">
+                                💡 <strong>¿Mejor desactivarlo?</strong><br/>
+                                Desactivar es más seguro y preserva el historial.
+                            </div>
+                            
+                            <div className="c-simple-warning">
+                                Esta acción NO se puede deshacer
+                            </div>
+                        </div>
+                        
+                        <div className="c-modal-footer">
+                            <button 
+                                onClick={() => setShowDeleteModal(false)}
+                                className="btn btn-secondary"
+                                disabled={actionLoading}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={() => deleteProducto(productToAction.id)}
+                                className="btn btn-danger"
+                                disabled={actionLoading}
+                            >
+                                {actionLoading ? 'Eliminando...' : 'Eliminar Permanentemente'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Toast simple */}
+            {showSuccessToast && (
+                <div className="c-toast-simple c-toast-simple--success">
+                    <span>✅ {successMessage}</span>
+                </div>
             )}
         </div>
     );

@@ -17,38 +17,57 @@ const VentaProductosLista = ({ empresaId, onAddToCart, isCajaAbierta }) => {
             }
             setLoading(true);
             setError(null);
-            const { data, error } = await supabase
-                .from('productos')
-                .select('*')
-                .eq('empresa_id', empresaId)
-                .order('nombre', { ascending: true });
             
-            if (error) {
-                console.error('Error al cargar productos para la venta:', error);
+            try {
+                // 🛑 ARREGLO: Query más simple y compatible 🛑
+                const { data, error } = await supabase
+                    .from('productos')
+                    .select('*')
+                    .eq('empresa_id', empresaId)
+                    .order('nombre', { ascending: true });
+                
+                if (error) {
+                    throw error;
+                }
+
+                // 🛑 FILTRAR EN JAVASCRIPT: Más confiable que en SQL 🛑
+                const productosActivos = (data || []).filter(producto => {
+                    // Considerar activo si el campo es true o null/undefined
+                    return producto.activo !== false;
+                });
+
+                setProductos(productosActivos.map(item => ({
+                    ...item,
+                    precio_venta: Number(item.precio_venta) || 0,
+                    stock_actual: Number(item.stock_actual) || 0,
+                })));
+                
+            } catch (err) {
+                console.error('Error al cargar productos para la venta:', err);
                 setError('Error al cargar productos para la venta.');
                 setProductos([]);
-            } else {
-                setProductos((data || []).map(item => ({
-                    ...item,
-                    precio_venta: Number(item.precio_venta),
-                    stock_actual: Number(item.stock_actual),
-                })));
             }
+            
             setLoading(false);
         };
+        
         if (!empresaId) {
             setProductos([]);
             setLoading(true);
             setError(null);
             return;
         }
+        
         fetchProductos();
     }, [empresaId]);
 
+    // 🛑 FILTRO SIMPLIFICADO: Solo productos con stock 🛑
     const productosFiltrados = productos.filter(p => 
-        p.nombre.toLowerCase().includes(search.toLowerCase()) || 
-        (p.codigo_referencia || '').toLowerCase().includes(search.toLowerCase())
-    ).filter(p => p.stock_actual > 0); 
+        (p.nombre.toLowerCase().includes(search.toLowerCase()) || 
+         (p.codigo_referencia || '').toLowerCase().includes(search.toLowerCase())) &&
+        p.stock_actual > 0
+        // Ya filtramos productos activos en la query, no necesitamos hacerlo aquí
+    );
 
     const handleClickProducto = (producto) => {
         if (!isCajaAbierta) {

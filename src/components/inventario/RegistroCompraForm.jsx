@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { supabase } from '../../api/supabaseClient'; 
 import { formatCurrencyCOP } from '../../utils/formatters';
+// 🛑 CRÍTICO: Importar estilos base y específicos 🛑
+import '../../styles/inventario.css';
+import './RegistroCompraForm.css';
 
 const RegistroCompraForm = ({ empresaId, productoInicial, onClose, onCompraRegistrada }) => {
     const [producto, setProducto] = useState(productoInicial);

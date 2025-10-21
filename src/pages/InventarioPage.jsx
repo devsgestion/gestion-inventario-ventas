@@ -93,6 +93,8 @@ const InventarioPage = () => {
     const [mostrarFormularioCompra, setMostrarFormularioCompra] = useState(false); // 🛑 Modal para Compra
     const [productoSeleccionado, setProductoSeleccionado] = useState(null); // Producto para Compra/Edición
     const [refreshKey, setRefreshKey] = useState(0);
+    // 🛑 NUEVO ESTADO: Para mostrar/ocultar productos inactivos 🛑
+    const [mostrarInactivos, setMostrarInactivos] = useState(false);
 
     const empresaId = perfil?.empresa_id;
     const isDataReady = !!empresaId && !isBootstrapping;
@@ -177,18 +179,32 @@ const InventarioPage = () => {
                     <div className="u-flex u-justify-between u-align-center u-mb-lg">
                         <h3 className="c-card__title">📦 Inventario Actual</h3>
                         
-                        <button
-                            onClick={() => setMostrarFormulario(true)}
-                            className="btn btn-primary btn-success btn-new-product-action"
-                            style={{ minWidth: 180 }}
-                        >
-                            + Crear Nuevo Producto
-                        </button>
+                        <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
+                            {/* 🛑 NUEVO: Toggle para productos inactivos 🛑 */}
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={mostrarInactivos}
+                                    onChange={(e) => setMostrarInactivos(e.target.checked)}
+                                />
+                                Mostrar productos inactivos
+                            </label>
+                            
+                            <button
+                                onClick={() => setMostrarFormulario(true)}
+                                className="btn btn-primary btn-success btn-new-product-action"
+                                style={{ minWidth: 180 }}
+                            >
+                                + Crear Nuevo Producto
+                            </button>
+                        </div>
                     </div>
+                    
                     <ProductosLista 
                         empresaId={empresaId} 
                         refreshKey={refreshKey} 
                         onRegisterStock={handleOpenCompraForm}
+                        mostrarInactivos={mostrarInactivos}
                     />
                 </section>
 
