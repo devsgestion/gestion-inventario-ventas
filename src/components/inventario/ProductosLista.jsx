@@ -26,6 +26,9 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
 
+    // 🛑 NUEVO ESTADO: Para el buscador 🛑
+    const [searchTerm, setSearchTerm] = useState('');
+
     // --- Lógica de Filtro MEJORADA ---
     const productosFiltrados = productos.filter(p => {
         // Filtro de alertas de stock
@@ -34,7 +37,12 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
         // 🛑 ARREGLO: Lógica de filtrado más estricta 🛑
         const cumpleEstado = mostrarInactivos ? true : (p.activo === true);
         
-        return cumpleAlertas && cumpleEstado;
+        // 🛑 NUEVO: Filtro de búsqueda por nombre o referencia 🛑
+        const cumpleBusqueda = searchTerm === '' || 
+            p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.codigo_referencia.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        return cumpleAlertas && cumpleEstado && cumpleBusqueda;
     });
         
     const countTotal = productos.length;
@@ -179,9 +187,34 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
         <div className="c-productos-lista">
             <AlertaStockMinimo />
             
+            {/* 🛑 NUEVO: Buscador de productos 🛑 */}
+            <div className="c-productos-lista__search-container">
+                <input
+                    type="text"
+                    placeholder="🔍 Buscar por nombre o referencia..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="c-productos-lista__search-input"
+                />
+                {searchTerm && (
+                    <button
+                        onClick={() => setSearchTerm('')}
+                        className="c-productos-lista__search-clear"
+                        title="Limpiar búsqueda"
+                    >
+                        ✕
+                    </button>
+                )}
+            </div>
+            
             <div className="c-productos-lista__filters-info">
                 <p className="c-form-message c-form-message--help">
                     Mostrando {productosFiltrados.length} de {countTotal} referencias
+                    {searchTerm && (
+                        <span style={{ color: 'var(--color-brand)', fontWeight: 'bold' }}>
+                            {' '}(búsqueda: "{searchTerm}")
+                        </span>
+                    )}
                     {!mostrarInactivos && (
                         <span style={{ color: 'var(--color-text-medium)', fontStyle: 'italic' }}>
                             {' '} (solo activos)

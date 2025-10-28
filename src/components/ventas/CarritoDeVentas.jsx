@@ -7,6 +7,7 @@ import '../../styles/ventas.css';
 // 🛑 NOTA: Asumimos que el componente padre (VentasPage) pasa la prop onUpdatePrice 🛑
 const CarritoDeVentas = ({ carrito, onUpdateCart, onUpdatePrice, isCajaAbierta }) => { 
     const [editingItemId, setEditingItemId] = useState(null);
+    const [editingQuantity, setEditingQuantity] = useState({}); // Estado local para edición de cantidades
 
     // Calcular el total
     const subtotal = carrito.reduce((acc, item) => acc + (Number(item.precio_venta) * item.cantidad), 0);
@@ -67,13 +68,54 @@ const CarritoDeVentas = ({ carrito, onUpdateCart, onUpdatePrice, isCajaAbierta }
                         <div className="c-cart__item-actions">
                             <input
                                 type="number"
-                                min="0"
-                                value={item.cantidad}
+                                min="1"
+                                value={editingQuantity[item.cartItemId] !== undefined 
+                                    ? editingQuantity[item.cartItemId] 
+                                    : item.cantidad}
                                 onChange={(e) => {
-                                    const val = Number.parseInt(e.target.value, 10);
-                                    if (val < 0 || val > item.stock_actual) return;
-                                    // Usa cartItemId para modificar la cantidad
-                                    onUpdateCart(item.cartItemId, val); 
+                                    const inputValue = e.target.value;
+                                    
+                                    // Guardar en estado local para permitir campo vacío
+                                    setEditingQuantity({
+                                        ...editingQuantity,
+                                        [item.cartItemId]: inputValue
+                                    });
+                                }}
+                                onBlur={(e) => {
+                                    const inputValue = e.target.value;
+                                    
+                                    // Limpiar el estado local de edición
+                                    const newEditingState = { ...editingQuantity };
+                                    delete newEditingState[item.cartItemId];
+                                    setEditingQuantity(newEditingState);
+                                    
+                                    // Si está vacío o es 0, restaurar a 1
+                                    if (inputValue === '' || inputValue === '0') {
+                                        onUpdateCart(item.cartItemId, 1);
+                                        return;
+                                    }
+                                    
+                                    const val = Number.parseInt(inputValue, 10);
+                                    
+                                    // Validar que sea un número válido
+                                    if (isNaN(val) || val < 1) {
+                                        onUpdateCart(item.cartItemId, 1);
+                                        return;
+                                    }
+                                    
+                                    // Validar stock disponible
+                                    if (val > item.stock_actual) {
+                                        onUpdateCart(item.cartItemId, item.stock_actual);
+                                        return;
+                                    }
+                                    
+                                    // Actualizar la cantidad
+                                    onUpdateCart(item.cartItemId, val);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.target.blur();
+                                    }
                                 }}
                                 className="form-input c-cart__quantity-input"
                                 disabled={!isCajaAbierta}

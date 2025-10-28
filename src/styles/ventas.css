@@ -356,6 +356,46 @@
     }
 }
 
+@media (max-width: 768px) {
+    .p-ventas__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+
+    .p-ventas__title {
+        font-size: 1.5rem;
+    }
+
+    .p-ventas__controls {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .p-ventas__controls button {
+        flex: 1;
+    }
+
+    .p-ventas__grid {
+        gap: var(--space-sm);
+    }
+
+    .c-product-list__items {
+        max-height: 40vh;
+    }
+
+    .c-cart__items {
+        max-height: 40vh;
+    }
+
+    .c-toast {
+        top: 16px;
+        right: 16px;
+        left: 16px;
+        min-width: auto;
+    }
+}
+
 /* Toast/Alerta flotante de éxito */
 .c-toast {
     position: fixed;
