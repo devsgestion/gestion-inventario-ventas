@@ -428,3 +428,49 @@
     from { opacity: 0; transform: translateY(-20px);}
     to { opacity: 0.98; transform: translateY(0);}
 }
+
+/* ---------------------------------------------------- */
+/* C-PRINT: Estilos para modal de impresión */
+/* ---------------------------------------------------- */
+.c-print-summary {
+    text-align: center;
+}
+
+.c-print-info {
+    background-color: var(--color-surface-300);
+    border-radius: var(--border-radius-md);
+    padding: var(--space-md);
+    margin-top: var(--space-md);
+}
+
+.c-print-info__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px dotted var(--color-border);
+}
+
+.c-print-info__item:last-child {
+    border-bottom: none;
+}
+
+.c-print-info__label {
+    color: var(--color-text-medium);
+    font-size: 0.9rem;
+}
+
+.c-print-info__value {
+    color: var(--color-text-high);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Modo claro */
+body.theme-light .c-print-info {
+    background-color: #f8fafc;
+}
+
+body.theme-light .c-print-info__item {
+    border-bottom-color: #e2e8f0;
+}

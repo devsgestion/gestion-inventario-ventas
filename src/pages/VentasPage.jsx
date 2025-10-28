@@ -6,6 +6,7 @@ import VentaProductosLista from '../components/ventas/VentaProductosLista';
 import CarritoDeVentas from '../components/ventas/CarritoDeVentas';
 import { supabase } from '../api/supabaseClient';
 import { formatCurrencyCOP } from '../utils/formatters';
+import { printTicket } from '../utils/printTicket';
 import '../styles/ventas.css';
 
 const forceInventoryRefresh = () => {
@@ -36,6 +37,9 @@ const VentasPage = () => {
     const [showSuccessAlert, setShowSuccessAlert] = useState(false);
     const [showCloseCajaModal, setShowCloseCajaModal] = useState(false);
     const [showCloseCajaAlert, setShowCloseCajaAlert] = useState(false);
+    const [lastSaleData, setLastSaleData] = useState(null); // Para guardar datos de última venta
+    const [showPrintModal, setShowPrintModal] = useState(false); // Modal para imprimir
+    const [imprimirTicketsHabilitado, setImprimirTicketsHabilitado] = useState(true); // Config de impresión
 
     const { 
         cajaStatus, 
@@ -59,6 +63,29 @@ const VentasPage = () => {
             localStorage.removeItem('carritoVentaActual');
         }
     }, [carrito]); // Dependencia CRÍTICA: carrito
+
+    // 🛑 NUEVO: Cargar configuración de impresión 🛑
+    useEffect(() => {
+        const loadPrintConfig = async () => {
+            if (!empresaId) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('configuraciones_empresa')
+                    .select('imprimir_tickets_habilitado')
+                    .eq('empresa_id', empresaId)
+                    .single();
+
+                if (data && !error) {
+                    setImprimirTicketsHabilitado(data.imprimir_tickets_habilitado ?? true);
+                }
+            } catch (error) {
+                console.error('Error al cargar config de impresión:', error);
+            }
+        };
+
+        loadPrintConfig();
+    }, [empresaId]);
 
     // ... (useEffect para window.refreshCajaStatus y checkCajaStatus - sin cambios)
 
@@ -195,6 +222,23 @@ const VentasPage = () => {
         if (error) {
             alert(`Error al registrar la venta. Detalle: ${error.message}`);
         } else {
+            // 🛑 NUEVO: Guardar datos de la venta para imprimir 🛑
+            const ventaData = {
+                numeroVenta: data || `VENTA-${Date.now()}`,
+                items: carrito.map(item => ({
+                    nombre: item.nombre,
+                    cantidad: item.cantidad,
+                    precio_unitario: item.precio_venta
+                })),
+                total: total,
+                fecha: new Date().toISOString(),
+                empresa: {
+                    nombre: perfil?.empresa?.nombre || 'MI NEGOCIO'
+                }
+            };
+            
+            setLastSaleData(ventaData);
+            
             // Éxito: Limpiar estado y persistencia
             setCarrito([]); // Limpia el estado de React
             
@@ -202,6 +246,12 @@ const VentasPage = () => {
             localStorage.removeItem('carritoVentaActual'); 
             
             setShowSuccessAlert(true);
+            
+            // 🛑 MODIFICADO: Solo mostrar modal si está habilitado 🛑
+            if (imprimirTicketsHabilitado) {
+                setShowPrintModal(true);
+            }
+            
             setTimeout(() => setShowSuccessAlert(false), 2500);
             forceInventoryRefresh();
         }
@@ -313,6 +363,54 @@ const VentasPage = () => {
             {showSuccessAlert && (
                 <div className="c-toast c-toast--success">
                     <span>✅ ¡Venta registrada exitosamente!</span>
+                </div>
+            )}
+
+            {/* 🛑 NUEVO: Modal para imprimir ticket 🛑 */}
+            {showPrintModal && lastSaleData && (
+                <div className="c-modal-overlay">
+                    <div className="c-modal-content" style={{ maxWidth: 420 }}>
+                        <div className="c-modal-header">
+                            <h3 className="c-modal-title">✅ Venta Exitosa</h3>
+                        </div>
+                        <div className="c-modal-body">
+                            <div className="c-print-summary">
+                                <p className="c-form-message c-form-message--success u-mb-md">
+                                    La venta se ha registrado correctamente
+                                </p>
+                                <div className="c-print-info">
+                                    <div className="c-print-info__item">
+                                        <span className="c-print-info__label">Total:</span>
+                                        <strong className="c-print-info__value">{formatCurrencyCOP(lastSaleData.total)}</strong>
+                                    </div>
+                                    <div className="c-print-info__item">
+                                        <span className="c-print-info__label">Items:</span>
+                                        <strong className="c-print-info__value">{lastSaleData.items.length} productos</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="c-form-message c-form-message--help u-mt-md u-mb-lg">
+                                ¿Deseas imprimir el ticket de venta?
+                            </p>
+                            <div className="c-modal-footer">
+                                <button 
+                                    className="btn btn-secondary" 
+                                    onClick={() => setShowPrintModal(false)}
+                                >
+                                    No, Continuar
+                                </button>
+                                <button 
+                                    className="btn btn-primary btn-success" 
+                                    onClick={() => {
+                                        printTicket(lastSaleData);
+                                        setShowPrintModal(false);
+                                    }}
+                                >
+                                    🖨️ Sí, Imprimir Ticket
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 

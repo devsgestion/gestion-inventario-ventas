@@ -5,6 +5,7 @@ import { supabase } from '../api/supabaseClient';
 import useAuth from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme'; // Asumimos que useTheme está en hooks/useTheme
 import * as XLSX from 'xlsx';
+import { printInventoryList, printLowStockReport } from '../utils/printInventory';
 
 // Importar el CSS de configuración
 import '../styles/SettingsPage.css'; 
@@ -30,10 +31,13 @@ const EmpresaSettings = () => {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [exportLoading, setExportLoading] = useState(false);
+    const [printLoading, setPrintLoading] = useState(false);
     
-    // 🛑 CONFIGURACIONES SIMPLIFICADAS - Solo documentos 🛑
+    // 🛑 CONFIGURACIONES 🛑
     const [configuraciones, setConfiguraciones] = useState({
-        formato_facturas: 'simple'
+        formato_facturas: 'simple',
+        imprimir_tickets_habilitado: true, // Por defecto habilitado
+        imprimir_reportes_habilitado: true // Por defecto habilitado
     });
 
     const empresaId = perfil?.empresa_id;
@@ -42,7 +46,38 @@ const EmpresaSettings = () => {
         if (perfil && perfil.empresa && perfil.empresa.nombre) {
             setNombre(perfil.empresa.nombre);
         }
-    }, [perfil]);
+        
+        // 🛑 NUEVO: Cargar configuraciones de impresión 🛑
+        if (empresaId) {
+            loadConfiguraciones();
+        }
+    }, [perfil, empresaId]);
+
+    // 🛑 NUEVA FUNCIÓN: Cargar configuraciones desde la BD 🛑
+    const loadConfiguraciones = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('configuraciones_empresa')
+                .select('*')
+                .eq('empresa_id', empresaId)
+                .single();
+
+            if (error && error.code !== 'PGRST116') { // PGRST116 = no encontrado
+                console.error('Error al cargar configuraciones:', error);
+                return;
+            }
+
+            if (data) {
+                setConfiguraciones({
+                    formato_facturas: data.formato_facturas || 'simple',
+                    imprimir_tickets_habilitado: data.imprimir_tickets_habilitado ?? true,
+                    imprimir_reportes_habilitado: data.imprimir_reportes_habilitado ?? true
+                });
+            }
+        } catch (error) {
+            console.error('Error al cargar configuraciones:', error);
+        }
+    };
 
     // 🛑 CRITICAL CHECKS 🛑
     if (isBootstrapping) {
@@ -74,6 +109,7 @@ const EmpresaSettings = () => {
     // 🛑 FUNCIÓN SIMPLIFICADA: Solo para documentos 🛑
     const handleSaveConfiguraciones = async (campo, valor) => {
         setLoading(true);
+        setSuccess('');
         
         const { error } = await supabase
             .from('configuraciones_empresa')
@@ -86,7 +122,7 @@ const EmpresaSettings = () => {
             alert(`Error al guardar configuración: ${error.message}`);
         } else {
             setConfiguraciones(prev => ({ ...prev, [campo]: valor }));
-            setSuccess(`Configuración de ${campo} actualizada!`);
+            setSuccess(`✅ Configuración actualizada correctamente`);
             setTimeout(() => setSuccess(''), 3000);
         }
         setLoading(false);
@@ -158,6 +194,66 @@ const EmpresaSettings = () => {
             alert(`Error al exportar el inventario: ${error.message}`);
         } finally {
             setExportLoading(false);
+        }
+    };
+
+    // 🛑 NUEVA FUNCIÓN: Imprimir inventario 🛑
+    const handlePrintInventory = async () => {
+        setPrintLoading(true);
+
+        try {
+            const { data: productos, error } = await supabase
+                .from('productos')
+                .select('*')
+                .eq('empresa_id', empresaId)
+                .eq('activo', true)
+                .order('nombre', { ascending: true });
+
+            if (error) throw error;
+
+            if (!productos || productos.length === 0) {
+                alert('No hay productos activos para imprimir');
+                setPrintLoading(false);
+                return;
+            }
+
+            printInventoryList(productos, perfil.empresa.nombre);
+
+        } catch (error) {
+            console.error('Error al imprimir:', error);
+            alert(`Error al imprimir el inventario: ${error.message}`);
+        } finally {
+            setPrintLoading(false);
+        }
+    };
+
+    // 🛑 NUEVA FUNCIÓN: Imprimir productos con stock bajo 🛑
+    const handlePrintLowStock = async () => {
+        setPrintLoading(true);
+
+        try {
+            const { data: productos, error } = await supabase
+                .from('productos')
+                .select('*')
+                .eq('empresa_id', empresaId)
+                .eq('activo', true)
+                .order('stock_actual', { ascending: true });
+
+            if (error) throw error;
+
+            if (!productos || productos.length === 0) {
+                alert('No hay productos para consultar');
+                setPrintLoading(false);
+                return;
+            }
+
+            printLowStockReport(productos, perfil.empresa.nombre);
+
+        } catch (error) {
+            console.error('Error al imprimir:', error);
+            alert(`Error al imprimir el reporte: ${error.message}`);
+        } finally {
+            setPrintLoading(false);
         }
     };
 
@@ -251,6 +347,111 @@ const EmpresaSettings = () => {
                             </>
                         )}
                     </button>
+                </SettingsModuleCard>
+
+                {/* --- 4. IMPRIMIR REPORTES --- */}
+                <SettingsModuleCard title="Imprimir Reportes">
+                    {/* 🛑 NUEVO: Toggle para habilitar/deshabilitar reportes 🛑 */}
+                    <div className="c-settings-toggle u-mb-lg">
+                        <div className="c-settings-toggle__header">
+                            <label className="c-form-label" htmlFor="toggle-reportes">
+                                Habilitar impresión de reportes
+                            </label>
+                            <div className="c-toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    id="toggle-reportes"
+                                    checked={configuraciones.imprimir_reportes_habilitado}
+                                    onChange={(e) => handleSaveConfiguraciones('imprimir_reportes_habilitado', e.target.checked)}
+                                    className="c-toggle-switch__input"
+                                />
+                                <label htmlFor="toggle-reportes" className="c-toggle-switch__label"></label>
+                            </div>
+                        </div>
+                        <p className="c-form-message c-form-message--help" style={{ fontSize: '0.85rem' }}>
+                            {configuraciones.imprimir_reportes_habilitado 
+                                ? '✅ Los botones de impresión estarán disponibles' 
+                                : '❌ Los botones de impresión estarán ocultos'}
+                        </p>
+                    </div>
+
+                    {configuraciones.imprimir_reportes_habilitado && (
+                        <>
+                            <p className="c-form-message c-form-message--help u-mb-md">
+                                Imprime listados de inventario para control físico o gestión de pedidos.
+                            </p>
+                            <div className="c-print-buttons-group">
+                                <button 
+                                    onClick={handlePrintInventory}
+                                    disabled={printLoading}
+                                    className="btn btn-secondary btn-full u-mb-sm"
+                                >
+                                    {printLoading ? (
+                                        <>
+                                            <span className="c-spinner"></span>
+                                            Cargando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            🖨️ Imprimir Inventario Completo
+                                        </>
+                                    )}
+                                </button>
+                                <button 
+                                    onClick={handlePrintLowStock}
+                                    disabled={printLoading}
+                                    className="btn btn-secondary btn-full"
+                                >
+                                    {printLoading ? (
+                                        <>
+                                            <span className="c-spinner"></span>
+                                            Cargando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            ⚠️ Imprimir Solo Stock Bajo
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                            <p className="c-form-message c-form-message--help u-mt-md" style={{ fontSize: '0.85rem' }}>
+                                💡 Los reportes incluyen estadísticas y se pueden guardar como PDF desde la vista de impresión
+                            </p>
+                        </>
+                    )}
+                </SettingsModuleCard>
+
+                {/* --- 5. CONFIGURACIÓN DE TICKETS DE VENTA --- */}
+                <SettingsModuleCard title="Tickets de Venta" successMessage={success}>
+                    <div className="c-settings-toggle u-mb-md">
+                        <div className="c-settings-toggle__header">
+                            <label className="c-form-label" htmlFor="toggle-tickets">
+                                Habilitar impresión de tickets
+                            </label>
+                            <div className="c-toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    id="toggle-tickets"
+                                    checked={configuraciones.imprimir_tickets_habilitado}
+                                    onChange={(e) => handleSaveConfiguraciones('imprimir_tickets_habilitado', e.target.checked)}
+                                    className="c-toggle-switch__input"
+                                />
+                                <label htmlFor="toggle-tickets" className="c-toggle-switch__label"></label>
+                            </div>
+                        </div>
+                        <p className="c-form-message c-form-message--help" style={{ fontSize: '0.85rem' }}>
+                            {configuraciones.imprimir_tickets_habilitado 
+                                ? '✅ Se mostrará la opción de imprimir después de cada venta' 
+                                : '❌ No se mostrará la opción de imprimir tickets'}
+                        </p>
+                    </div>
+                    <div className="c-alert c-alert--info">
+                        <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>ℹ️</span>
+                        <div>
+                            <strong>Nota legal:</strong> Los tickets impresos NO son facturas electrónicas. 
+                            Son comprobantes internos que no requieren autorización de la DIAN.
+                        </div>
+                    </div>
                 </SettingsModuleCard>
 
             </div>
