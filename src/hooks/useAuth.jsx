@@ -10,8 +10,11 @@ const fetchProfile = async (userId) => {
     .from('perfiles')
     .select(`
       id,
+      nombre_completo,
       nombre,
       is_admin,
+      rol,
+      activo,
       empresa_id,
       empresa:empresas(id, nombre, plan_activo)
     `)
@@ -63,6 +66,16 @@ export const AuthProvider = ({ children }) => {
           setPerfil(profile);
           setError(null);
           console.log('✅ Perfil cargado exitosamente:', profile.nombre);
+          
+          // Verificar si el usuario está desactivado
+          if (profile.activo === false) {
+            console.log('⛔ Usuario desactivado detectado, cerrando sesión');
+            await supabase.auth.signOut();
+            setPerfil(null);
+            setSession(null);
+            setError('Tu cuenta ha sido desactivada. Contacta al administrador.');
+            return null;
+          }
         } else {
           console.warn('⚠️ No se encontró perfil para el usuario:', userId);
           setPerfil(null);
@@ -256,9 +269,50 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     setIsLoading(true);
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    if (isMountedRef.current) setIsLoading(false);
-    return { error: authError };
+    
+    try {
+      // 1. Intentar autenticar con Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
+      
+      if (authError) {
+        if (isMountedRef.current) setIsLoading(false);
+        return { error: authError };
+      }
+
+      // 2. Verificar si el usuario está activo en la tabla perfiles
+      const { data: perfilData, error: perfilError } = await supabase
+        .from('perfiles')
+        .select('activo')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (perfilError) {
+        console.error('Error verificando estado del usuario:', perfilError);
+        // Si no se puede verificar, permitir acceso por seguridad
+        if (isMountedRef.current) setIsLoading(false);
+        return { error: null };
+      }
+
+      // 3. Si el usuario está desactivado, hacer logout inmediato
+      if (!perfilData.activo) {
+        console.log('⛔ Usuario desactivado, bloqueando acceso');
+        await supabase.auth.signOut();
+        if (isMountedRef.current) setIsLoading(false);
+        return { error: new Error('Tu cuenta ha sido desactivada. Contacta al administrador.') };
+      }
+
+      // 4. Usuario activo, permitir acceso
+      if (isMountedRef.current) setIsLoading(false);
+      return { error: null };
+      
+    } catch (error) {
+      console.error('Error en login:', error);
+      if (isMountedRef.current) setIsLoading(false);
+      return { error };
+    }
   };
 
   const logout = async () => {

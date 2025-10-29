@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import useAuth from '../../hooks/useAuth';
 import './Sidebar.css';
 
 const Sidebar = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const { perfil } = useAuth();
 
     const toggleSidebar = () => {
         setIsOpen(!isOpen);
@@ -39,7 +41,7 @@ const Sidebar = () => {
             <aside className={`c-sidebar ${isOpen ? 'c-sidebar--open' : ''}`}>
                 <div className="c-sidebar__header">
                     <h1 className="c-sidebar__brand">
-                        <span className="c-sidebar__brand-icon">📊</span> GestiON
+                        <span className="c-sidebar__brand-icon"></span> GestionDevs
                     </h1>
                     {/* Botón cerrar (solo visible en móvil cuando está abierto) */}
                     <button 
@@ -95,6 +97,30 @@ const Sidebar = () => {
                             <span className="c-nav-link__icon">⚙️</span><span className="c-nav-link__text">Configuración</span>
                         </NavLink>
                     </li>
+                    
+                    {/* ENLACE DE PERFIL DE USUARIO */}
+                    <li className="c-nav-item">
+                        <NavLink 
+                            to="/profile" 
+                            className={({ isActive }) => `c-nav-link ${isActive ? 'c-nav-link-active' : ''}`}
+                            onClick={closeSidebar}
+                        >
+                            <span className="c-nav-link__icon">👤</span><span className="c-nav-link__text">Mi Perfil</span>
+                        </NavLink>
+                    </li>
+                    
+                    {/* PANEL DE ADMINISTRACIÓN - Solo para superadmins */}
+                    {perfil?.rol === 'superadmin' && (
+                        <li className="c-nav-item">
+                            <NavLink 
+                                to="/admin" 
+                                className={({ isActive }) => `c-nav-link ${isActive ? 'c-nav-link-active' : ''}`}
+                                onClick={closeSidebar}
+                            >
+                                <span className="c-nav-link__icon">👥</span><span className="c-nav-link__text">Panel de Admin</span>
+                            </NavLink>
+                        </li>
+                    )}
                     
                 </ul>
             </nav>

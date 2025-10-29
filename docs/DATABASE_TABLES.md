@@ -5,6 +5,7 @@
 **Base de Datos:** Supabase (PostgreSQL)
 **Patrón:** Multi-tenant (Una instancia, múltiples empresas)
 **Autenticación:** Supabase Auth + Row Level Security (RLS)
+**Última Actualización:** 28 de Octubre, 2025
 
 ---
 
@@ -27,6 +28,7 @@ CREATE TABLE public.empresas (
 - `owner_id`: Usuario propietario de la empresa
 - `plan_activo`: Control de planes de suscripción
 - Timestamps automáticos con zona horaria UTC
+**✅ Estado:** ACTIVA - En uso por sistema multi-tenant
 
 ---
 
@@ -35,20 +37,36 @@ CREATE TABLE public.empresas (
 CREATE TABLE public.perfiles (
     id UUID NOT NULL,
     nombre VARCHAR(255) NOT NULL,
-    rol VARCHAR(50) NOT NULL DEFAULT 'vendedor',
     empresa_id UUID NOT NULL,
     updated_at TIMESTAMPTZ NULL DEFAULT timezone('utc', now()),
+    
+    -- 🆕 NUEVAS COLUMNAS (Sistema Admin)
+    nombre_completo TEXT,
+    rol user_role DEFAULT 'usuario',
+    activo BOOLEAN DEFAULT true,
+    created_by UUID REFERENCES perfiles(id),
+    last_login TIMESTAMP WITH TIME ZONE,
+    
+    -- 🗑️ DEPRECATED (mantener por compatibilidad)
     is_admin BOOLEAN NULL DEFAULT false,
+    
     CONSTRAINT perfiles_pkey PRIMARY KEY (id),
     CONSTRAINT perfiles_empresa_id_fkey FOREIGN KEY (empresa_id) REFERENCES empresas (id),
     CONSTRAINT perfiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users (id)
 );
+
+-- Tipo ENUM para roles
+CREATE TYPE user_role AS ENUM ('superadmin', 'admin', 'usuario');
 ```
 **📝 Descripción:** Perfiles de usuario vinculados a Supabase Auth
 **🔑 Características:**
-- `rol`: Sistema de roles ('vendedor', 'admin', etc.)
-- `is_admin`: Flag para permisos administrativos
-- Relación directa con auth.users
+- `rol`: Sistema de roles basado en ENUM ('superadmin', 'admin', 'usuario')
+- `nombre_completo`: Nombre completo del usuario (nuevo campo)
+- `activo`: Control de estado de cuenta (activar/desactivar usuarios)
+- `created_by`: Referencia al usuario que creó este perfil
+- `last_login`: Última vez que el usuario inició sesión
+- ⚠️ `is_admin`: Campo legacy, usar `rol` en su lugar
+**✅ Estado:** ACTIVA - Migrada a sistema de roles
 
 ---
 
@@ -64,7 +82,7 @@ CREATE TABLE public.productos (
     precio_costo NUMERIC(10,2) NOT NULL DEFAULT 0.00,
     precio_venta NUMERIC(10,2) NOT NULL DEFAULT 0.00,
     alerta_stock_min INTEGER NULL DEFAULT 5,
-    activo BOOLEAN NOT NULL DEFAULT true, -- 🛑 NUEVO CAMPO
+    activo BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NULL DEFAULT timezone('utc', now()),
     CONSTRAINT productos_pkey PRIMARY KEY (id),
     CONSTRAINT productos_empresa_id_codigo_referencia_key UNIQUE (empresa_id, codigo_referencia),
@@ -73,11 +91,12 @@ CREATE TABLE public.productos (
 ```
 **📝 Descripción:** Inventario de productos por empresa
 **🔑 Características:** 
-- `precio_costo`: Costo Promedio Ponderado (CPP)
+- `precio_costo`: Costo Promedio Ponderado (CPP) - se actualiza automáticamente con cada compra
 - `codigo_referencia`: Único por empresa (no globalmente)
 - `descripcion`: Campo opcional para detalles adicionales
-- `activo`: Control de estado del producto (activo/inactivo) 🛑 NUEVO
-- Control de stock con alertas mínimas
+- `activo`: Control de estado del producto (activo/inactivo)
+- `alerta_stock_min`: Threshold para alertas de stock bajo
+**✅ Estado:** ACTIVA - Sistema CPP implementado
 
 ---
 
@@ -104,6 +123,7 @@ CREATE TABLE public.estado_caja (
 - Control de apertura/cierre diario
 - Estados: 'ABIERTA', 'CERRADA'
 - Tracking de usuarios responsables
+**✅ Estado:** ACTIVA
 
 ---
 
@@ -126,6 +146,7 @@ CREATE TABLE public.ventas (
 - `estado`: Control de estado de ventas ('completada', 'pendiente', 'cancelada')
 - Timestamp automático con zona horaria UTC
 - Vinculado al usuario que realizó la venta
+**✅ Estado:** ACTIVA - Función `registrar_venta()` en uso
 
 ---
 
@@ -152,6 +173,7 @@ CREATE TABLE public.detalle_venta (
 - `precio_unitario`: Precio de venta al momento de la transacción
 - CASCADE DELETE al eliminar venta
 - Redundancia de `empresa_id` para optimización de consultas
+**✅ Estado:** ACTIVA - Usado por reportes de utilidad
 
 ---
 
@@ -179,6 +201,7 @@ CREATE TABLE public.movimientos_inventario (
 - `razon`: Texto libre para justificar el movimiento
 - Trazabilidad completa de stock
 - BIGSERIAL para alto volumen de movimientos
+**✅ Estado:** ACTIVA - Auditoría automática
 
 ---
 
@@ -202,45 +225,87 @@ CREATE TABLE public.cierres_caja (
 - Un cierre por día por empresa (UNIQUE empresa_id, fecha_cierre)
 - Resumen financiero del día
 - Usuario responsable del cierre
-- Timestamps automáticos
+**✅ Estado:** ACTIVA
+
+---
+
+### 9. **configuraciones_empresa** 🆕
+```sql
+CREATE TABLE IF NOT EXISTS configuraciones_empresa (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    empresa_id UUID NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+    formato_facturas TEXT DEFAULT 'simple',
+    imprimir_tickets_habilitado BOOLEAN DEFAULT true,
+    imprimir_reportes_habilitado BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    
+    UNIQUE(empresa_id)
+);
+```
+**📝 Descripción:** Configuraciones personalizadas por empresa
+**🔑 Características:**
+- Una configuración por empresa (UNIQUE empresa_id)
+- `formato_facturas`: Tipo de formato de ticket ('simple', 'completo')
+- `imprimir_tickets_habilitado`: Habilita/deshabilita impresión automática de tickets
+- `imprimir_reportes_habilitado`: Habilita/deshabilita botones de impresión de reportes
+**✅ Estado:** ACTIVA - Agregada recientemente
 
 ---
 
 ## 🔗 DIAGRAMA DE RELACIONES
 
 ```
-auth.users (Supabase)
+auth.users (Supabase Auth)
     ↓
-perfiles ← empresas (owner_id)
-    ↓       ↓
-    ↓   productos
-    ↓       ↓
-    ↓   movimientos_inventario
-    ↓       ↓
-    ↓   ventas → detalle_venta
-    ↓       ↓
-    ↓   estado_caja
-    ↓       ↓
-    ↓   cierres_caja
+perfiles (rol: superadmin/admin/usuario) ← empresas (owner_id)
+    ↓                                          ↓
+    ↓                                      productos
+    ↓                                          ↓
+    ↓                                    movimientos_inventario
+    ↓                                          ↓
+    ↓                                      ventas → detalle_venta
+    ↓                                          ↓
+    ↓                                      estado_caja
+    ↓                                          ↓
+    ↓                                      cierres_caja
+    ↓                                          ↓
+    └──────────────────────────────→ configuraciones_empresa
 ```
+
+---
 
 ## 📊 ÍNDICES PARA PERFORMANCE
 
 ```sql
--- Índices críticos para consultas frecuentes
+-- Índices de productos
 CREATE INDEX idx_productos_empresa_id ON productos(empresa_id);
 CREATE INDEX idx_productos_empresa_codigo ON productos(empresa_id, codigo_referencia);
+
+-- Índices de ventas
 CREATE INDEX idx_ventas_empresa_fecha ON ventas(empresa_id, fecha_venta);
 CREATE INDEX idx_detalle_venta_venta_id ON detalle_venta(venta_id);
 CREATE INDEX idx_detalle_venta_producto_id ON detalle_venta(producto_id);
+
+-- Índices de movimientos
 CREATE INDEX idx_movimientos_producto_fecha ON movimientos_inventario(producto_id, fecha);
 CREATE INDEX idx_movimientos_empresa_tipo ON movimientos_inventario(empresa_id, tipo_movimiento);
+
+-- 🆕 Índices del sistema de admin
+CREATE INDEX idx_perfiles_rol ON perfiles(rol);
+CREATE INDEX idx_perfiles_activo ON perfiles(activo);
+CREATE INDEX idx_perfiles_empresa_rol ON perfiles(empresa_id, rol);
+
+-- 🆕 Índice de configuraciones
+CREATE INDEX idx_configuraciones_empresa_empresa_id ON configuraciones_empresa(empresa_id);
 ```
+
+---
 
 ## 🔄 TRIGGERS IMPLEMENTADOS
 
+### 1. **update_updated_at_column** - Actualización automática de timestamps
 ```sql
--- Actualización automática de updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -253,11 +318,34 @@ CREATE TRIGGER update_perfiles_updated_at
     BEFORE UPDATE ON perfiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 ```
+**📝 Estado:** ACTIVO
+
+---
+
+### 2. **update_last_login** - Registro automático de último login 🆕
+```sql
+CREATE OR REPLACE FUNCTION update_last_login()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE perfiles
+    SET last_login = NOW()
+    WHERE id = NEW.id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION update_last_login();
+```
+**📝 Estado:** ACTIVO - Actualiza `last_login` en cada inicio de sesión
+
+---
 
 ## 📈 VISTAS ÚTILES
 
+### Vista: **vista_productos_con_alertas**
 ```sql
--- Vista de productos con alertas
 CREATE VIEW vista_productos_con_alertas AS
 SELECT 
     p.*,
@@ -269,8 +357,13 @@ SELECT
         ELSE 0 
     END as margen_porcentaje
 FROM productos p;
+```
+**🎯 Uso:** Monitoreo de stock bajo y análisis de márgenes
 
--- Vista de resumen diario
+---
+
+### Vista: **vista_resumen_diario**
+```sql
 CREATE VIEW vista_resumen_diario AS
 SELECT 
     v.empresa_id,
@@ -283,9 +376,56 @@ FROM ventas v
 LEFT JOIN detalle_venta dv ON v.id = dv.venta_id
 GROUP BY v.empresa_id, DATE(v.fecha_venta AT TIME ZONE 'America/Bogota');
 ```
+**🎯 Uso:** Reportes diarios de rentabilidad
 
 ---
 
-**📝 Última actualización:** 2024-12-19
+## 🗑️ ELEMENTOS DEPRECATED (Mantener por compatibilidad)
+
+### Columna: `perfiles.is_admin`
+- **Estado:** ⚠️ DEPRECATED
+- **Reemplazo:** Usar `perfiles.rol` en su lugar
+- **Razón:** Migración a sistema de roles más completo (superadmin/admin/usuario)
+- **Acción recomendada:** Actualizar código para usar `rol` en lugar de `is_admin`
+
+---
+
+## ⚠️ NOTAS IMPORTANTES
+
+### Sistema de Roles
+- **superadmin**: Acceso completo, puede gestionar todos los usuarios
+- **admin**: Administrador de empresa, puede gestionar su empresa
+- **usuario**: Usuario regular/vendedor
+
+### Campos Obligatorios para Nuevos Usuarios
+Al crear un usuario, asegúrate de incluir:
+- `nombre_completo` (TEXT)
+- `rol` (user_role ENUM)
+- `activo` (BOOLEAN, default: true)
+- `empresa_id` (UUID)
+
+### Eliminación en Cascada
+- Al eliminar una `venta`, se eliminan automáticamente los `detalle_venta` relacionados
+- Al eliminar una `empresa`, se eliminan las `configuraciones_empresa` relacionadas
+
+---
+
+## 🔢 RESUMEN DE TABLAS
+
+| Tabla | Registros Aprox. | Tipo | Estado |
+|-------|------------------|------|--------|
+| `empresas` | Bajo | Maestra | ✅ Activa |
+| `perfiles` | Medio | Maestra | ✅ Activa (Migrada) |
+| `productos` | Alto | Transaccional | ✅ Activa |
+| `ventas` | Muy Alto | Transaccional | ✅ Activa |
+| `detalle_venta` | Muy Alto | Transaccional | ✅ Activa |
+| `movimientos_inventario` | Muy Alto | Auditoría | ✅ Activa |
+| `estado_caja` | Bajo | Control | ✅ Activa |
+| `cierres_caja` | Medio | Historial | ✅ Activa |
+| `configuraciones_empresa` | Bajo | Configuración | ✅ Activa |
+
+---
+
+**📝 Última actualización:** 28 de Octubre, 2025
 **👤 Mantenido por:** Equipo de Desarrollo GestiON
-**🔢 Versión del Schema:** 1.1.0
+**🔢 Versión del Schema:** 2.0.0

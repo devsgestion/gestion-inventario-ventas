@@ -130,3 +130,168 @@
     padding: 6px 12px;
     margin-top: 10px;
 }
+
+/* ============================================
+   Forgot Password Link & Modal - Estilos Únicos
+   ============================================ */
+
+.login-forgot-pwd-link {
+    background: none;
+    border: none;
+    color: var(--color-brand);
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: underline;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.login-forgot-pwd-link:hover {
+    color: #2980b9;
+}
+
+/* Modal Overlay */
+.login-forgot-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: loginForgotFadeIn 0.2s ease-out;
+}
+
+@keyframes loginForgotFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal Content */
+.login-forgot-modal-content {
+    background: var(--color-surface-200);
+    padding: 30px;
+    border-radius: var(--border-radius-md);
+    max-width: 450px;
+    width: 90%;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: loginForgotSlideUp 0.3s ease-out;
+}
+
+@keyframes loginForgotSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-forgot-modal-title {
+    margin: 0 0 10px 0;
+    color: var(--color-text-high);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.login-forgot-modal-subtitle {
+    margin: 0 0 20px 0;
+    color: var(--color-text-medium);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Success/Error Boxes */
+.login-forgot-success-box {
+    background: var(--color-success);
+    color: white;
+    padding: 12px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    animation: loginForgotSlideDown 0.3s ease-out;
+}
+
+.login-forgot-error-box {
+    background: var(--color-danger);
+    color: white;
+    padding: 12px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    animation: loginForgotSlideDown 0.3s ease-out;
+}
+
+@keyframes loginForgotSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modal Actions */
+.login-forgot-modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.login-forgot-btn {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: var(--font-family);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.login-forgot-btn-primary {
+    background-color: var(--color-brand);
+    color: white;
+}
+
+.login-forgot-btn-primary:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.login-forgot-btn-secondary {
+    background-color: var(--color-surface-300);
+    color: var(--color-text-high);
+    border: 1px solid var(--color-border);
+}
+
+.login-forgot-btn-secondary:hover {
+    background-color: var(--color-surface-200);
+    border-color: var(--color-text-medium);
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .login-forgot-modal-content {
+        padding: 24px 20px;
+    }
+
+    .login-forgot-modal-actions {
+        flex-direction: column;
+    }
+}

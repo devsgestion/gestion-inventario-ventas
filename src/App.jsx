@@ -14,6 +14,9 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 // 🛑 NUEVA PÁGINA 🛑
 const HistorialCajaPage = lazy(() => import('./pages/HistorialCajaPage'));
+const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
+const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
 
 function App() {
@@ -23,7 +26,7 @@ function App() {
             <Routes>
                 {/* Rutas Públicas */}
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/404" element={<NotFoundPage />} />
 
                 {/* Rutas Protegidas GENERALES */}
@@ -35,7 +38,11 @@ function App() {
                     <Route path="/inventario" element={<InventarioPage />} />
                     <Route path="/ventas" element={<VentasPage />} />
                     <Route path="/settings" element={<EmpresaSettings />} /> 
+                    <Route path="/profile" element={<UserProfilePage />} />
                     <Route path="/historial" element={<HistorialCajaPage />} />
+                    
+                    {/* Ruta de administración - Solo superadmin */}
+                    <Route path="/admin" element={<AdminUsersPage />} />
                 </Route>
                 
                 {/* Redirección 404 */}

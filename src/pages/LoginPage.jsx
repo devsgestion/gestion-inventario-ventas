@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth.jsx';
 import { useTheme } from '../hooks/useTheme'; // Importa el hook de tema
+import { supabase } from '../api/supabaseClient';
 // 💡 Importar el nuevo CSS
 import '../styles/AuthForms.css'; 
 
@@ -11,6 +12,9 @@ const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [resetEmail, setResetEmail] = useState('');
+    const [resetMessage, setResetMessage] = useState('');
     const { login, session, isLoading, isBootstrapping } = useAuth();
     const { theme } = useTheme(); // Obtiene el tema actual
     const navigate = useNavigate();
@@ -41,6 +45,32 @@ const LoginPage = () => {
 
         if (loginError) {
             setError(loginError.message);
+        }
+    };
+
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        setResetMessage('');
+        setError(null);
+
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+                redirectTo: `${window.location.origin}/reset-password`,
+            });
+
+            if (error) throw error;
+
+            setResetMessage('✅ Se ha enviado un enlace de recuperación a tu email. Revisa tu bandeja de entrada.');
+            setResetEmail('');
+            
+            // Cerrar el modal después de 3 segundos
+            setTimeout(() => {
+                setShowForgotPassword(false);
+                setResetMessage('');
+            }, 3000);
+
+        } catch (error) {
+            setError(error.message);
         }
     };
 
@@ -84,8 +114,83 @@ const LoginPage = () => {
                     
                     {error && <p className="c-auth-error">{error}</p>}
 
+                    <div style={{ 
+                        textAlign: 'center', 
+                        marginTop: '16px',
+                        paddingTop: '16px',
+                        borderTop: '1px solid var(--color-border)'
+                    }}>
+                        <button
+                            type="button"
+                            onClick={() => setShowForgotPassword(true)}
+                            className="login-forgot-pwd-link"
+                        >
+                            ¿Olvidaste tu contraseña?
+                        </button>
+                    </div>
+
                 </form>
             </div>
+
+            {/* Modal para recuperar contraseña */}
+            {showForgotPassword && (
+                <div className="login-forgot-modal-overlay">
+                    <div className="login-forgot-modal-content">
+                        <h3 className="login-forgot-modal-title">
+                            Recuperar Contraseña
+                        </h3>
+                        <p className="login-forgot-modal-subtitle">
+                            Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.
+                        </p>
+
+                        <form onSubmit={handleForgotPassword}>
+                            <div className="c-form-group">
+                                <input
+                                    type="email"
+                                    placeholder="tu-email@ejemplo.com"
+                                    value={resetEmail}
+                                    onChange={(e) => setResetEmail(e.target.value)}
+                                    required
+                                    className="c-form-input"
+                                />
+                            </div>
+
+                            {resetMessage && (
+                                <div className="login-forgot-success-box">
+                                    {resetMessage}
+                                </div>
+                            )}
+
+                            {error && (
+                                <div className="login-forgot-error-box">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div className="login-forgot-modal-actions">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowForgotPassword(false);
+                                        setResetEmail('');
+                                        setResetMessage('');
+                                        setError(null);
+                                    }}
+                                    className="login-forgot-btn login-forgot-btn-secondary"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="login-forgot-btn login-forgot-btn-primary"
+                                >
+                                    Enviar Enlace
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
