@@ -15,11 +15,13 @@
 | Función | Categoría | Estado | Usado en Código |
 |---------|-----------|--------|-----------------|
 | `create_tenant_and_profile()` | Setup | ✅ Activa | RegisterPage.jsx, api.js |
+| `create_user_profile_admin()` | Setup | ✅ Activa | AdminUsersPage.jsx |
 | `registrar_compra()` | Inventario | ✅ Activa | RegistroCompraForm.jsx |
 | `registrar_venta()` | Ventas | ✅ Activa | VentasPage.jsx |
 | `get_ventas_del_dia()` | Reportes | ✅ Activa | InventarioPage.jsx, useInventario.js |
 | `get_utilidad_del_dia()` | Reportes | ✅ Activa | InventarioPage.jsx |
 | `get_detalle_venta_by_date()` | Reportes | ✅ Activa | HistorialCajaPage.jsx |
+| `get_products_count_by_empresa()` | Reportes | ✅ Activa | AdminUsersPage.jsx |
 | `es_superadmin()` | Admin | ✅ Activa | Interna (RLS) |
 | `get_all_users()` | Admin | ✅ Activa | AdminUsersPage.jsx |
 | `toggle_user_status()` | Admin | ✅ Activa | AdminUsersPage.jsx |
@@ -97,9 +99,40 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ---
 
+### 3. **create_user_profile_admin** 👤 CREAR USUARIOS DESDE ADMIN
+```sql
+CREATE OR REPLACE FUNCTION public.create_user_profile_admin(
+    p_user_id UUID,
+    p_nombre_completo VARCHAR,
+    p_empresa_id UUID,
+    p_rol user_role DEFAULT 'usuario'
+) RETURNS VOID AS $$
+BEGIN
+    -- Crear el PERFIL del nuevo usuario con el rol especificado
+    INSERT INTO public.perfiles (id, nombre, rol, empresa_id, nombre_completo, activo)
+    VALUES (p_user_id, p_nombre_completo, p_rol, p_empresa_id, p_nombre_completo, true);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+**🎯 Propósito:** Crear perfil de usuario desde el panel de administración
+**📥 Parámetros:**
+- `p_user_id`: UUID del usuario de Supabase Auth
+- `p_nombre_completo`: Nombre completo del usuario
+- `p_empresa_id`: UUID de la empresa a la que pertenece
+- `p_rol`: Rol del usuario (default: 'usuario')
+
+**🔄 Flujo:**
+1. Inserta un nuevo perfil en la tabla `perfiles`
+2. Asocia el usuario a una empresa existente
+3. Asigna el rol especificado (usuario, admin, superadmin)
+
+**✅ Estado:** ACTIVA - Usado en AdminUsersPage.jsx
+
+---
+
 ## 📦 FUNCIONES DE INVENTARIO
 
-### 3. **registrar_compra** 🛒 GESTIÓN DE STOCK
+### 4. **registrar_compra** 🛒 GESTIÓN DE STOCK
 ```sql
 CREATE OR REPLACE FUNCTION public.registrar_compra(
     p_empresa_id UUID,
@@ -365,7 +398,33 @@ $$ LANGUAGE sql;
 
 ---
 
-### 8. **get_ventas_por_fecha** 📅 CONSULTAS HISTÓRICAS
+### 8. **get_products_count_by_empresa** 📊 CONTADOR DE PRODUCTOS
+```sql
+CREATE OR REPLACE FUNCTION public.get_products_count_by_empresa()
+RETURNS TABLE(
+    empresa_id UUID,
+    total_productos BIGINT
+) AS $$
+    SELECT 
+        empresa_id,
+        COUNT(*) as total_productos
+    FROM public.productos
+    WHERE activo = true
+    GROUP BY empresa_id;
+$$ LANGUAGE sql;
+```
+**🎯 Propósito:** Obtener el conteo total de productos activos por empresa
+**📤 Retorna:**
+- `empresa_id`: UUID de la empresa
+- `total_productos`: Cantidad de productos activos
+
+**💡 Uso:** Panel de administración para monitorear recursos por empresa
+
+**✅ Estado:** ACTIVA - Usado en AdminUsersPage.jsx
+
+---
+
+### 9. **get_ventas_por_fecha** 📅 CONSULTAS HISTÓRICAS
 ```sql
 CREATE OR REPLACE FUNCTION public.get_ventas_por_fecha(
     p_empresa_id UUID,
@@ -392,7 +451,7 @@ $$ LANGUAGE sql;
 
 ---
 
-### 9. **get_reporte_ventas** 📈 VISTA GENERAL
+### 10. **get_reporte_ventas** 📈 VISTA GENERAL
 ```sql
 CREATE OR REPLACE FUNCTION public.get_reporte_ventas(
     p_empresa_id UUID
@@ -419,7 +478,7 @@ $$ LANGUAGE sql;
 
 ## 🔧 FUNCIONES UTILITARIAS
 
-### 10. **get_current_tenant_id** 🏢 HELPER DE SEGURIDAD
+### 11. **get_current_tenant_id** 🏢 HELPER DE SEGURIDAD
 ```sql
 CREATE OR REPLACE FUNCTION public.get_current_tenant_id()
 RETURNS UUID AS $$
@@ -625,10 +684,24 @@ FOR EACH ROW EXECUTE FUNCTION update_last_login();
 ### 🛒 **Procesamiento de Ventas**
 - ✅ `registrar_venta()` - Ventas completas con actualización de stock
 
-### 📊 **Reportes y Analytics**
+## 🏷️ FUNCIONES POR CATEGORÍA
+
+### 🏗️ **Setup y Gestión de Usuarios**
+- ✅ `create_tenant_and_profile()` - Crear nueva empresa + admin inicial
+- ✅ `create_user_profile_admin()` - Crear usuarios desde panel admin
+- ⚠️ `add_profile_to_tenant()` - Agregar empleados (no usado)
+
+### � **Gestión de Inventario**
+- ✅ `registrar_compra()` - Ingresos de stock con CPP automático
+
+### 🛒 **Procesamiento de Ventas**
+- ✅ `registrar_venta()` - Ventas completas con actualización de stock
+
+### �📊 **Reportes y Analytics**
 - ✅ `get_ventas_del_dia()` - Dashboard diario (ACTIVA)
 - ✅ `get_utilidad_del_dia()` - Análisis de rentabilidad (ACTIVA)
 - ✅ `get_detalle_venta_by_date()` - Análisis por producto (ACTIVA)
+- ✅ `get_products_count_by_empresa()` - Conteo de productos por empresa (ACTIVA)
 - ⚠️ `get_ventas_por_fecha()` - Consultas históricas (no usado)
 - ⚠️ `get_reporte_ventas()` - Vista general (no usado)
 
@@ -723,11 +796,13 @@ SELECT '✅ Funciones legacy eliminadas' as status;
 
 ### Funciones Críticas (NO ELIMINAR)
 - ✅ `create_tenant_and_profile` - Registro de usuarios
+- ✅ `create_user_profile_admin` - Crear usuarios desde admin
 - ✅ `registrar_compra` - Compras de inventario
 - ✅ `registrar_venta` - Ventas del POS
 - ✅ `get_ventas_del_dia` - Dashboard principal
 - ✅ `get_utilidad_del_dia` - Métricas de rentabilidad
 - ✅ `get_detalle_venta_by_date` - Historial de caja
+- ✅ `get_products_count_by_empresa` - Conteo de productos
 - ✅ `es_superadmin` - Seguridad de admin
 - ✅ `get_all_users` - Panel de admin
 - ✅ `toggle_user_status` - Gestión de usuarios
@@ -759,6 +834,6 @@ SELECT '✅ Funciones legacy eliminadas' as status;
 
 ---
 
-**📝 Última actualización:** 28 de Octubre, 2025
+**📝 Última actualización:** 30 de Octubre, 2025
 **👤 Mantenido por:** Equipo de Desarrollo GestiON
 **🔢 Versión de Funciones:** 2.0.0

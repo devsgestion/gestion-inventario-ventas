@@ -199,6 +199,193 @@
     text-align: center;
 }
 
+/* 🛑 NUEVO: Input de edición de precio con formato 🛑 */
+.c-cart__price-input {
+    padding: 8px 10px !important;
+    width: 140px !important;
+    border: 2px solid var(--color-brand) !important;
+    border-radius: var(--border-radius-sm) !important;
+    background: var(--color-surface-400) !important;
+    color: var(--color-text-high) !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    text-align: right !important;
+    font-family: 'Courier New', monospace !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.2s ease !important;
+}
+
+.c-cart__price-input:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3) !important;
+    background: var(--color-surface-500) !important;
+}
+
+.c-cart__price-input::placeholder {
+    color: var(--color-text-medium) !important;
+    opacity: 0.6 !important;
+    font-style: italic !important;
+}
+
+/* Modo claro - Input de precio en carrito */
+body.theme-light .c-cart__price-input {
+    background-color: #ffffff !important;
+    border-color: var(--color-brand) !important;
+    color: #1a202c !important;
+}
+
+body.theme-light .c-cart__price-input:focus {
+    background-color: #f8fafc !important;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2) !important;
+}
+
+/* ================================================ */
+/* 🛑 ADVERTENCIAS DE STOCK INSUFICIENTE 🛑 */
+/* ================================================ */
+
+/* Advertencia general de stock */
+.c-cart__stock-warning {
+    background: linear-gradient(135deg, rgba(243, 156, 18, 0.15) 0%, rgba(230, 126, 34, 0.1) 100%);
+    border-left: 4px solid var(--color-warning);
+    border-radius: var(--border-radius-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+    animation: warningPulse 2s ease-in-out infinite;
+}
+
+@keyframes warningPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(243, 156, 18, 0);
+    }
+}
+
+.c-cart__warning-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-warning);
+    font-size: 1rem;
+    margin-bottom: var(--space-sm);
+}
+
+.c-cart__warning-icon {
+    font-size: 1.3rem;
+    animation: iconShake 0.5s ease-in-out infinite;
+}
+
+@keyframes iconShake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+}
+
+.c-cart__warning-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+}
+
+.c-cart__warning-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--space-xs) var(--space-sm);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius-sm);
+}
+
+.c-cart__warning-product {
+    font-weight: 600;
+    color: var(--color-text-high);
+    font-size: 0.95rem;
+}
+
+.c-cart__warning-details {
+    font-size: 0.85rem;
+    color: var(--color-text-medium);
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.c-cart__deficit {
+    color: var(--color-danger) !important;
+    font-weight: 700 !important;
+}
+
+.c-cart__warning-note {
+    margin: var(--space-sm) 0 0 0;
+    font-size: 0.85rem;
+    color: var(--color-text-medium);
+    font-style: italic;
+    padding: var(--space-xs) var(--space-sm);
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: var(--border-radius-sm);
+}
+
+/* Item con déficit - resaltado */
+.c-cart__item--deficit {
+    background: rgba(243, 156, 18, 0.08);
+    border-left: 3px solid var(--color-warning);
+    padding-left: var(--space-sm) !important;
+    border-radius: var(--border-radius-sm);
+}
+
+/* Badge de déficit individual */
+.c-cart__deficit-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: var(--space-xs);
+    padding: 6px 10px;
+    background: rgba(231, 76, 60, 0.15);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8rem;
+    color: var(--color-danger);
+}
+
+.c-cart__deficit-icon {
+    font-size: 1rem;
+}
+
+.c-cart__deficit-text {
+    font-weight: 500;
+}
+
+/* Modo claro - Advertencias */
+body.theme-light .c-cart__stock-warning {
+    background: linear-gradient(135deg, rgba(243, 156, 18, 0.1) 0%, rgba(230, 126, 34, 0.05) 100%);
+    border-left-color: #e67e22;
+}
+
+body.theme-light .c-cart__warning-header {
+    color: #d68910;
+}
+
+body.theme-light .c-cart__warning-item {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .c-cart__warning-note {
+    background: rgba(52, 152, 219, 0.08);
+    color: #2c5282;
+}
+
+body.theme-light .c-cart__item--deficit {
+    background: rgba(243, 156, 18, 0.05);
+    border-left-color: #e67e22;
+}
+
+body.theme-light .c-cart__deficit-badge {
+    background: rgba(231, 76, 60, 0.1);
+    border-color: rgba(231, 76, 60, 0.25);
+    color: #c0392b;
+}
+
 .c-cart__totals {
     padding: var(--space-md) 0 0 0;
     border-top: 1px solid var(--color-surface-200);

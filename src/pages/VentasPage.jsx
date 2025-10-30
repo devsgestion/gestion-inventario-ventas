@@ -34,6 +34,8 @@ const VentasPage = () => {
     const [loading, setLoading] = useState(false); // Para acciones de CAJA (Abrir/Cerrar)
     const [isProcessingSale, setIsProcessingSale] = useState(false); // Para el botón de VENTA
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showStockWarningModal, setShowStockWarningModal] = useState(false); // 🛑 NUEVO: Modal de advertencia de stock 🛑
+    const [productosConDeficit, setProductosConDeficit] = useState([]); // 🛑 NUEVO: Lista de productos con déficit 🛑
     const [showSuccessAlert, setShowSuccessAlert] = useState(false);
     const [showCloseCajaModal, setShowCloseCajaModal] = useState(false);
     const [showCloseCajaAlert, setShowCloseCajaAlert] = useState(false);
@@ -178,16 +180,10 @@ const VentasPage = () => {
             const productoEnLista = prevCarrito.find(item => item.cartItemId === cartItemId);
             if (!productoEnLista) return prevCarrito;
 
-            // 🔒 Validación de Stock al actualizar
-            if (quantity > productoEnLista.stock_actual) {
-                setStockErrorMsg(`Stock insuficiente para ${productoEnLista.nombre}. Máximo permitido: ${productoEnLista.stock_actual}.`);
-                setTimeout(() => setStockErrorMsg(''), 2500);
-                // Ajustar la cantidad al máximo disponible
-                return prevCarrito.map(item =>
-                    item.cartItemId === cartItemId ? { ...item, cantidad: productoEnLista.stock_actual } : item
-                );
-            }
-
+            // � CAMBIO: Eliminar validación de stock para permitir sobregiro 🛑
+            // Ahora se permite vender más de lo que hay en stock
+            // La advertencia se mostrará en el carrito y al finalizar la venta
+            
             return prevCarrito.map(item =>
                 item.cartItemId === cartItemId ? { ...item, cantidad: quantity } : item
             );
@@ -195,7 +191,50 @@ const VentasPage = () => {
     }, [isCajaAbiertaHoy]);
     
     const handleFinalizarVenta = async () => {
-        setShowConfirmModal(true);
+        // 🛑 NUEVO: Detectar productos con stock insuficiente (agrupando por producto_id) 🛑
+        
+        // Agrupar cantidades por producto
+        const cantidadesPorProducto = {};
+        carrito.forEach(item => {
+            const prodId = item.id;
+            if (!cantidadesPorProducto[prodId]) {
+                cantidadesPorProducto[prodId] = {
+                    nombre: item.nombre,
+                    stock_actual: item.stock_actual,
+                    cantidad_total: 0
+                };
+            }
+            cantidadesPorProducto[prodId].cantidad_total += item.cantidad;
+        });
+        
+        // Detectar cuáles tienen déficit
+        const deficitDetectado = Object.entries(cantidadesPorProducto)
+            .filter(([prodId, data]) => data.cantidad_total > data.stock_actual)
+            .map(([prodId, data]) => ({
+                id: prodId,
+                nombre: data.nombre,
+                cantidad: data.cantidad_total,
+                stock_actual: data.stock_actual,
+                deficit: data.cantidad_total - data.stock_actual
+            }));
+        
+        console.log('🔍 DEBUG - handleFinalizarVenta:');
+        console.log('Carrito:', carrito);
+        console.log('Cantidades agrupadas:', cantidadesPorProducto);
+        console.log('Productos con déficit:', deficitDetectado);
+        console.log('Cantidad de productos con déficit:', deficitDetectado.length);
+        
+        if (deficitDetectado.length > 0) {
+            // Guardar los productos con déficit en el estado
+            setProductosConDeficit(deficitDetectado);
+            // Mostrar modal especial de advertencia de déficit
+            console.log('✅ Mostrando modal de stock warning');
+            setShowStockWarningModal(true);
+        } else {
+            // Flujo normal de confirmación
+            console.log('✅ Mostrando modal de confirmación normal');
+            setShowConfirmModal(true);
+        }
     };
 
     const confirmarFinalizarVenta = async () => {
@@ -257,8 +296,65 @@ const VentasPage = () => {
         }
     };
 
-    // Estado para el mensaje de error de stock
-    const [stockErrorMsg, setStockErrorMsg] = useState('');
+    // 🛑 NUEVO: Confirmar venta con déficit de stock 🛑
+    const confirmarVentaConDeficit = async () => {
+        setShowStockWarningModal(false);
+        if (isCheckoutDisabled) return;
+
+        setIsProcessingSale(true);
+
+        const itemsParaRPC = carrito.map(item => ({
+            producto_id: item.id,
+            cantidad: item.cantidad,
+            precio_unitario: item.precio_venta,
+            costo_unitario: item.precio_costo
+        }));
+
+        const { data, error } = await supabase.rpc('registrar_venta', {
+            p_empresa_id: empresaId,
+            p_usuario_id: userId,
+            p_items: itemsParaRPC
+        });
+
+        setIsProcessingSale(false);
+
+        if (error) {
+            alert(`Error al registrar la venta. Detalle: ${error.message}`);
+        } else {
+            // 🛑 NUEVO: Guardar datos de la venta para imprimir 🛑
+            const ventaData = {
+                numeroVenta: data || `VENTA-${Date.now()}`,
+                items: carrito.map(item => ({
+                    nombre: item.nombre,
+                    cantidad: item.cantidad,
+                    precio_unitario: item.precio_venta
+                })),
+                total: total,
+                fecha: new Date().toISOString(),
+                empresa: {
+                    nombre: perfil?.empresa?.nombre || 'MI NEGOCIO'
+                }
+            };
+            
+            setLastSaleData(ventaData);
+            
+            // Éxito: Limpiar estado y persistencia
+            setCarrito([]); // Limpia el estado de React
+            
+            // 🛑 CRÍTICO: Limpiar la persistencia 🛑
+            localStorage.removeItem('carritoVentaActual'); 
+            
+            setShowSuccessAlert(true);
+            
+            // 🛑 MODIFICADO: Solo mostrar modal si está habilitado 🛑
+            if (imprimirTicketsHabilitado) {
+                setShowPrintModal(true);
+            }
+            
+            setTimeout(() => setShowSuccessAlert(false), 2500);
+            forceInventoryRefresh();
+        }
+    };
 
     // Renderizado
     if (isLoadingCaja || !perfil) {
@@ -328,6 +424,63 @@ const VentasPage = () => {
                                 </button>
                                 <button className="btn btn-primary btn-success" onClick={confirmarFinalizarVenta}>
                                     Sí, Finalizar Venta
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 🛑 Modal de advertencia de stock insuficiente 🛑 */}
+            {showStockWarningModal && (
+                <div className="c-modal-overlay">
+                    <div className="c-modal-content" style={{ maxWidth: 550 }}>
+                        <div className="c-modal-header">
+                            <h3 className="c-modal-title">⚠️ Stock Insuficiente Detectado</h3>
+                        </div>
+                        <div className="c-modal-body">
+                            <p className="c-form-message c-form-message--warning u-mb-md">
+                                Los siguientes productos exceden el stock disponible:
+                            </p>
+                            
+                            <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '1rem' }}>
+                                <table style={{ width: '100%', fontSize: '0.9rem', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '2px solid #e0e0e0' }}>
+                                            <th style={{ textAlign: 'left', padding: '8px' }}>Producto</th>
+                                            <th style={{ textAlign: 'center', padding: '8px' }}>Vendiendo</th>
+                                            <th style={{ textAlign: 'center', padding: '8px' }}>Disponible</th>
+                                            <th style={{ textAlign: 'center', padding: '8px', color: '#d32f2f' }}>Déficit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {productosConDeficit.map((producto) => {
+                                            return (
+                                                <tr key={producto.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                                                    <td style={{ padding: '8px' }}>{producto.nombre}</td>
+                                                    <td style={{ textAlign: 'center', padding: '8px', fontWeight: 'bold' }}>{producto.cantidad}</td>
+                                                    <td style={{ textAlign: 'center', padding: '8px' }}>{producto.stock_actual}</td>
+                                                    <td style={{ textAlign: 'center', padding: '8px', color: '#d32f2f', fontWeight: 'bold' }}>
+                                                        -{producto.deficit}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <p className="c-form-message c-form-message--info" style={{ fontSize: '0.9rem' }}>
+                                💡 <strong>Nota importante:</strong> Si continúas, el inventario quedará <strong>negativo</strong> para estos productos. 
+                                Deberás reabastecerlos para reflejar stock positivo.
+                            </p>
+
+                            <div className="c-modal-footer" style={{ marginTop: '1.5rem' }}>
+                                <button className="btn btn-secondary" onClick={() => setShowStockWarningModal(false)}>
+                                    Cancelar
+                                </button>
+                                <button className="btn btn-primary" style={{ background: '#ff9800', borderColor: '#ff9800' }} onClick={confirmarVentaConDeficit}>
+                                    Continuar de Todos Modos
                                 </button>
                             </div>
                         </div>
@@ -418,13 +571,6 @@ const VentasPage = () => {
             {showCloseCajaAlert && (
                 <div className="c-toast c-toast--success">
                     <span>✅ ¡Caja cerrada correctamente!</span>
-                </div>
-            )}
-
-            {/* Mensaje visual de stock insuficiente */}
-            {stockErrorMsg && (
-                <div className="c-toast c-toast--error">
-                    <span>⚠️ {stockErrorMsg}</span>
                 </div>
             )}
         </div>

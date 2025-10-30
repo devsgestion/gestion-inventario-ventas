@@ -384,6 +384,40 @@ body.theme-light .c-productos-table__row--inactive .c-productos-table__cell {
   color: #b26a00;
 }
 
+/* 🛑 NUEVO: Estilos para stock negativo (versión suave) 🛑 */
+.c-productos-lista__stock-negative {
+  color: #e57373 !important;
+  font-weight: 600 !important;
+  background: rgba(211, 47, 47, 0.08) !important;
+  position: relative;
+}
+
+.c-productos-lista__negative-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: rgba(211, 47, 47, 0.12);
+  color: #d32f2f;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid rgba(211, 47, 47, 0.3);
+  text-transform: lowercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* Light mode variant */
+body.light-mode .c-productos-lista__stock-negative {
+  background: rgba(211, 47, 47, 0.06) !important;
+  color: #c62828 !important;
+}
+
+body.light-mode .c-productos-lista__negative-badge {
+  background: rgba(229, 57, 53, 0.1);
+  color: #c62828;
+  border-color: rgba(229, 57, 53, 0.25);
+}
+
 /* Contenedor de acciones */
 .c-productos-lista__actions {
   display: flex;
@@ -503,19 +537,74 @@ body.theme-light .c-productos-table__row--inactive .c-productos-table__cell {
 
 /* Input de edición inline */
 .c-productos-lista__inline-edit {
-  padding: 4px 6px;
+  padding: 8px 10px;
   width: 95%;
-  border: 1px solid var(--color-brand);
+  border: 2px solid var(--color-brand);
   border-radius: var(--border-radius-sm);
   background: var(--color-surface-300);
   color: var(--color-text-high);
-  font-size: inherit;
+  font-size: 1rem;
+  font-weight: 600;
   transition: box-shadow 0.2s;
+  text-align: right;
+  font-family: 'Courier New', monospace; /* Fuente monoespaciada para números */
+  letter-spacing: 0.5px;
 }
 
 .c-productos-lista__inline-edit:focus {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+  background: var(--color-surface-400);
+}
+
+.c-productos-lista__inline-edit::placeholder {
+  color: var(--color-text-medium);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* Celda de precio clickeable - indicador visual */
+.c-productos-lista__price-cell {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  font-weight: 600;
+}
+
+.c-productos-lista__price-cell:hover {
+  background-color: rgba(52, 152, 219, 0.15);
+  color: var(--color-brand);
+  transform: scale(1.05);
+}
+
+.c-productos-lista__price-cell:hover::after {
+  content: "✏️";
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* Modo claro - Input de edición */
+body.theme-light .c-productos-lista__inline-edit {
+  background-color: #ffffff;
+  border-color: var(--color-brand);
+  color: #1a202c;
+}
+
+body.theme-light .c-productos-lista__inline-edit:focus {
+  background-color: #f8fafc;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+body.theme-light .c-productos-lista__price-cell:hover {
+  background-color: rgba(52, 152, 219, 0.1);
+  color: var(--color-brand);
 }
 
 /* Información de filtros */
@@ -823,4 +912,305 @@ body.theme-light .c-simple-product-card {
 body.theme-light .c-modal-content--confirm-action .c-modal-footer {
     background: #f8fafc !important;
     border-top-color: #e2e8f0 !important;
+}
+
+/* 🛑 NUEVO: Modal de edición de nombre - optimizado para tablets 🛑 */
+.c-modal-content--edit-name {
+    max-width: 450px !important;
+    width: 92% !important;
+}
+
+.c-productos-lista__name-input {
+    width: 100%;
+    padding: 14px 16px; /* Input grande para tablets */
+    font-size: 1.1rem; /* Texto más grande */
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    background-color: var(--color-surface-300);
+    color: var(--color-text-high);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.c-productos-lista__name-input:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    background-color: var(--color-surface-400);
+}
+
+.c-productos-lista__name-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Modo claro - input de nombre */
+body.theme-light .c-productos-lista__name-input {
+    background-color: #ffffff;
+    border-color: #cbd5e1;
+    color: #1a202c;
+}
+
+body.theme-light .c-productos-lista__name-input:focus {
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+    background-color: #f8fafc;
+}
+
+/* Botón de editar en acciones */
+.c-productos-lista__action-btn--edit {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+}
+
+.c-productos-lista__action-btn--edit:hover {
+    background-color: var(--color-brand);
+    color: var(--color-text-on-dark);
+}
+
+/* Responsive para tablets */
+@media (max-width: 768px) {
+    .c-productos-lista__name-input {
+        font-size: 1rem;
+        padding: 16px; /* Aún más grande en tablets */
+        min-height: 50px; /* Altura mínima táctil */
+    }
+    
+    .c-modal-content--edit-name {
+        max-width: 95% !important;
+    }
+}
+
+/* Touch-friendly: Aumentar área de botones en pantallas táctiles */
+@media (hover: none) and (pointer: coarse) {
+    .c-productos-lista__action-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    
+    .c-productos-lista__name-input {
+        min-height: 52px;
+        font-size: 1.1rem;
+    }
+    
+    .c-modal-content--edit-name .btn {
+        min-height: 48px;
+        font-size: 1rem;
+    }
+}
+
+/* ================================================ */
+/* 🎯 MENÚ CONTEXTUAL DE ACCIONES (3 puntos) */
+/* ================================================ */
+
+/* Wrapper del menú */
+.c-productos-lista__menu-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* Botón principal de menú (⋮) */
+.c-productos-lista__menu-btn {
+    width: 40px;
+    height: 40px;
+    background-color: var(--color-surface-300);
+    border: 2px solid var(--color-surface-400);
+    color: var(--color-text-high);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.4rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    letter-spacing: -2px;
+}
+
+.c-productos-lista__menu-btn:hover {
+    background-color: var(--color-brand);
+    border-color: var(--color-brand);
+    color: white;
+    transform: scale(1.05);
+}
+
+.c-productos-lista__menu-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Menú desplegable */
+.c-productos-lista__dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background-color: var(--color-surface-200);
+    border: 1px solid var(--color-surface-400);
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    min-width: 200px;
+    z-index: 100;
+    overflow: hidden;
+    animation: dropdownSlideIn 0.15s ease-out;
+}
+
+@keyframes dropdownSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Items del menú */
+.c-productos-lista__menu-item {
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: var(--color-text-high);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.c-productos-lista__menu-item:hover {
+    background-color: var(--color-surface-300);
+}
+
+.c-productos-lista__menu-item:active {
+    background-color: var(--color-surface-400);
+}
+
+.c-productos-lista__menu-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Iconos en items del menú */
+.c-productos-lista__menu-icon {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Variantes de items por tipo */
+.c-productos-lista__menu-item--edit:hover {
+    background-color: rgba(52, 152, 219, 0.15);
+    color: var(--color-brand);
+}
+
+.c-productos-lista__menu-item--buy:hover {
+    background-color: rgba(52, 152, 219, 0.15);
+    color: var(--color-brand);
+}
+
+.c-productos-lista__menu-item--adjust:hover {
+    background-color: rgba(156, 39, 176, 0.15);
+    color: #9c27b0;
+}
+
+.c-productos-lista__menu-item--deactivate:hover {
+    background-color: rgba(243, 156, 18, 0.15);
+    color: var(--color-warning);
+}
+
+.c-productos-lista__menu-item--activate:hover {
+    background-color: rgba(46, 204, 113, 0.15);
+    color: var(--color-success);
+}
+
+.c-productos-lista__menu-item--delete:hover {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: var(--color-danger);
+}
+
+/* Divisor entre items */
+.c-productos-lista__menu-divider {
+    height: 1px;
+    background-color: var(--color-surface-400);
+    margin: 4px 0;
+}
+
+/* Modo claro - Menú contextual */
+body.theme-light .c-productos-lista__menu-btn {
+    background-color: #ffffff;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+body.theme-light .c-productos-lista__menu-btn:hover {
+    background-color: var(--color-brand);
+    border-color: var(--color-brand);
+    color: white;
+}
+
+body.theme-light .c-productos-lista__dropdown-menu {
+    background-color: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+body.theme-light .c-productos-lista__menu-item {
+    color: #1a202c;
+}
+
+body.theme-light .c-productos-lista__menu-item:hover {
+    background-color: #f8fafc;
+}
+
+body.theme-light .c-productos-lista__menu-divider {
+    background-color: #e2e8f0;
+}
+
+/* Responsive para tablets - Menú más grande */
+@media (max-width: 768px) {
+    .c-productos-lista__dropdown-menu {
+        min-width: 220px;
+    }
+    
+    .c-productos-lista__menu-item {
+        padding: 14px 18px;
+        font-size: 1rem;
+    }
+    
+    .c-productos-lista__menu-icon {
+        font-size: 1.3rem;
+        width: 28px;
+    }
+}
+
+/* Touch-friendly: Items del menú más grandes */
+@media (hover: none) and (pointer: coarse) {
+    .c-productos-lista__menu-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 1.6rem;
+    }
+    
+    .c-productos-lista__dropdown-menu {
+        min-width: 240px;
+    }
+    
+    .c-productos-lista__menu-item {
+        padding: 16px 20px;
+        font-size: 1.05rem;
+        min-height: 52px;
+    }
+    
+    .c-productos-lista__menu-icon {
+        font-size: 1.4rem;
+        width: 32px;
+    }
 }

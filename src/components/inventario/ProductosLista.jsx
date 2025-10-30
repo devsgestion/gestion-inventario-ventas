@@ -1,6 +1,6 @@
 // src/components/inventario/ProductosLista.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useInventario from '../../hooks/useInventario';
 import AjusteStockModal from './AjusteStockModal';
 import { formatCurrencyCOP } from '../../utils/formatters';
@@ -13,6 +13,7 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
 
     const [productoSeleccionado, setProductoSeleccionado] = useState(null);
     const [editingId, setEditingId] = useState(null);
+    const [editingPrice, setEditingPrice] = useState(''); // Nuevo: valor temporal del precio siendo editado
     const [mostrarSoloAlertas, setMostrarSoloAlertas] = useState(false);
     // 🛑 NUEVO ESTADO: Para controlar acciones de eliminar/toggle 🛑
     const [actionLoading, setActionLoading] = useState(false);
@@ -20,6 +21,7 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
     // 🛑 NUEVOS ESTADOS: Para modales de confirmación 🛑
     const [showDeactivateModal, setShowDeactivateModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showEditNameModal, setShowEditNameModal] = useState(false);
     const [productToAction, setProductToAction] = useState(null);
 
     // 🛑 NUEVOS ESTADOS: Para toast de éxito 🛑
@@ -28,6 +30,24 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
 
     // 🛑 NUEVO ESTADO: Para el buscador 🛑
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // 🛑 NUEVO ESTADO: Para edición de nombre 🛑
+    const [editedName, setEditedName] = useState('');
+    
+    // 🛑 NUEVO ESTADO: Para menú contextual de acciones 🛑
+    const [openMenuId, setOpenMenuId] = useState(null);
+    
+    // 🛑 NUEVO: Cerrar menú al hacer click fuera 🛑
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (openMenuId && !event.target.closest('.c-productos-lista__menu-wrapper')) {
+                setOpenMenuId(null);
+            }
+        };
+        
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [openMenuId]);
 
     // --- Lógica de Filtro MEJORADA ---
     const productosFiltrados = productos.filter(p => {
@@ -50,16 +70,19 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
 
     // 🛑 FUNCIÓN CRÍTICA: Actualización de precio en línea (mantenemos la lógica) 🛑
     const handlePriceUpdate = async (productId, newPriceString) => {
-        // ... (Tu lógica de handlePriceUpdate se mantiene aquí) ...
-        const newPrice = parseFloat(newPriceString);
+        // Limpiar el formato (eliminar puntos) para obtener el número real
+        const cleanPrice = newPriceString.replace(/\./g, '');
+        const newPrice = parseFloat(cleanPrice);
 
         if (isNaN(newPrice) || newPrice <= 0) {
             alert("Introduce un precio de venta válido.");
             setEditingId(null);
+            setEditingPrice('');
             return;
         }
 
-        setEditingId(null); 
+        setEditingId(null);
+        setEditingPrice('');
 
         const { error } = await supabase
             .from('productos')
@@ -72,6 +95,28 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
         } else {
             fetchProductos(); 
         }
+    };
+    
+    // 🛑 NUEVA FUNCIÓN: Formatear precio mientras se escribe 🛑
+    const handlePriceChange = (value) => {
+        // Permitir solo números
+        const numbersOnly = value.replace(/\D/g, '');
+        
+        if (numbersOnly === '') {
+            setEditingPrice('');
+            return;
+        }
+        
+        // Formatear con separadores de miles
+        const formatted = parseInt(numbersOnly).toLocaleString('es-CO');
+        setEditingPrice(formatted);
+    };
+    
+    // 🛑 NUEVA FUNCIÓN: Iniciar edición de precio 🛑
+    const startPriceEdit = (productId, currentPrice) => {
+        setEditingId(productId);
+        // Formatear el precio actual con separadores
+        setEditingPrice(currentPrice.toLocaleString('es-CO'));
     };
     
     // Función para cerrar el modal y limpiar el estado
@@ -129,6 +174,59 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
     const handleDeleteProducto = (producto) => {
         setProductToAction(producto);
         setShowDeleteModal(true);
+    };
+
+    // 🛑 NUEVA FUNCIÓN: Editar nombre de producto 🛑
+    const handleEditName = (producto) => {
+        setProductToAction(producto);
+        setEditedName(producto.nombre);
+        setShowEditNameModal(true);
+    };
+
+    const saveProductName = async () => {
+        const nombreTrimmed = editedName.trim();
+        
+        // Validaciones
+        if (!nombreTrimmed) {
+            alert('❌ El nombre no puede estar vacío');
+            return;
+        }
+        
+        if (nombreTrimmed === productToAction.nombre) {
+            setShowEditNameModal(false);
+            setProductToAction(null);
+            return;
+        }
+        
+        // Verificar si ya existe otro producto con ese nombre
+        const existeNombre = productos.some(
+            p => p.nombre.toLowerCase() === nombreTrimmed.toLowerCase() && p.id !== productToAction.id
+        );
+        
+        if (existeNombre) {
+            alert('❌ Ya existe otro producto con ese nombre. Usa un nombre diferente.');
+            return;
+        }
+        
+        setActionLoading(true);
+        
+        const { error } = await supabase
+            .from('productos')
+            .update({ nombre: nombreTrimmed })
+            .eq('id', productToAction.id);
+
+        if (error) {
+            alert(`Error al actualizar el nombre: ${error.message}`);
+        } else {
+            fetchProductos();
+            setSuccessMessage('Nombre actualizado correctamente');
+            setShowSuccessToast(true);
+            setTimeout(() => setShowSuccessToast(false), 3000);
+        }
+        
+        setActionLoading(false);
+        setShowEditNameModal(false);
+        setProductToAction(null);
     };
 
     const deleteProducto = async (productoId) => {
@@ -240,7 +338,7 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                             <th className="c-productos-table__header">Costo (CPP)</th>
                             <th className="c-productos-table__header">Alerta Mín.</th>
                             <th className="c-productos-table__header">Estado</th>
-                            <th className="c-productos-table__header" style={{minWidth: 280}}>Acciones</th>
+                            <th className="c-productos-table__header" style={{minWidth: 80, textAlign: 'center'}}>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -254,23 +352,36 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                     {p.nombre}
                                     {p.activo === false && <span className="c-productos-lista__inactive-badge">Inactivo</span>}
                                 </td>
-                                <td className={`c-productos-table__cell${p.stock_actual <= p.alerta_stock_min ? ' c-productos-lista__stock-alert' : ''}`}>
-                                    {p.stock_actual}
+                                <td className={`c-productos-table__cell${p.stock_actual <= p.alerta_stock_min && p.stock_actual >= 0 ? ' c-productos-lista__stock-alert' : ''}${p.stock_actual < 0 ? ' c-productos-lista__stock-negative' : ''}`}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span>{p.stock_actual}</span>
+                                        {p.stock_actual < 0 && (
+                                            <span className="c-productos-lista__negative-badge">pendiente</span>
+                                        )}
+                                    </div>
                                 </td>
-                                <td className="c-productos-table__cell" onClick={() => setEditingId(p.id)}>
+                                <td className="c-productos-table__cell" onClick={() => startPriceEdit(p.id, p.precio_venta)}>
                                     {editingId === p.id ? (
                                         <input 
-                                            type="number"
-                                            defaultValue={p.precio_venta}
+                                            type="text"
+                                            value={editingPrice}
+                                            onChange={(e) => handlePriceChange(e.target.value)}
                                             onBlur={(e) => handlePriceUpdate(p.id, e.target.value)}
                                             onKeyDown={(e) => { 
                                                 if (e.key === 'Enter') e.target.blur();
+                                                if (e.key === 'Escape') {
+                                                    setEditingId(null);
+                                                    setEditingPrice('');
+                                                }
                                             }}
                                             className="c-productos-lista__inline-edit"
+                                            placeholder="Ej: 50.000"
                                             autoFocus
                                         />
                                     ) : (
-                                        <>{formatCurrencyCOP(p.precio_venta)}</>
+                                        <span className="c-productos-lista__price-cell" title="Click para editar precio">
+                                            {formatCurrencyCOP(p.precio_venta)}
+                                        </span>
                                     )}
                                 </td>
                                 <td className="c-productos-table__cell">
@@ -286,46 +397,95 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
 
                                 <td className="c-productos-table__cell c-productos-table__cell--actions">
                                     <div className="c-productos-lista__actions">
-                                        {p.activo !== false && (
-                                            <>
-                                                <button 
-                                                    onClick={() => onRegisterStock(p)}
-                                                    className="c-productos-lista__action-btn c-productos-lista__action-btn--comprar"
-                                                    disabled={actionLoading}
-                                                    title="Registrar compra"
-                                                >
-                                                    🛒
-                                                </button>
-                                                <button 
-                                                    onClick={() => setProductoSeleccionado(p)}
-                                                    className="c-productos-lista__action-btn c-productos-lista__action-btn--ajustar"
-                                                    disabled={actionLoading}
-                                                    title="Ajustar stock"
-                                                >
-                                                    ⚙️
-                                                </button>
-                                            </>
-                                        )}
-                                        
-                                        <button 
-                                            onClick={() => handleToggleProducto(p)}
-                                            className={`c-productos-lista__action-btn ${p.activo !== false ? 'c-productos-lista__action-btn--toggle' : 'c-productos-lista__action-btn--toggle-active'}`}
-                                            disabled={actionLoading}
-                                            title={p.activo !== false ? 'Desactivar producto' : 'Activar producto'}
-                                        >
-                                            {p.activo !== false ? '⏸' : '▶'}
-                                        </button>
-                                        
-                                        {p.activo === false && (
+                                        {/* Botón de menú contextual */}
+                                        <div className="c-productos-lista__menu-wrapper">
                                             <button 
-                                                onClick={() => handleDeleteProducto(p)}
-                                                className="c-productos-lista__action-btn c-productos-lista__action-btn--delete"
+                                                onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)}
+                                                className="c-productos-lista__menu-btn"
                                                 disabled={actionLoading}
-                                                title="Eliminar permanentemente"
+                                                title="Acciones"
                                             >
-                                                🗑
+                                                ⋮
                                             </button>
-                                        )}
+                                            
+                                            {/* Menú desplegable */}
+                                            {openMenuId === p.id && (
+                                                <div className="c-productos-lista__dropdown-menu">
+                                                    {p.activo !== false && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => {
+                                                                    handleEditName(p);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="c-productos-lista__menu-item c-productos-lista__menu-item--edit"
+                                                                disabled={actionLoading}
+                                                            >
+                                                                <span className="c-productos-lista__menu-icon">✏️</span>
+                                                                <span>Editar Nombre</span>
+                                                            </button>
+                                                            
+                                                            <button
+                                                                onClick={() => {
+                                                                    onRegisterStock(p);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="c-productos-lista__menu-item c-productos-lista__menu-item--buy"
+                                                                disabled={actionLoading}
+                                                            >
+                                                                <span className="c-productos-lista__menu-icon">🛒</span>
+                                                                <span>Registrar Compra</span>
+                                                            </button>
+                                                            
+                                                            <button
+                                                                onClick={() => {
+                                                                    setProductoSeleccionado(p);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="c-productos-lista__menu-item c-productos-lista__menu-item--adjust"
+                                                                disabled={actionLoading}
+                                                            >
+                                                                <span className="c-productos-lista__menu-icon">⚙️</span>
+                                                                <span>Ajustar Stock</span>
+                                                            </button>
+                                                            
+                                                            <div className="c-productos-lista__menu-divider"></div>
+                                                        </>
+                                                    )}
+                                                    
+                                                    <button
+                                                        onClick={() => {
+                                                            handleToggleProducto(p);
+                                                            setOpenMenuId(null);
+                                                        }}
+                                                        className={`c-productos-lista__menu-item ${p.activo !== false ? 'c-productos-lista__menu-item--deactivate' : 'c-productos-lista__menu-item--activate'}`}
+                                                        disabled={actionLoading}
+                                                    >
+                                                        <span className="c-productos-lista__menu-icon">
+                                                            {p.activo !== false ? '⏸' : '▶'}
+                                                        </span>
+                                                        <span>{p.activo !== false ? 'Desactivar' : 'Activar'}</span>
+                                                    </button>
+                                                    
+                                                    {p.activo === false && (
+                                                        <>
+                                                            <div className="c-productos-lista__menu-divider"></div>
+                                                            <button
+                                                                onClick={() => {
+                                                                    handleDeleteProducto(p);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="c-productos-lista__menu-item c-productos-lista__menu-item--delete"
+                                                                disabled={actionLoading}
+                                                            >
+                                                                <span className="c-productos-lista__menu-icon">🗑</span>
+                                                                <span>Eliminar Permanente</span>
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -458,6 +618,76 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
             {showSuccessToast && (
                 <div className="c-toast-simple c-toast-simple--success">
                     <span>✅ {successMessage}</span>
+                </div>
+            )}
+
+            {/* 🛑 NUEVO MODAL: Editar nombre de producto 🛑 */}
+            {showEditNameModal && productToAction && (
+                <div className="c-modal-overlay">
+                    <div className="c-modal-content c-modal-content--edit-name">
+                        <div className="c-modal-header">
+                            <h3 className="c-modal-title">✏️ Editar Nombre del Producto</h3>
+                            <button 
+                                onClick={() => setShowEditNameModal(false)}
+                                className="c-modal-close-btn"
+                                disabled={actionLoading}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        
+                        <div className="c-modal-body">
+                            <div className="c-simple-product-card">
+                                <p><strong>Referencia:</strong> {productToAction.codigo_referencia}</p>
+                                <p><strong>Stock:</strong> {productToAction.stock_actual} unidades</p>
+                            </div>
+                            
+                            <div className="c-form-group">
+                                <label className="c-form-label">
+                                    <strong>Nombre del Producto</strong>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editedName}
+                                    onChange={(e) => setEditedName(e.target.value)}
+                                    className="c-productos-lista__name-input"
+                                    placeholder="Ingresa el nuevo nombre"
+                                    autoFocus
+                                    disabled={actionLoading}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') saveProductName();
+                                        if (e.key === 'Escape') setShowEditNameModal(false);
+                                    }}
+                                />
+                                <small className="c-form-message c-form-message--help">
+                                    El nombre aparecerá en el punto de venta y reportes
+                                </small>
+                            </div>
+                            
+                            {editedName.trim() && editedName.trim() !== productToAction.nombre && (
+                                <div className="c-simple-suggestion">
+                                    💡 Nuevo nombre: <strong>"{editedName.trim()}"</strong>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="c-modal-footer">
+                            <button 
+                                onClick={() => setShowEditNameModal(false)}
+                                className="btn btn-secondary"
+                                disabled={actionLoading}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={saveProductName}
+                                className="btn btn-primary"
+                                disabled={actionLoading || !editedName.trim()}
+                            >
+                                {actionLoading ? 'Guardando...' : 'Guardar Cambios'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
