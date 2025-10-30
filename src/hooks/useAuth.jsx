@@ -2,6 +2,12 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '../api/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { DEBUG_CONFIG } from '../config/debug';
+
+// Helper para logs condicionales
+const authLog = (...args) => {
+  if (DEBUG_CONFIG.enableAuthLogs) console.log(...args);
+};
 
 const AuthContext = createContext(null);
 
@@ -51,25 +57,25 @@ export const AuthProvider = ({ children }) => {
     // Funciones internas del useEffect para evitar dependencias
     const loadProfile = async (userId) => {
       if (lastUserIdRef.current === userId && perfil && perfil.id) {
-        console.log('🚫 Perfil ya cargado para:', userId);
+        authLog('🚫 Perfil ya cargado para:', userId);
         return perfil;
       }
       
       lastUserIdRef.current = userId;
 
       try {
-        console.log('🔄 Cargando perfil para usuario:', userId);
+        authLog('🔄 Cargando perfil para usuario:', userId);
         const profile = await fetchProfile(userId);
         if (!isMountedRef.current) return null;
         
         if (profile) {
           setPerfil(profile);
           setError(null);
-          console.log('✅ Perfil cargado exitosamente:', profile.nombre);
+          authLog('✅ Perfil cargado exitosamente:', profile.nombre);
           
           // Verificar si el usuario está desactivado
           if (profile.activo === false) {
-            console.log('⛔ Usuario desactivado detectado, cerrando sesión');
+            authLog('⛔ Usuario desactivado detectado, cerrando sesión');
             await supabase.auth.signOut();
             setPerfil(null);
             setSession(null);
@@ -77,13 +83,13 @@ export const AuthProvider = ({ children }) => {
             return null;
           }
         } else {
-          console.warn('⚠️ No se encontró perfil para el usuario:', userId);
+          authLog('⚠️ No se encontró perfil para el usuario:', userId);
           setPerfil(null);
           setError('Perfil no encontrado');
         }
         return profile;
       } catch (err) {
-        console.error('❌ Error fetching perfil:', err);
+        console.error('❌ Error fetching perfil:', err); // Mantener errores siempre visibles
         if (!isMountedRef.current) return null;
         setPerfil(null);
         setError(err);
@@ -95,7 +101,7 @@ export const AuthProvider = ({ children }) => {
       if (isMountedRef.current && !bootstrapCompletedRef.current) {
         bootstrapCompletedRef.current = true;
         setIsBootstrapping(false);
-        console.log('✅ Bootstrap finalizado');
+        authLog('✅ Bootstrap finalizado');
       }
     };
 
@@ -153,12 +159,12 @@ export const AuthProvider = ({ children }) => {
       // THROTTLING: Ignorar eventos muy frecuentes (menos de 500ms)
       const now = Date.now();
       if (now - lastEventTimeRef.current < 500 && event === 'SIGNED_IN') {
-        console.log('🚫 Evento SIGNED_IN throttled - muy frecuente (< 500ms)');
+        authLog('🚫 Evento SIGNED_IN throttled - muy frecuente (< 500ms)');
         return;
       }
       lastEventTimeRef.current = now;
       
-      console.log('🔐 Auth event:', event, 'SessionProcessed?', !!signedInProcessedInSession, 'LoggedOut?', isLoggedOutRef.current);
+      authLog('🔐 Auth event:', event, 'SessionProcessed?', !!signedInProcessedInSession, 'LoggedOut?', isLoggedOutRef.current);
       
       // Si aún no terminó el bootstrap, finalizarlo
       if (!bootstrapCompletedRef.current) {
@@ -168,7 +174,7 @@ export const AuthProvider = ({ children }) => {
       
       // Procesar logout siempre
       if (event === 'SIGNED_OUT') {
-        console.log('🚪 Procesando logout');
+        authLog('🚪 Procesando logout');
         setSession(null);
         setPerfil(null);
         lastUserIdRef.current = null;
@@ -177,7 +183,7 @@ export const AuthProvider = ({ children }) => {
       } 
       // Procesar login SOLO si nunca se ha procesado en esta sesión del browser
       else if (event === 'SIGNED_IN' && !signedInProcessedInSession && nextSession) {
-        console.log('🔑 Primer SIGNED_IN de la sesión del browser');
+        authLog('🔑 Primer SIGNED_IN de la sesión del browser');
         sessionStorage.setItem(sessionStorageKey, 'true'); // MARCAR como procesado
         setSession(nextSession);
         isLoggedOutRef.current = false;
@@ -188,7 +194,7 @@ export const AuthProvider = ({ children }) => {
       }
       // CASO ESPECIAL: Login después de logout explícito
       else if (event === 'SIGNED_IN' && isLoggedOutRef.current && nextSession) {
-        console.log('🔑 Login después de logout explícito');
+        authLog('🔑 Login después de logout explícito');
         sessionStorage.setItem(sessionStorageKey, 'true');
         setSession(nextSession);
         isLoggedOutRef.current = false;
@@ -198,8 +204,8 @@ export const AuthProvider = ({ children }) => {
         }
       }
       // Ignorar todos los demás SIGNED_IN
-      else {
-        console.log('🚫 Evento SIGNED_IN ignorado - ya procesado en esta sesión');
+      else if (event === 'SIGNED_IN') {
+        authLog('🚫 Evento SIGNED_IN ignorado - ya procesado en esta sesión');
       }
     });
 
@@ -220,18 +226,18 @@ export const AuthProvider = ({ children }) => {
     
     // Bloquear durante los primeros 30 segundos (casi siempre)
     if (timeSinceBootstrap < 30000) {
-      console.log('🚫 loadProfileExternal: BLOQUEADO - protección anti-duplicados');
+      authLog('🚫 loadProfileExternal: BLOQUEADO - protección anti-duplicados');
       return perfil;
     }
     
     // Verificación adicional
     if (lastUserIdRef.current === userId && perfil && perfil.id === userId) {
-      console.log('🚫 loadProfileExternal: perfil válido - NO recarga');
+      authLog('🚫 loadProfileExternal: perfil válido - NO recarga');
       return perfil;
     }
     
     // Solo permitir en casos extremos
-    console.log('🔄 loadProfileExternal: CASO EXTREMO - recargando');
+    authLog('🔄 loadProfileExternal: CASO EXTREMO - recargando');
     try {
       const profile = await fetchProfile(userId);
       if (!isMountedRef.current) return null;
@@ -298,13 +304,23 @@ export const AuthProvider = ({ children }) => {
 
       // 3. Si el usuario está desactivado, hacer logout inmediato
       if (!perfilData.activo) {
-        console.log('⛔ Usuario desactivado, bloqueando acceso');
+        authLog('⛔ Usuario desactivado, bloqueando acceso');
         await supabase.auth.signOut();
         if (isMountedRef.current) setIsLoading(false);
         return { error: new Error('Tu cuenta ha sido desactivada. Contacta al administrador.') };
       }
 
-      // 4. Usuario activo, permitir acceso
+      // 4. Actualizar last_login en la tabla perfiles
+      const { error: updateError } = await supabase
+        .from('perfiles')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', authData.user.id);
+
+      if (updateError) {
+        authLog('⚠️ No se pudo actualizar last_login:', updateError);
+      }
+
+      // 5. Usuario activo, permitir acceso
       if (isMountedRef.current) setIsLoading(false);
       return { error: null };
       
@@ -317,7 +333,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     setIsLoading(true);
-    console.log('🚪 Iniciando logout...');
+    authLog('🚪 Iniciando logout...');
     
     // Marcar que se va a hacer logout antes de la llamada
     isLoggedOutRef.current = true;

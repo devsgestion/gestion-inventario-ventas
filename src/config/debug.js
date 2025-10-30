@@ -1,10 +1,10 @@
 // Configuración para logs de debugging
 export const DEBUG_CONFIG = {
-  enableProfileLogs: true,
-  enableBootstrapLogs: true,
+  enableProfileLogs: false,      // ⚠️ DESACTIVADO - Causa demasiados re-renders
+  enableBootstrapLogs: false,    // ⚠️ DESACTIVADO - Causa demasiados re-renders
   enableInventoryLogs: true,
   enableRecoveryLogs: true,
-  enableAuthLogs: true
+  enableAuthLogs: false          // ⚠️ DESACTIVADO - Causa demasiados re-renders
 };
 
 // Función helper para logs condicionales
