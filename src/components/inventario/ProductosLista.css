@@ -1056,10 +1056,28 @@ body.theme-light .c-productos-lista__name-input:focus {
     animation: dropdownSlideIn 0.15s ease-out;
 }
 
+/* Variante cuando se abre hacia arriba */
+.c-productos-lista__dropdown-menu--up {
+    top: auto;
+    bottom: calc(100% + 4px);
+    animation: dropdownSlideInUp 0.15s ease-out;
+}
+
 @keyframes dropdownSlideIn {
     from {
         opacity: 0;
         transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes dropdownSlideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
     }
     to {
         opacity: 1;

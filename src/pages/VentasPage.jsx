@@ -218,21 +218,13 @@ const VentasPage = () => {
                 deficit: data.cantidad_total - data.stock_actual
             }));
         
-        console.log('🔍 DEBUG - handleFinalizarVenta:');
-        console.log('Carrito:', carrito);
-        console.log('Cantidades agrupadas:', cantidadesPorProducto);
-        console.log('Productos con déficit:', deficitDetectado);
-        console.log('Cantidad de productos con déficit:', deficitDetectado.length);
-        
         if (deficitDetectado.length > 0) {
             // Guardar los productos con déficit en el estado
             setProductosConDeficit(deficitDetectado);
             // Mostrar modal especial de advertencia de déficit
-            console.log('✅ Mostrando modal de stock warning');
             setShowStockWarningModal(true);
         } else {
             // Flujo normal de confirmación
-            console.log('✅ Mostrando modal de confirmación normal');
             setShowConfirmModal(true);
         }
     };

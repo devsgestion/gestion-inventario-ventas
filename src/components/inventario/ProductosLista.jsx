@@ -36,12 +36,14 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
     
     // 🛑 NUEVO ESTADO: Para menú contextual de acciones 🛑
     const [openMenuId, setOpenMenuId] = useState(null);
+    const [menuOpenUpward, setMenuOpenUpward] = useState(false);
     
     // 🛑 NUEVO: Cerrar menú al hacer click fuera 🛑
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (openMenuId && !event.target.closest('.c-productos-lista__menu-wrapper')) {
                 setOpenMenuId(null);
+                setMenuOpenUpward(false);
             }
         };
         
@@ -400,7 +402,32 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                         {/* Botón de menú contextual */}
                                         <div className="c-productos-lista__menu-wrapper">
                                             <button 
-                                                onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)}
+                                                onClick={(e) => {
+                                                    const newMenuId = openMenuId === p.id ? null : p.id;
+                                                    
+                                                    // Si vamos a abrir el menú, calcular si debe abrirse hacia arriba
+                                                    if (newMenuId) {
+                                                        const button = e.currentTarget;
+                                                        const rect = button.getBoundingClientRect();
+                                                        const viewportHeight = window.innerHeight;
+                                                        
+                                                        // Calcular espacio disponible abajo
+                                                        // El menú tiene aproximadamente 320px de alto (5 opciones + padding)
+                                                        const spaceBelow = viewportHeight - rect.bottom;
+                                                        const menuHeight = 320;
+                                                        
+                                                        // Abrir hacia arriba si no hay suficiente espacio abajo
+                                                        if (spaceBelow < menuHeight) {
+                                                            setMenuOpenUpward(true);
+                                                        } else {
+                                                            setMenuOpenUpward(false);
+                                                        }
+                                                    } else {
+                                                        setMenuOpenUpward(false);
+                                                    }
+                                                    
+                                                    setOpenMenuId(newMenuId);
+                                                }}
                                                 className="c-productos-lista__menu-btn"
                                                 disabled={actionLoading}
                                                 title="Acciones"
@@ -410,7 +437,7 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                             
                                             {/* Menú desplegable */}
                                             {openMenuId === p.id && (
-                                                <div className="c-productos-lista__dropdown-menu">
+                                                <div className={`c-productos-lista__dropdown-menu ${menuOpenUpward ? 'c-productos-lista__dropdown-menu--up' : ''}`}>
                                                     {p.activo !== false && (
                                                         <>
                                                             <button
