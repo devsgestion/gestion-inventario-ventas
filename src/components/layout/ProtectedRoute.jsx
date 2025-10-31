@@ -1,5 +1,5 @@
 // src/components/layout/ProtectedRoute.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth.jsx';
 import Sidebar from './Sidebar';
@@ -7,10 +7,12 @@ import './ProtectedRoute.css';
 
 export default function ProtectedRoute() {
     const { isBootstrapping, session, perfil, forceFinishBootstrap } = useAuth();
+    const timeoutExecutedRef = useRef(false);
 
-    // Timeout de emergencia
+    // Timeout de emergencia - SOLO UNA VEZ
     useEffect(() => {
-        if (isBootstrapping) {
+        if (isBootstrapping && !timeoutExecutedRef.current) {
+            timeoutExecutedRef.current = true;
             const timeoutId = setTimeout(() => {
                 console.log('🔴 ProtectedRoute timeout - finalizando bootstrap');
                 forceFinishBootstrap();

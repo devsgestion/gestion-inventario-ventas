@@ -47,6 +47,7 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('🟦 [useAuth] MONTANDO hook principal');
     isMountedRef.current = true;
     bootstrapCompletedRef.current = false;
     lastUserIdRef.current = null;
@@ -148,23 +149,14 @@ export const AuthProvider = ({ children }) => {
       }
     })();
 
-    // Suscripción a cambios de auth - ULTRA-ESTRICTO con SessionStorage
+    // Suscripción a cambios de auth - SIMPLIFICADO Y ESTABLE
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
       if (!isMountedRef.current) return;
       
-      // BLOQUEO GLOBAL: Solo 1 SIGNED_IN por sesión del browser
-      const sessionStorageKey = 'signed_in_processed';
-      const signedInProcessedInSession = sessionStorage.getItem(sessionStorageKey);
-      
-      // THROTTLING: Ignorar eventos muy frecuentes (menos de 500ms)
-      const now = Date.now();
-      if (now - lastEventTimeRef.current < 500 && event === 'SIGNED_IN') {
-        authLog('🚫 Evento SIGNED_IN throttled - muy frecuente (< 500ms)');
-        return;
-      }
-      lastEventTimeRef.current = now;
-      
-      authLog('🔐 Auth event:', event, 'SessionProcessed?', !!signedInProcessedInSession, 'LoggedOut?', isLoggedOutRef.current);
+      console.log('🔵 [Auth Event]:', event, { 
+        hasSession: !!nextSession, 
+        bootstrapCompleted: bootstrapCompletedRef.current 
+      });
       
       // Si aún no terminó el bootstrap, finalizarlo
       if (!bootstrapCompletedRef.current) {
@@ -172,45 +164,44 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       
-      // Procesar logout siempre
+      // Procesarlogout
       if (event === 'SIGNED_OUT') {
-        authLog('🚪 Procesando logout');
+        console.log('🚪 [Auth] SIGNED_OUT - Limpiando sesión');
         setSession(null);
         setPerfil(null);
         lastUserIdRef.current = null;
         isLoggedOutRef.current = true;
-        sessionStorage.removeItem(sessionStorageKey); // PERMITIR nuevo login
       } 
-      // Procesar login SOLO si nunca se ha procesado en esta sesión del browser
-      else if (event === 'SIGNED_IN' && !signedInProcessedInSession && nextSession) {
-        authLog('🔑 Primer SIGNED_IN de la sesión del browser');
-        sessionStorage.setItem(sessionStorageKey, 'true'); // MARCAR como procesado
-        setSession(nextSession);
-        isLoggedOutRef.current = false;
+      // Procesar SIGNED_IN solo en casos específicos
+      else if (event === 'SIGNED_IN' && nextSession) {
+        const userId = nextSession.user?.id;
         
-        if (nextSession.user?.id) {
-          await loadProfile(nextSession.user.id);
+        // Solo procesar si es un usuario diferente O si venimos de un logout
+        if (isLoggedOutRef.current || lastUserIdRef.current !== userId) {
+          console.log('🔑 [Auth] SIGNED_IN procesado - Usuario:', userId);
+          setSession(nextSession);
+          isLoggedOutRef.current = false;
+          
+          if (userId) {
+            await loadProfile(userId);
+          }
+        } else {
+          console.log('⏭️ [Auth] SIGNED_IN ignorado - Usuario ya autenticado');
         }
       }
-      // CASO ESPECIAL: Login después de logout explícito
-      else if (event === 'SIGNED_IN' && isLoggedOutRef.current && nextSession) {
-        authLog('🔑 Login después de logout explícito');
-        sessionStorage.setItem(sessionStorageKey, 'true');
-        setSession(nextSession);
-        isLoggedOutRef.current = false;
-        
-        if (nextSession.user?.id) {
-          await loadProfile(nextSession.user.id);
-        }
+      // TOKEN_REFRESHED puede estar causando problemas
+      else if (event === 'TOKEN_REFRESHED') {
+        console.log('🔄 [Auth] TOKEN_REFRESHED');
       }
-      // Ignorar todos los demás SIGNED_IN
-      else if (event === 'SIGNED_IN') {
-        authLog('🚫 Evento SIGNED_IN ignorado - ya procesado en esta sesión');
+      // Otros eventos
+      else if (event !== 'INITIAL_SESSION') {
+        console.log('⚠️ [Auth] Evento no manejado:', event);
       }
     });
 
     // ✅ CLEANUP
     return () => {
+      console.log('🟥 [useAuth] DESMONTANDO hook - ¡ESTO NO DEBERÍA PASAR FRECUENTEMENTE!');
       isMountedRef.current = false;
       if (bootstrapTimeoutId) {
         clearTimeout(bootstrapTimeoutId);
@@ -220,24 +211,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const loadProfileExternal = useCallback(async (userId) => {
-    // BLOQUEO ULTRA-ESTRICTO - NO recargar NUNCA después del bootstrap inicial
-    const now = Date.now();
-    const timeSinceBootstrap = now - bootstrapStartTimeRef.current;
-    
-    // Bloquear durante los primeros 30 segundos (casi siempre)
-    if (timeSinceBootstrap < 30000) {
-      authLog('🚫 loadProfileExternal: BLOQUEADO - protección anti-duplicados');
-      return perfil;
-    }
-    
-    // Verificación adicional
+    // Verificar si ya tenemos el perfil cargado
     if (lastUserIdRef.current === userId && perfil && perfil.id === userId) {
-      authLog('🚫 loadProfileExternal: perfil válido - NO recarga');
+      authLog('🚫 loadProfileExternal: perfil ya cargado');
       return perfil;
     }
     
-    // Solo permitir en casos extremos
-    authLog('🔄 loadProfileExternal: CASO EXTREMO - recargando');
+    authLog('🔄 loadProfileExternal: cargando perfil');
     try {
       const profile = await fetchProfile(userId);
       if (!isMountedRef.current) return null;
@@ -340,11 +320,25 @@ export const AuthProvider = ({ children }) => {
     
     const { error: authError } = await supabase.auth.signOut();
     
-    // Limpiar completamente el localStorage de Supabase
+    // 🛑 PRESERVAR preferencias de tours antes de limpiar localStorage 🛑
+    const tourPreferences = {};
     try {
+      // Guardar estado de tours completados
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('tour_') && key.endsWith('_completed')) {
+          tourPreferences[key] = localStorage.getItem(key);
+        }
+      });
+      
+      // Limpiar localStorage (incluye auth de Supabase)
       localStorage.removeItem('supabase.auth.token');
       sessionStorage.removeItem('signed_in_processed'); // Limpiar también sessionStorage
       localStorage.clear();
+      
+      // Restaurar preferencias de tours
+      Object.entries(tourPreferences).forEach(([key, value]) => {
+        localStorage.setItem(key, value);
+      });
     } catch (e) {
       console.warn('No se pudo limpiar localStorage:', e);
     }

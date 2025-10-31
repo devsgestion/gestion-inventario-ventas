@@ -10,19 +10,21 @@ const getTodayDate = () => {
 };
 
 const useInventario = (empresaId, refreshTrigger = 0) => {
-    const { session, perfil: userProfile } = useAuth();
-    const [productos, setProductos] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [productosBajoStock, setProductosBajoStock] = useState([]);
-    const [isCajaAbierta, setIsCajaAbierta] = useState(false);
+    const { session, perfil: userProfile } = useAuth();
+    const [productos, setProductos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [productosBajoStock, setProductosBajoStock] = useState([]);
+    const [isCajaAbierta, setIsCajaAbierta] = useState(false);
     const [cajaStatus, setCajaStatus] = useState(null);
     const [isLoadingCaja, setIsLoadingCaja] = useState(true);
     
-    // Simplificamos las referencias, ya que el Realtime es más robusto
-    const controllerRef = useRef(null);
+    // 🛑 CRÍTICO: Ref para evitar re-suscripciones cuando empresaId es el mismo
+    const lastEmpresaIdRef = useRef(null);
+    const channelRef = useRef(null);
     
-    // Función que mapea y detecta alertas
+    // Simplificamos las referencias, ya que el Realtime es más robusto
+    const controllerRef = useRef(null);    // Función que mapea y detecta alertas
     const mapAndSetProducts = useCallback((data) => {
         const mapped = (data || []).map((item) => ({
             ...item,
@@ -76,44 +78,113 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
             return;
         }
 
-        // 1. Suscribirse a INSERTS, UPDATES, y DELETES en la tabla 'productos'
-        const channel = supabase
-            .channel(`inventory-changes-${empresaId}`)
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'productos', filter: `empresa_id=eq.${empresaId}` },
-                (payload) => {
-                    console.log('⚡ Realtime Update Received:', payload.eventType);
-                    // 2. Si recibimos un cambio, llamamos a fetchProductos() para actualizar el estado.
-                    fetchProductos(); 
-                }
-            )
-            .subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                     // 3. CRÍTICO: Cuando la suscripción está lista, hacemos la carga inicial.
-                     // Esto asegura que no nos perdamos ningún evento.
-                     fetchProductos(); 
-                }
-            });
+        console.log('🟢 [Realtime] useEffect ejecutado para empresa:', empresaId);
+
+        // Función local estable que no causa re-renders
+        const loadProducts = async () => {
+            if (!empresaId) return;
+
+            setLoading(true);
+            setError(null);
+            
+            try {
+                const { data, error } = await supabase
+                    .from('productos')
+                    .select('*')
+                    .eq('empresa_id', empresaId)
+                    .order('nombre', { ascending: true });
+
+                if (error) throw error;
+                
+                const mapped = (data || []).map((item) => ({
+                    ...item,
+                    precio_venta: Number(item.precio_venta),
+                    precio_costo: Number(item.precio_costo),
+                    stock_actual: Number(item.stock_actual),
+                    alerta_stock_min: Number(item.alerta_stock_min),
+                }));
+
+                const lowStockItems = mapped.filter(p => p.stock_actual <= p.alerta_stock_min);
+                setProductosBajoStock(lowStockItems);
+                setProductos(mapped);
+            } catch (e) {
+                console.error('❌ [useInventario] exception:', e?.message || e);
+                setError(e?.message || String(e));
+                setProductos([]);
+                setProductosBajoStock([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        // 🛑 PREVENIR doble suscripción en React 18 desarrollo
+        let isSubscribed = true;
+        let channel = null;
+
+        // Delay mínimo para evitar doble montaje de React 18 en desarrollo
+        const subscribeTimeout = setTimeout(() => {
+            if (!isSubscribed) return;
+
+            console.log('🟢 [Realtime] Iniciando suscripción para empresa:', empresaId);
+
+            // 1. Suscribirse a INSERTS, UPDATES, y DELETES en la tabla 'productos'
+            channel = supabase
+                .channel(`inventory-changes-${empresaId}-${Date.now()}`) // Nombre único
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'productos', filter: `empresa_id=eq.${empresaId}` },
+                    (payload) => {
+                        if (!isSubscribed) return;
+                        console.log('⚡ [Realtime] Update recibido:', payload.eventType);
+                        loadProducts(); 
+                    }
+                )
+                .subscribe((status, err) => {
+                    if (!isSubscribed) return;
+                    console.log('🔌 [Realtime] Estado de suscripción:', status);
+                    
+                    if (err) {
+                        console.error('❌ [Realtime] Error en suscripción:', err);
+                        return;
+                    }
+                    
+                    if (status === 'SUBSCRIBED') {
+                        console.log('📥 [Realtime] Cargando inventario inicial');
+                        loadProducts(); 
+                    }
+                    
+                    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                        console.error('❌ [Realtime] Fallo en conexión:', status);
+                    }
+                });
+        }, 100); // 100ms delay para evitar doble montaje
 
         // 4. Limpieza
         return () => {
-            supabase.removeChannel(channel);
+            console.log('🔴 [Realtime] Cleanup para empresa:', empresaId);
+            isSubscribed = false;
+            clearTimeout(subscribeTimeout);
+            
+            if (channel) {
+                console.log('🧹 [Realtime] Removiendo canal');
+                supabase.removeChannel(channel);
+            }
         };
 
-    }, [empresaId, fetchProductos]); 
+    }, [empresaId]); // ✅ SOLO empresaId como dependencia 
     // ----------------------------------------------------------------------
 
-    // Aseguramos que la primera llamada a fetchProductos se haga al montarse el hook.
-    // El Realtime se encarga de esto, pero mantenemos esta estructura para refrescos manuales.
-    
-    // Este useEffect ahora solo se usa para forzar el refresco cuando el padre lo pide
+    // 🔄 Este useEffect se usa para refrescos manuales desde el padre
     useEffect(() => {
         if (empresaId && refreshTrigger > 0) {
+            console.log('🔄 [Inventario] Refresco manual solicitado');
             fetchProductos();
         }
-    }, [refreshTrigger, empresaId, fetchProductos]);
+    }, [refreshTrigger]); // ✅ SOLO refreshTrigger - fetchProductos se llama manualmente
 
+
+    // 🛑 OPTIMIZACIÓN: Evitar ciclos infinitos con checkCajaStatus 🛑
+    const cajaStatusFetchedRef = useRef(false);
 
     // Función central para verificar el estado de la caja
     const checkCajaStatus = useCallback(async (empresaIdParam) => {
@@ -153,11 +224,13 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
         }
     }, [empresaId, userProfile]);
 
+    // 🛑 IMPORTANTE: Solo cargar checkCajaStatus UNA VEZ al montar, no en cada cambio
     useEffect(() => {
-        if (userProfile?.empresa_id || empresaId) {
+        if ((userProfile?.empresa_id || empresaId) && !cajaStatusFetchedRef.current) {
+            cajaStatusFetchedRef.current = true;
             checkCajaStatus();
         }
-    }, [userProfile, empresaId, checkCajaStatus]);
+    }, [userProfile?.empresa_id, empresaId, checkCajaStatus]);
 
     // FUNCIONES DE CONTROL (Abrir/Cerrar)
     const abrirCaja = async (monto_inicial = 0) => {

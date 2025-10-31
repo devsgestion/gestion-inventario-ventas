@@ -2,41 +2,25 @@ import { useState, useEffect, useRef } from 'react';
 
 const usePageVisibility = () => {
   const [isVisible, setIsVisible] = useState(!document.hidden);
-  const [wasHidden, setWasHidden] = useState(false);
-  const [needsRecovery, setNeedsRecovery] = useState(false);
-  
   const lastChangeRef = useRef(Date.now());
-  const recoveryExecutedRef = useRef(false);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
       const now = Date.now();
       const timeSinceLastChange = now - lastChangeRef.current;
       
-      // Evitar cambios muy rápidos
-      if (timeSinceLastChange < 300) return;
+      // Evitar cambios muy rápidos (menos de 500ms)
+      if (timeSinceLastChange < 500) {
+        console.log('🚫 Cambio de visibilidad ignorado - demasiado rápido');
+        return;
+      }
       
       lastChangeRef.current = now;
       const currentlyVisible = !document.hidden;
 
-      if (!currentlyVisible && isVisible) {
-        // Página se oculta
-        console.log('📱 Página se ocultó');
-        setWasHidden(true);
-        setIsVisible(false);
-        recoveryExecutedRef.current = false;
-      } else if (currentlyVisible && !isVisible && wasHidden && !recoveryExecutedRef.current) {
-        // Página vuelve a ser visible - SOLO UNA VEZ
-        console.log('🔄 Página volvió - ejecutando recovery');
-        setIsVisible(true);
-        setNeedsRecovery(true);
-        recoveryExecutedRef.current = true;
-        
-        // Reset inmediato para evitar loops
-        setTimeout(() => {
-          setNeedsRecovery(false);
-          setWasHidden(false);
-        }, 100);
+      if (currentlyVisible !== isVisible) {
+        console.log(currentlyVisible ? '👁️ Página visible' : '� Página oculta');
+        setIsVisible(currentlyVisible);
       }
     };
 
@@ -45,9 +29,10 @@ const usePageVisibility = () => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isVisible, wasHidden]);
+  }, [isVisible]);
 
-  return { isVisible, wasHidden, needsRecovery };
+  // Retornar solo isVisible - eliminar wasHidden y needsRecovery que causaban loops
+  return { isVisible, wasHidden: false, needsRecovery: false };
 };
 
 export default usePageVisibility;

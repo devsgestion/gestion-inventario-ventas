@@ -80,14 +80,14 @@ const VentaProductosLista = ({ empresaId, onAddToCart, isCajaAbierta }) => {
     if (error) return <div className="alert alert-error">Error: {error}</div>;
 
     return (
-        <div className="card c-product-list">
+        <div className="card c-product-list c-ventas__productos-lista">
             <h4 className="card-title c-product-list__title">Productos Disponibles (Stock &gt; 0)</h4>
             <input 
                 type="text" 
                 placeholder="Buscar por nombre o referencia..." 
                 value={search} 
                 onChange={(e) => setSearch(e.target.value)}
-                className="form-input c-product-list__search-input"
+                className="form-input c-product-list__search-input c-ventas__search"
                 disabled={!isCajaAbierta}
                 maxLength={40}
             />

@@ -4,6 +4,9 @@ import useAuth from '../hooks/useAuth';
 import useInventario from '../hooks/useInventario'; 
 import VentaProductosLista from '../components/ventas/VentaProductosLista';
 import CarritoDeVentas from '../components/ventas/CarritoDeVentas';
+import GuidedTour from '../components/layout/GuidedTour';
+import HelpButton from '../components/layout/HelpButton';
+import { ventasTourSteps, isTourCompleted } from '../config/tourSteps';
 import { supabase } from '../api/supabaseClient';
 import { formatCurrencyCOP } from '../utils/formatters';
 import { printTicket } from '../utils/printTicket';
@@ -42,6 +45,9 @@ const VentasPage = () => {
     const [lastSaleData, setLastSaleData] = useState(null); // Para guardar datos de última venta
     const [showPrintModal, setShowPrintModal] = useState(false); // Modal para imprimir
     const [imprimirTicketsHabilitado, setImprimirTicketsHabilitado] = useState(true); // Config de impresión
+    
+    // ✨ Estados para el tour guiado
+    const [runTour, setRunTour] = useState(false);
 
     const { 
         cajaStatus, 
@@ -50,7 +56,19 @@ const VentasPage = () => {
         checkCajaStatus, 
         abrirCaja, 
         cerrarCaja 
-    } = useInventario(); 
+    } = useInventario();
+    
+    // ✨ Verificar si es la primera vez que visita la página de ventas
+    useEffect(() => {
+        const hasSeenTour = isTourCompleted('ventas');
+        if (!hasSeenTour && empresaId && isCajaAbierta) {
+            // Esperar un momento para que la página cargue completamente
+            const timer = setTimeout(() => {
+                setRunTour(true);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [empresaId, isCajaAbierta]); 
 
     // 💡 Performance: Función memoizada
     const getTodayDate = useCallback(() => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), []);
@@ -361,13 +379,13 @@ const VentasPage = () => {
         <div className="m-inventory-layout p-ventas">
             <header className="card p-ventas__header">
                 <h2 className="card-title p-ventas__title">Punto de Venta - {perfil?.empresa?.nombre}</h2>
-                <div className="p-ventas__controls">
+                <div className="p-ventas__controls c-ventas__caja-controls">
                     {isCajaAbiertaHoy ? (
-                        <button onClick={handleCerrarCaja} disabled={loading} className="btn btn-error">
+                        <button onClick={handleCerrarCaja} disabled={loading} className="btn btn-error c-ventas__cerrar-caja-btn">
                             {loading ? 'Cerrando...' : 'Cerrar Caja'}
                         </button>
                     ) : (
-                        <button onClick={handleAbrirCaja} disabled={loading} className="btn btn-success">
+                        <button onClick={handleAbrirCaja} disabled={loading} className="btn btn-success c-ventas__abrir-caja-btn">
                             Abrir Caja / Iniciar Día
                         </button>
                     )}
@@ -391,7 +409,7 @@ const VentasPage = () => {
                     <button
                         onClick={handleFinalizarVenta}
                         disabled={isCheckoutDisabled} 
-                        className={`btn btn-primary btn-lg btn-full p-ventas__checkout-button`}
+                        className={`btn btn-primary btn-lg btn-full p-ventas__checkout-button c-ventas__finalizar-btn`}
                     >
                         {isProcessingSale ? 'Procesando...' : 'Finalizar Venta'}
                     </button>
@@ -565,6 +583,20 @@ const VentasPage = () => {
                     <span>✅ ¡Caja cerrada correctamente!</span>
                 </div>
             )}
+            
+            {/* ✨ Tour Guiado */}
+            <GuidedTour
+                steps={ventasTourSteps}
+                run={runTour}
+                onFinish={() => setRunTour(false)}
+                tourKey="ventas"
+            />
+            
+            {/* ✨ Botón de Ayuda */}
+            <HelpButton
+                onClick={() => setRunTour(true)}
+                tooltip="¿Necesitas ayuda con las ventas? Inicia el tour"
+            />
         </div>
     );
 };

@@ -1,6 +1,6 @@
 // src/App.jsx (VERSIÓN CON SISTEMA DE ROLES)
 
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import './styles/global.css';
@@ -17,8 +17,18 @@ const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
+let appMountCount = 0;
 
 function App() {
+    useEffect(() => {
+        appMountCount++;
+        console.log(`🟦 [App] MONTADO - Contador: ${appMountCount}`);
+        
+        return () => {
+            console.log(`🟥 [App] DESMONTADO - ¡ESTO NO DEBERÍA PASAR! Contador: ${appMountCount}`);
+        };
+    }, []);
+
     return (
         <Suspense fallback={<div>Cargando Módulo...</div>}> 
             <Routes>

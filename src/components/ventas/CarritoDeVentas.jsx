@@ -49,7 +49,7 @@ const CarritoDeVentas = ({ carrito, onUpdateCart, onUpdatePrice, isCajaAbierta }
     };
 
     return (
-        <div className="c-cart">
+        <div className="c-cart c-ventas__carrito">
             <h4 className="c-cart__title">Detalle de la Venta ({carrito.length} ítems)</h4>
             
             {/* 🛑 NUEVA ALERTA: Advertencia de stock insuficiente 🛑 */}
@@ -217,7 +217,7 @@ const CarritoDeVentas = ({ carrito, onUpdateCart, onUpdatePrice, isCajaAbierta }
                     );
                 })}
             </div>
-            <div className="c-cart__totals">
+            <div className="c-cart__totals c-ventas__total">
                 {carrito.length > 1 && (
                     <p className="form-help" style={{ color: 'var(--color-text-light-muted)' }}>
                         Subtotal: <strong>{formatCurrencyCOP(subtotal)}</strong>

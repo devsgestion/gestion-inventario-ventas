@@ -288,7 +288,7 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
             <AlertaStockMinimo />
             
             {/* 🛑 NUEVO: Buscador de productos 🛑 */}
-            <div className="c-productos-lista__search-container">
+            <div className="c-productos-lista__search-container c-inventario__search-bar">
                 <input
                     type="text"
                     placeholder="🔍 Buscar por nombre o referencia..."

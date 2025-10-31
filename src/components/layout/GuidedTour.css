@@ -1,0 +1,38 @@
+/* Estilos adicionales para Joyride */
+
+/* Ajustar el beacon (punto pulsante que indica el inicio) */
+.__floater__open {
+    z-index: 10001 !important;
+}
+
+/* Asegurar que los tooltips se vean bien en tema oscuro */
+.react-joyride__tooltip {
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+}
+
+/* Animación suave para el spotlight */
+.react-joyride__spotlight {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+/* Mejorar contraste del overlay */
+.react-joyride__overlay {
+    transition: opacity 0.3s ease;
+}
+
+/* Resaltar mejor el elemento objetivo */
+.react-joyride__beacon {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}

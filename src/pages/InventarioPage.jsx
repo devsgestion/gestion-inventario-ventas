@@ -5,6 +5,9 @@ import { supabase } from '../api/supabaseClient';
 import ProductoForm from '../components/inventario/ProductoForm';
 import ProductosLista from '../components/inventario/ProductosLista';
 import RegistroCompraForm from '../components/inventario/RegistroCompraForm'; // 🛑 Importar nuevo formulario
+import GuidedTour from '../components/layout/GuidedTour';
+import HelpButton from '../components/layout/HelpButton';
+import { inventarioTourSteps, isTourCompleted } from '../config/tourSteps';
 import useAuth from '../hooks/useAuth.jsx';
 import { formatCurrencyCOP } from '../utils/formatters';
 import '../styles/inventario.css';
@@ -95,9 +98,34 @@ const InventarioPage = () => {
     const [refreshKey, setRefreshKey] = useState(0);
     // 🛑 NUEVO ESTADO: Para mostrar/ocultar productos inactivos 🛑
     const [mostrarInactivos, setMostrarInactivos] = useState(false);
+    
+    // ✨ Estados para el tour guiado
+    const [runTour, setRunTour] = useState(false);
+    
+    // ✨ Callback para manejar acciones del tour (simplificado)
+    const handleTourCallback = useCallback((data) => {
+        const { index, action, type } = data;
+        
+        // Log para debugging
+        if (type === 'step:after' || type === 'step:before') {
+            console.log('🎯 Tour paso:', index + 1, 'Acción:', action);
+        }
+    }, []);
 
     const empresaId = perfil?.empresa_id;
     const isDataReady = !!empresaId && !isBootstrapping;
+    
+    // ✨ Verificar si es la primera vez que visita la página
+    useEffect(() => {
+        const hasSeenTour = isTourCompleted('inventario');
+        if (!hasSeenTour && isDataReady) {
+            // Esperar un momento para que la página cargue completamente
+            const timer = setTimeout(() => {
+                setRunTour(true);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [isDataReady]);
 
     // Función de refresco: Aumenta la key y notifica a otros componentes
     const handleProductSaved = () => {
@@ -169,14 +197,14 @@ const InventarioPage = () => {
             {/* Contenido Principal */}
             <main className="m-inventory-content">
                 {/* Secciones de Reportes */}
-                <section className="c-card">
+                <section className="c-card c-inventario__stats">
                     <h3 className="c-card__title">📊 Reporte Financiero Rápido (Hoy)</h3>
                     <ReportesResumen empresaId={empresaId} refreshKey={refreshKey} />
                 </section>
 
                 {/* Lista de Productos */}
                 <section className="c-card">
-                    <div className="u-flex u-justify-between u-align-center u-mb-lg">
+                    <div className="u-flex u-justify-between u-align-center u-mb-lg c-inventario__filters">
                         <h3 className="c-card__title">📦 Inventario Actual</h3>
                         
                         <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
@@ -192,7 +220,7 @@ const InventarioPage = () => {
                             
                             <button
                                 onClick={() => setMostrarFormulario(true)}
-                                className="btn btn-primary btn-success btn-new-product-action"
+                                className="btn btn-primary btn-success btn-new-product-action c-inventario__add-btn"
                                 style={{ minWidth: 180 }}
                             >
                                 + Crear Nuevo Producto
@@ -226,6 +254,21 @@ const InventarioPage = () => {
                         onClose={handleCloseCompraForm}
                     />
                 )}
+                
+                {/* ✨ Tour Guiado */}
+                <GuidedTour
+                    steps={inventarioTourSteps}
+                    run={runTour}
+                    onFinish={() => setRunTour(false)}
+                    onStepChange={handleTourCallback}
+                    tourKey="inventario"
+                />
+                
+                {/* ✨ Botón de Ayuda */}
+                <HelpButton
+                    onClick={() => setRunTour(true)}
+                    tooltip="¿Necesitas ayuda? Inicia el tour guiado"
+                />
             </main>
         </div>
     );
