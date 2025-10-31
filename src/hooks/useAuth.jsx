@@ -116,13 +116,25 @@ export const AuthProvider = ({ children }) => {
     // Bootstrap con carga paralela optimizada
     (async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
+        if (error && error.status === 403) {
+          // Manejo robusto de error 403 Forbidden
+          console.error('❌ Error 403: Sesión inválida o expirada.');
+          setSession(null);
+          setPerfil(null);
+          setError('Tu sesión ha expirado o es inválida. Por favor, inicia sesión nuevamente.');
+          navigate('/login', { replace: true });
+          if (bootstrapTimeoutId) {
+            clearTimeout(bootstrapTimeoutId);
+            bootstrapTimeoutId = null;
+          }
+          finishBootstrap();
+          return;
+        }
         const nextSession = data?.session ?? null;
-        
         if (isMountedRef.current) {
           setSession(nextSession);
         }
-
         // Carga de perfil paralela y más rápida
         if (nextSession?.user?.id) {
           loadProfile(nextSession.user.id).catch(console.error);
@@ -131,14 +143,12 @@ export const AuthProvider = ({ children }) => {
             setPerfil(null);
           }
         }
-
         // Finalizar bootstrap inmediatamente sin esperar perfil
         if (bootstrapTimeoutId) {
           clearTimeout(bootstrapTimeoutId);
           bootstrapTimeoutId = null;
         }
         finishBootstrap();
-        
       } catch (error) {
         console.error('❌ Error en bootstrap:', error);
         if (bootstrapTimeoutId) {

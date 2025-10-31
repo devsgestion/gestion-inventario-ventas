@@ -12,7 +12,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: false,
-    detectSessionInUrl: true, // ✅ Cambiar a true para detectar tokens en URL
+  detectSessionInUrl: false, // Desactivado para evitar bucles de sesión
     debug: false,
     storage: window.localStorage,
     storageKey: 'supabase.auth.token',
@@ -39,19 +39,5 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// ⬅️ COMENTAR O REMOVER este listener adicional que puede causar duplicados
-// supabase.auth.onAuthStateChange((event, session) => {
-//   // Solo logs críticos
-//   if (event === 'SIGNED_OUT') {
-//     console.log('🚪 Sesión cerrada');
-//   }
-// });
 
 // Detector de problemas de red
-window.addEventListener('online', () => {
-  console.log('🌐 Conexión restaurada');
-});
-
-window.addEventListener('offline', () => {
-  console.warn('⚠️ Sin conexión a internet');
-});
