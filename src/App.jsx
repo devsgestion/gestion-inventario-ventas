@@ -1,9 +1,9 @@
-// src/App.jsx (VERSIÓN MODIFICADA)
+// src/App.jsx (VERSIÓN CON SISTEMA DE ROLES)
 
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './components/layout/ProtectedRoute'; 
-import './styles/global.css'; // Importa el CSS global
+import ProtectedRoute from './components/layout/ProtectedRoute';
+import './styles/global.css';
 
 // 🛑 Carga Lazy para la fluidez 🛑
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -12,7 +12,6 @@ const VentasPage = lazy(() => import('./pages/VentasPage'));
 const EmpresaSettings = lazy(() => import('./pages/EmpresaSettings'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage')); 
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
-// 🛑 NUEVA PÁGINA 🛑
 const HistorialCajaPage = lazy(() => import('./pages/HistorialCajaPage'));
 const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
@@ -21,7 +20,6 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
 function App() {
     return (
-        // Suspense para manejar la espera de módulos
         <Suspense fallback={<div>Cargando Módulo...</div>}> 
             <Routes>
                 {/* Rutas Públicas */}
@@ -29,19 +27,18 @@ function App() {
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/404" element={<NotFoundPage />} />
 
-                {/* Rutas Protegidas GENERALES */}
+                {/* Todas las rutas protegidas usan ProtectedRoute (con Sidebar) */}
                 <Route element={<ProtectedRoute />}>
-                    
-                    {/* 🛑 CAMBIO CRÍTICO: La raíz (/) ahora solo redirige 🛑 */}
                     <Route path="/" element={<Navigate to="/ventas" replace />} /> 
-
+                    
+                    {/* Rutas accesibles para todos los usuarios autenticados */}
                     <Route path="/inventario" element={<InventarioPage />} />
                     <Route path="/ventas" element={<VentasPage />} />
-                    <Route path="/settings" element={<EmpresaSettings />} /> 
                     <Route path="/profile" element={<UserProfilePage />} />
-                    <Route path="/historial" element={<HistorialCajaPage />} />
                     
-                    {/* Ruta de administración - Solo superadmin */}
+                    {/* Rutas que validan permisos internamente */}
+                    <Route path="/settings" element={<EmpresaSettings />} /> 
+                    <Route path="/historial" element={<HistorialCajaPage />} />
                     <Route path="/admin" element={<AdminUsersPage />} />
                 </Route>
                 

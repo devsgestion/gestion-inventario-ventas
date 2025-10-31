@@ -4,11 +4,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
 import useAuth from '../hooks/useAuth';
+import usePermissions from '../hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
 import '../styles/AdminPage.css';
 
 const AdminUsersPage = () => {
     const { perfil, logout } = useAuth();
+    const permissions = usePermissions();
     const navigate = useNavigate();
     
     const [usuarios, setUsuarios] = useState([]);
@@ -29,20 +31,20 @@ const AdminUsersPage = () => {
         rol: 'usuario'
     });
 
-    // Verificar que el usuario es superadmin
+    // Verificar que el usuario tiene permisos de superadmin
     useEffect(() => {
-        if (perfil && perfil.rol !== 'superadmin') {
-            alert('⛔ Acceso denegado: Esta sección es solo para administradores');
+        if (perfil && !permissions.canManageUsers) {
+            alert('⛔ Acceso denegado: Esta sección es solo para super administradores');
             navigate('/inventario');
         }
-    }, [perfil, navigate]);
+    }, [perfil, permissions, navigate]);
 
     // Cargar usuarios
     useEffect(() => {
-        if (perfil?.rol === 'superadmin') {
+        if (permissions.canManageUsers) {
             loadUsers();
         }
-    }, [perfil]);
+    }, [permissions]);
 
     const loadUsers = async () => {
         setLoading(true);

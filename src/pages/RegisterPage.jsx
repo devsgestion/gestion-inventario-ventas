@@ -1,9 +1,9 @@
-// src/pages/RegisterPage.jsx (FINAL - Refactorizado)
+// src/pages/RegisterPage.jsx (Con traducción de errores)
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../api/supabaseClient';
-// 💡 Importar el nuevo CSS
+import { translateSupabaseError, successMessages } from '../utils/errorMessages';
 import '../styles/AuthForms.css'; 
 
 const RegisterPage = () => {
@@ -26,7 +26,7 @@ const RegisterPage = () => {
         });
 
         if (authError) {
-            setError(authError.message);
+            setError(translateSupabaseError(authError));
             setLoading(false);
             return;
         }
@@ -42,7 +42,7 @@ const RegisterPage = () => {
             if (dbError) {
                 // Si falla la BD, debemos borrar el usuario de Auth para limpiar
                 await supabase.auth.admin.deleteUser(user.id); 
-                setError(`Error de BD al crear empresa: ${dbError.message}`);
+                setError(`Error al crear la empresa: ${translateSupabaseError(dbError)}`);
             } else {
                 alert('¡Registro exitoso! Revisa tu correo para confirmar y luego inicia sesión.');
                 navigate('/login', { replace: true });

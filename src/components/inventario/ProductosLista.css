@@ -1051,7 +1051,7 @@ body.theme-light .c-productos-lista__name-input:focus {
     border-radius: var(--border-radius-md);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     min-width: 200px;
-    z-index: 100;
+    z-index: 9999; /* ✅ Por encima de todo */
     overflow: hidden;
     animation: dropdownSlideIn 0.15s ease-out;
 }
@@ -1061,6 +1061,53 @@ body.theme-light .c-productos-lista__name-input:focus {
     top: auto;
     bottom: calc(100% + 4px);
     animation: dropdownSlideInUp 0.15s ease-out;
+}
+
+/* ✨ NUEVO: Modal centrado cuando hay pocos productos y no cabe el menú */
+.c-productos-lista__dropdown-menu--modal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 10001 !important; /* Por encima del overlay */
+    animation: modalFadeIn 0.2s ease-out !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    min-width: 240px;
+}
+
+/* Overlay oscuro para el modal */
+.c-productos-lista__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    animation: overlayFadeIn 0.2s ease-out;
+    cursor: pointer;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes overlayFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes dropdownSlideIn {

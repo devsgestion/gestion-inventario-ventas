@@ -158,14 +158,37 @@
 
 /* --- Elemento: Pie de página --- */
 .c-sidebar__footer {
-    padding: var(--space-md) var(--space-lg); /* 15px 20px */
+    padding: var(--space-md) var(--space-lg);
     border-top: 1px solid var(--color-border); 
     text-align: center;
 }
 
+/* Información del usuario en el footer */
+.c-sidebar__user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--color-surface-300);
+    border-radius: var(--border-radius-sm);
+}
+
+.c-sidebar__user-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-high);
+}
+
+.c-sidebar__user-role {
+    font-size: 0.75rem;
+    color: var(--color-text-medium);
+    font-weight: 500;
+}
+
 .c-sidebar__version {
     font-size: 0.8rem;
-    color: var(--color-text-medium); /* Texto secundario/muted */
+    color: var(--color-text-medium);
 }
 
 /* ===== RESPONSIVE DESIGN ===== */

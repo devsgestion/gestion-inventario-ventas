@@ -1,19 +1,31 @@
-// src/pages/HistorialCajaPage.jsx (Actualizado para el diseño de la imagen)
+// src/pages/HistorialCajaPage.jsx (Con validación de permisos)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../api/supabaseClient';
 import useAuth from '../hooks/useAuth.jsx';
+import usePermissions from '../hooks/usePermissions';
+import { useNavigate } from 'react-router-dom';
 import { formatCurrencyCOP } from '../utils/formatters';
 import '../styles/ventas.css'; 
 
 const HistorialCajaPage = () => {
     const { perfil, isLoading: isAuthLoading } = useAuth();
+    const permissions = usePermissions();
+    const navigate = useNavigate();
     const empresaId = perfil?.empresa_id;
 
     const [cierres, setCierres] = useState([]);
     const [detalleDia, setDetalleDia] = useState(null); 
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(null);
+
+    // Verificar permisos
+    useEffect(() => {
+        if (perfil && !permissions.canViewCashHistory) {
+            alert('⛔ Acceso denegado: No tienes permisos para ver el historial de caja');
+            navigate('/ventas');
+        }
+    }, [perfil, permissions, navigate]);
 
     const fetchCierres = useCallback(async () => {
         if (!empresaId) return;

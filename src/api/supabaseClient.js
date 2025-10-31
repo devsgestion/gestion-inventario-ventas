@@ -12,11 +12,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: true, // ✅ Cambiar a true para detectar tokens en URL
     debug: false,
     storage: window.localStorage,
     storageKey: 'supabase.auth.token',
-    flowType: 'pkce',
+    flowType: 'implicit', // ✅ Cambiar a implicit para reset de password
   },
   // Configuración optimizada para velocidad
   global: {

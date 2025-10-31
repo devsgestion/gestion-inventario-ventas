@@ -405,18 +405,15 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                                 onClick={(e) => {
                                                     const newMenuId = openMenuId === p.id ? null : p.id;
                                                     
-                                                    // Si vamos a abrir el menú, calcular si debe abrirse hacia arriba
+                                                    // Si vamos a abrir el menú, decidir el modo (dropdown o modal)
                                                     if (newMenuId) {
                                                         const button = e.currentTarget;
                                                         const rect = button.getBoundingClientRect();
                                                         const viewportHeight = window.innerHeight;
-                                                        
-                                                        // Calcular espacio disponible abajo
-                                                        // El menú tiene aproximadamente 320px de alto (5 opciones + padding)
                                                         const spaceBelow = viewportHeight - rect.bottom;
-                                                        const menuHeight = 320;
+                                                        const menuHeight = 280;
                                                         
-                                                        // Abrir hacia arriba si no hay suficiente espacio abajo
+                                                        // Si no hay suficiente espacio, abrir como modal centrado
                                                         if (spaceBelow < menuHeight) {
                                                             setMenuOpenUpward(true);
                                                         } else {
@@ -435,82 +432,87 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                                 ⋮
                                             </button>
                                             
-                                            {/* Menú desplegable */}
+                                            {/* Menú desplegable o modal */}
                                             {openMenuId === p.id && (
-                                                <div className={`c-productos-lista__dropdown-menu ${menuOpenUpward ? 'c-productos-lista__dropdown-menu--up' : ''}`}>
-                                                    {p.activo !== false && (
-                                                        <>
-                                                            <button
-                                                                onClick={() => {
-                                                                    handleEditName(p);
-                                                                    setOpenMenuId(null);
-                                                                }}
-                                                                className="c-productos-lista__menu-item c-productos-lista__menu-item--edit"
-                                                                disabled={actionLoading}
-                                                            >
-                                                                <span className="c-productos-lista__menu-icon">✏️</span>
-                                                                <span>Editar Nombre</span>
-                                                            </button>
-                                                            
-                                                            <button
-                                                                onClick={() => {
-                                                                    onRegisterStock(p);
-                                                                    setOpenMenuId(null);
-                                                                }}
-                                                                className="c-productos-lista__menu-item c-productos-lista__menu-item--buy"
-                                                                disabled={actionLoading}
-                                                            >
-                                                                <span className="c-productos-lista__menu-icon">🛒</span>
-                                                                <span>Registrar Compra</span>
-                                                            </button>
-                                                            
-                                                            <button
-                                                                onClick={() => {
-                                                                    setProductoSeleccionado(p);
-                                                                    setOpenMenuId(null);
-                                                                }}
-                                                                className="c-productos-lista__menu-item c-productos-lista__menu-item--adjust"
-                                                                disabled={actionLoading}
-                                                            >
-                                                                <span className="c-productos-lista__menu-icon">⚙️</span>
-                                                                <span>Ajustar Stock</span>
-                                                            </button>
-                                                            
-                                                            <div className="c-productos-lista__menu-divider"></div>
-                                                        </>
-                                                    )}
+                                                <>
+                                                    {/* Overlay oscuro cuando es modal */}
+                                                    {menuOpenUpward && <div className="c-productos-lista__modal-overlay" onClick={() => setOpenMenuId(null)}></div>}
                                                     
-                                                    <button
-                                                        onClick={() => {
-                                                            handleToggleProducto(p);
-                                                            setOpenMenuId(null);
-                                                        }}
-                                                        className={`c-productos-lista__menu-item ${p.activo !== false ? 'c-productos-lista__menu-item--deactivate' : 'c-productos-lista__menu-item--activate'}`}
-                                                        disabled={actionLoading}
-                                                    >
-                                                        <span className="c-productos-lista__menu-icon">
-                                                            {p.activo !== false ? '⏸' : '▶'}
-                                                        </span>
-                                                        <span>{p.activo !== false ? 'Desactivar' : 'Activar'}</span>
-                                                    </button>
-                                                    
-                                                    {p.activo === false && (
-                                                        <>
-                                                            <div className="c-productos-lista__menu-divider"></div>
-                                                            <button
-                                                                onClick={() => {
-                                                                    handleDeleteProducto(p);
-                                                                    setOpenMenuId(null);
-                                                                }}
-                                                                className="c-productos-lista__menu-item c-productos-lista__menu-item--delete"
-                                                                disabled={actionLoading}
-                                                            >
-                                                                <span className="c-productos-lista__menu-icon">🗑</span>
-                                                                <span>Eliminar Permanente</span>
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </div>
+                                                    <div className={`c-productos-lista__dropdown-menu ${menuOpenUpward ? 'c-productos-lista__dropdown-menu--modal' : ''}`}>
+                                                        {p.activo !== false && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        handleEditName(p);
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="c-productos-lista__menu-item c-productos-lista__menu-item--edit"
+                                                                    disabled={actionLoading}
+                                                                >
+                                                                    <span className="c-productos-lista__menu-icon">✏️</span>
+                                                                    <span>Editar Nombre</span>
+                                                                </button>
+                                                                
+                                                                <button
+                                                                    onClick={() => {
+                                                                        onRegisterStock(p);
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="c-productos-lista__menu-item c-productos-lista__menu-item--buy"
+                                                                    disabled={actionLoading}
+                                                                >
+                                                                    <span className="c-productos-lista__menu-icon">🛒</span>
+                                                                    <span>Registrar Compra</span>
+                                                                </button>
+                                                                
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setProductoSeleccionado(p);
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="c-productos-lista__menu-item c-productos-lista__menu-item--adjust"
+                                                                    disabled={actionLoading}
+                                                                >
+                                                                    <span className="c-productos-lista__menu-icon">⚙️</span>
+                                                                    <span>Ajustar Stock</span>
+                                                                </button>
+                                                                
+                                                                <div className="c-productos-lista__menu-divider"></div>
+                                                            </>
+                                                        )}
+                                                        
+                                                        <button
+                                                            onClick={() => {
+                                                                handleToggleProducto(p);
+                                                                setOpenMenuId(null);
+                                                            }}
+                                                            className={`c-productos-lista__menu-item ${p.activo !== false ? 'c-productos-lista__menu-item--deactivate' : 'c-productos-lista__menu-item--activate'}`}
+                                                            disabled={actionLoading}
+                                                        >
+                                                            <span className="c-productos-lista__menu-icon">
+                                                                {p.activo !== false ? '⏸' : '▶'}
+                                                            </span>
+                                                            <span>{p.activo !== false ? 'Desactivar' : 'Activar'}</span>
+                                                        </button>
+                                                        
+                                                        {p.activo === false && (
+                                                            <>
+                                                                <div className="c-productos-lista__menu-divider"></div>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        handleDeleteProducto(p);
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="c-productos-lista__menu-item c-productos-lista__menu-item--delete"
+                                                                    disabled={actionLoading}
+                                                                >
+                                                                    <span className="c-productos-lista__menu-icon">🗑</span>
+                                                                    <span>Eliminar Permanente</span>
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </>
                                             )}
                                         </div>
                                     </div>

@@ -1,16 +1,16 @@
-// src/pages/EmpresaSettings.jsx (FINAL)
+// src/pages/EmpresaSettings.jsx (Con validación de permisos)
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
 import useAuth from '../hooks/useAuth';
-import { useTheme } from '../hooks/useTheme'; // Asumimos que useTheme está en hooks/useTheme
+import usePermissions from '../hooks/usePermissions';
+import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../hooks/useTheme';
 import * as XLSX from 'xlsx';
 import { printInventoryList, printLowStockReport } from '../utils/printInventory';
 
 // Importar el CSS de configuración
 import '../styles/SettingsPage.css'; 
-// Importar la lógica de layout si la usas (ej. m-inventory-layout)
-// import '../styles/inventario.css'; 
 
 
 // 💡 Componente Wrapper para la tarjeta de configuración
@@ -25,6 +25,8 @@ const SettingsModuleCard = ({ title, children, successMessage }) => (
 
 const EmpresaSettings = () => {
     const { perfil, reloadProfile, isBootstrapping } = useAuth();
+    const permissions = usePermissions();
+    const navigate = useNavigate();
     const { theme, setAppTheme } = useTheme();
     
     const [nombre, setNombre] = useState('');
@@ -36,11 +38,19 @@ const EmpresaSettings = () => {
     // 🛑 CONFIGURACIONES 🛑
     const [configuraciones, setConfiguraciones] = useState({
         formato_facturas: 'simple',
-        imprimir_tickets_habilitado: true, // Por defecto habilitado
-        imprimir_reportes_habilitado: true // Por defecto habilitado
+        imprimir_tickets_habilitado: true,
+        imprimir_reportes_habilitado: true
     });
 
     const empresaId = perfil?.empresa_id;
+
+    // Verificar permisos
+    useEffect(() => {
+        if (perfil && !permissions.canAccessSettings) {
+            alert('⛔ Acceso denegado: No tienes permisos para acceder a la configuración');
+            navigate('/ventas');
+        }
+    }, [perfil, permissions, navigate]);
 
     useEffect(() => {
         if (perfil && perfil.empresa && perfil.empresa.nombre) {

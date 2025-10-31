@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../api/supabaseClient';
 import { useTheme } from '../hooks/useTheme';
+import { translateSupabaseError, successMessages, validationMessages } from '../utils/errorMessages';
 import '../styles/ResetPasswordPage.css';
 
 const ResetPasswordPage = () => {
@@ -22,43 +23,19 @@ const ResetPasswordPage = () => {
     useEffect(() => {
         const checkSession = async () => {
             try {
-                // Verificar tanto hash como query params
+                // Obtener los parámetros del hash (Supabase envía tokens en el hash)
                 const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                const queryParams = new URLSearchParams(window.location.search);
                 
-                // Supabase puede enviar un "code" que necesitamos intercambiar por una sesión
-                const code = queryParams.get('code');
-                
-                let accessToken = hashParams.get('access_token') || queryParams.get('access_token');
-                let refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
-                let type = hashParams.get('type') || queryParams.get('type');
+                const accessToken = hashParams.get('access_token');
+                const refreshToken = hashParams.get('refresh_token');
+                const type = hashParams.get('type');
 
-                console.log('🔍 URL completa:', window.location.href);
-                console.log('🔍 Hash:', window.location.hash);
-                console.log('🔍 Search params:', window.location.search);
-                console.log('🔍 Code presente:', !!code);
-                console.log('🔍 Verificando tipo de evento:', type);
-                console.log('🔍 Access token presente:', !!accessToken);
+                console.log('🔍 Verificando sesión de recuperación...');
+                console.log('- Access token presente:', !!accessToken);
+                console.log('- Refresh token presente:', !!refreshToken);
+                console.log('- Tipo:', type);
 
-                // Si hay un code, intercambiarlo por una sesión
-                if (code) {
-                    console.log('🔄 Intercambiando code por sesión...');
-                    
-                    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-                    
-                    if (error) {
-                        console.error('❌ Error intercambiando code:', error);
-                        throw error;
-                    }
-
-                    if (data.session) {
-                        console.log('✅ Sesión obtenida exitosamente del code');
-                        setHasSession(true);
-                        return;
-                    }
-                }
-
-                // Si hay tokens en la URL y es un recovery, establecer la sesión
+                // Si hay tokens en el hash y es de tipo recovery, establecer la sesión
                 if (accessToken && refreshToken && type === 'recovery') {
                     console.log('🔄 Estableciendo sesión de recuperación...');
                     
@@ -75,7 +52,7 @@ const ResetPasswordPage = () => {
                     console.log('✅ Sesión de recuperación establecida');
                     setHasSession(true);
                 } else {
-                    // Si no hay tokens en la URL, verificar sesión existente
+                    // Si no hay tokens en el hash, verificar sesión existente
                     const { data: { session } } = await supabase.auth.getSession();
                     
                     if (session) {
@@ -83,17 +60,12 @@ const ResetPasswordPage = () => {
                         setHasSession(true);
                     } else {
                         console.log('❌ No se detectó sesión válida');
-                        console.log('Detalles de debugging:');
-                        console.log('- code:', code);
-                        console.log('- accessToken:', accessToken);
-                        console.log('- refreshToken:', refreshToken);
-                        console.log('- type:', type);
-                        setError('Enlace inválido o expirado. Por favor solicita un nuevo enlace de recuperación.');
+                        setError('Enlace inválido o expirado. Por favor solicita un nuevo enlace de recuperación desde el login.');
                     }
                 }
-            } catch (err) {
+                } catch (err) {
                 console.error('❌ Error verificando sesión:', err);
-                setError('Error al verificar la sesión. Por favor solicita un nuevo enlace.');
+                setError(translateSupabaseError(err));
             } finally {
                 setCheckingSession(false);
             }
@@ -111,11 +83,11 @@ const ResetPasswordPage = () => {
         try {
             // Validar que las contraseñas coincidan
             if (newPassword !== confirmPassword) {
-                throw new Error('Las contraseñas no coinciden');
+                throw new Error(validationMessages.passwordsDontMatch);
             }
 
             if (newPassword.length < 6) {
-                throw new Error('La contraseña debe tener al menos 6 caracteres');
+                throw new Error(validationMessages.passwordTooShort);
             }
 
             // Actualizar contraseña
@@ -125,7 +97,7 @@ const ResetPasswordPage = () => {
 
             if (updateError) throw updateError;
 
-            setMessage('✅ Contraseña actualizada exitosamente. Redirigiendo...');
+            setMessage(successMessages.passwordReset + ' Redirigiendo...');
             
             // Redirigir al login después de 2 segundos
             setTimeout(() => {
@@ -134,13 +106,14 @@ const ResetPasswordPage = () => {
 
         } catch (error) {
             console.error('Error al restablecer contraseña:', error);
-            setError(error.message);
+            setError(error.message === validationMessages.passwordsDontMatch || 
+                     error.message === validationMessages.passwordTooShort 
+                     ? error.message 
+                     : translateSupabaseError(error));
         } finally {
             setLoading(false);
         }
-    };
-
-    return (
+    };    return (
         <div className={`reset-pwd-container ${theme === 'light' ? 'theme-light' : ''}`}>
             <div className="reset-pwd-card">
                 <div className="reset-pwd-header">

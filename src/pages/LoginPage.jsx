@@ -1,11 +1,11 @@
-// src/pages/LoginPage.jsx (FINAL - Refactorizado)
+// src/pages/LoginPage.jsx (Con traducción de errores)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth.jsx';
-import { useTheme } from '../hooks/useTheme'; // Importa el hook de tema
+import { useTheme } from '../hooks/useTheme';
 import { supabase } from '../api/supabaseClient';
-// 💡 Importar el nuevo CSS
+import { translateSupabaseError, successMessages } from '../utils/errorMessages';
 import '../styles/AuthForms.css'; 
 
 const LoginPage = () => {
@@ -44,7 +44,7 @@ const LoginPage = () => {
         const { error: loginError } = await login(email, password);
 
         if (loginError) {
-            setError(loginError.message);
+            setError(translateSupabaseError(loginError));
         }
     };
 
@@ -60,7 +60,7 @@ const LoginPage = () => {
 
             if (error) throw error;
 
-            setResetMessage('✅ Se ha enviado un enlace de recuperación a tu email. Revisa tu bandeja de entrada.');
+            setResetMessage(successMessages.passwordResetEmailSent);
             setResetEmail('');
             
             // Cerrar el modal después de 3 segundos
@@ -70,7 +70,7 @@ const LoginPage = () => {
             }, 3000);
 
         } catch (error) {
-            setError(error.message);
+            setError(translateSupabaseError(error));
         }
     };
 
