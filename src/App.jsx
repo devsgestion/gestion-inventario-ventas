@@ -9,6 +9,7 @@ import './styles/global.css';
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const InventarioPage = lazy(() => import('./pages/InventarioPage'));
 const VentasPage = lazy(() => import('./pages/VentasPage'));
+const PedidosPage = lazy(() => import('./pages/PedidosPage'));
 const EmpresaSettings = lazy(() => import('./pages/EmpresaSettings'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage')); 
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
@@ -20,14 +21,7 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 let appMountCount = 0;
 
 function App() {
-    useEffect(() => {
-        appMountCount++;
-        console.log(`🟦 [App] MONTADO - Contador: ${appMountCount}`);
-        
-        return () => {
-            console.log(`🟥 [App] DESMONTADO - ¡ESTO NO DEBERÍA PASAR! Contador: ${appMountCount}`);
-        };
-    }, []);
+    // ...sin logs de montaje para mayor fluidez
 
     return (
         <Suspense fallback={<div>Cargando Módulo...</div>}> 
@@ -44,6 +38,7 @@ function App() {
                     {/* Rutas accesibles para todos los usuarios autenticados */}
                     <Route path="/inventario" element={<InventarioPage />} />
                     <Route path="/ventas" element={<VentasPage />} />
+                    <Route path="/pedidos" element={<PedidosPage />} />
                     <Route path="/profile" element={<UserProfilePage />} />
                     
                     {/* Rutas que validan permisos internamente */}

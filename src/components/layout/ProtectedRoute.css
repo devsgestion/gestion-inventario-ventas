@@ -2,38 +2,42 @@
   ==============================================
   🛡️ PROTECTED ROUTE LAYOUT (Refactorizado)
   ==============================================
-  Objetivo: Asegurar que el main-content ocupe el 100% del espacio, 
-  y que las páginas internas manejen su propio offset (como m-inventory-layout).
+  Layout con Sidebar + TopBar
 */
 
-/* --- VARIABLES DE LAYOUT --- */
 :root {
-  /* Establecer el ancho de la barra lateral como una variable maestra */
   --sidebar-width: 240px; 
-  /* Si tu tema oscuro usa estas variables, asegúrate de que estén en index.css */
-  /* --color-bg-main, --color-text-secondary, etc. */
+  --topbar-height: 60px;
 }
 
 .app-layout {
   display: flex;
   min-height: 100vh;
-  background-color: var(--color-surface-100); /* Usando la variable refactorizada */
+  background-color: var(--color-surface-100);
+}
+
+/* Contenedor del TopBar + MainContent */
+.app-layout__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin-left: var(--sidebar-width); /* El margen lo tiene el contenedor completo */
+  width: calc(100% - var(--sidebar-width));
+  max-width: calc(100% - var(--sidebar-width));
+  overflow-x: hidden;
 }
 
 .main-content {
-  /* CRÍTICO: Eliminar el margen izquierdo fijo que duplicaba el offset */
   flex: 1;
-  min-height: 100vh;
-  /* El margen izquierdo fijo se ELIMINA de aquí. */
-  /* Los elementos dentro del contenido (como .m-inventory-layout)
-     tienen su propio margin-left: var(--sidebar-width) para crear el offset. */
-  margin-left: 0; 
-  
-  overflow-x: hidden;
-  transition: margin-left var(--transition-normal);
+  overflow-x: auto;
+  background-color: var(--color-surface-100);
+  padding: var(--space-xl) var(--space-lg);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* ===== LOADING CONTAINER (Usando variables de diseño) ===== */
+/* ===== LOADING CONTAINER ===== */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -41,7 +45,7 @@
   justify-content: center;
   min-height: 100vh;
   background-color: var(--color-surface-100);
-  gap: var(--space-md); /* Usando variable de espaciado */
+  gap: var(--space-md);
 }
 
 .loading-container p {
@@ -52,27 +56,17 @@
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
-@media (max-width: 1024px) {
-  /* En tablets, si el sidebar no se oculta, no necesita margen fijo */
-  .main-content {
-    margin-left: 0;
-  }
-}
-
 @media (max-width: 768px) {
   .app-layout {
     flex-direction: column;
   }
   
-  .main-content {
-    margin-top: 0;
+  .app-layout__content {
     margin-left: 0; /* Sin margen en móvil */
+  }
+
+  .main-content {
+    padding: var(--space-md);
     padding-top: 70px; /* Espacio para el botón hamburguesa */
   }
-}
-
-/* ===== PARA SIDEBAR MINI (futuro) - Mantener la funcionalidad de offset simple ===== */
-/* Esta clase debería ser aplicada al .app-layout para cambiar el margen en la página */
-.app-layout.sidebar-mini .main-content {
-  margin-left: 80px; 
 }

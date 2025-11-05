@@ -46,9 +46,17 @@ export default function GuidedTour({ steps, run, onFinish, onStepChange, tourKey
         }
 
         // Log para debugging
-        if (type === EVENTS.STEP_AFTER || type === EVENTS.TARGET_NOT_FOUND) {
-            console.log('Tour step:', index + 1, 'Action:', action, 'Status:', status, 'Step data:', step?.data);
-        }
+        // (log eliminado para mayor fluidez)
+    };
+
+    // Personalización del texto de progreso y botón Next
+    const customLocale = {
+        back: 'Atrás',
+        close: 'Cerrar',
+        last: 'Finalizar',
+        next: 'Siguiente',
+        skip: 'Saltar tour',
+        progress: (current, total) => `paso ${current} de ${total}`,
     };
 
     return (
@@ -110,13 +118,7 @@ export default function GuidedTour({ steps, run, onFinish, onStepChange, tourKey
                     fontSize: '0.9rem',
                 },
             }}
-            locale={{
-                back: 'Atrás',
-                close: 'Cerrar',
-                last: 'Finalizar',
-                next: 'Siguiente',
-                skip: 'Saltar tour',
-            }}
+            locale={customLocale}
         />
     );
 }

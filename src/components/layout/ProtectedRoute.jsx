@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth.jsx';
 import Sidebar from './Sidebar';
+import TopBar from './TopBar';
 import './ProtectedRoute.css';
 
 export default function ProtectedRoute() {
@@ -74,9 +75,12 @@ export default function ProtectedRoute() {
     return (
         <div className="app-layout">
             <Sidebar />
-            <main className="main-content">
-                <Outlet />
-            </main>
+            <div className="app-layout__content">
+                <TopBar />
+                <main className="main-content">
+                    <Outlet />
+                </main>
+            </div>
         </div>
     );
 }

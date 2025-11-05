@@ -1,0 +1,282 @@
+/* ============================================
+   TOP BAR - Barra superior con menú de usuario
+   Prefijo: tb-topbar para evitar conflictos
+   Diseño minimalista acorde al sistema
+   ============================================ */
+
+.tb-topbar {
+  height: 60px;
+  background: var(--color-surface-200);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-lg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  background: rgba(30, 43, 64, 0.95);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Efecto al hacer scroll */
+.tb-topbar.scrolled {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  background: rgba(30, 43, 64, 0.98);
+}
+
+.tb-topbar__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-high);
+}
+
+.tb-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* ============================================
+   MENÚ DE USUARIO - Diseño Minimalista
+   ============================================ */
+
+.tb-topbar__user-menu {
+  position: relative;
+}
+
+.tb-topbar__user-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.tb-topbar__user-button:hover {
+  background: var(--color-surface-300);
+  border-color: var(--color-brand);
+}
+
+.tb-topbar__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--border-radius-sm);
+  background: var(--color-brand);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.tb-topbar__user-name {
+  font-weight: 500;
+  color: var(--color-text-high);
+  font-size: 0.875rem;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tb-topbar__chevron {
+  transition: transform 0.2s ease;
+  color: var(--color-text-medium);
+  flex-shrink: 0;
+}
+
+.tb-topbar__chevron--open {
+  transform: rotate(180deg);
+}
+
+/* ============================================
+   DROPDOWN
+   ============================================ */
+
+.tb-topbar__dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-sm));
+  right: 0;
+  width: 280px;
+  background: var(--color-surface-200);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-base);
+  padding: var(--space-sm);
+  animation: tb-dropdownSlideIn 0.2s ease-out;
+  z-index: 1000;
+}
+
+@keyframes tb-dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tb-topbar__dropdown-header {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-surface-300);
+  border-radius: var(--border-radius-md);
+}
+
+.tb-topbar__dropdown-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius-md);
+  background: var(--color-brand);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.tb-topbar__dropdown-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: hidden;
+}
+
+.tb-topbar__dropdown-name {
+  font-weight: 600;
+  color: var(--color-text-high);
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tb-topbar__dropdown-email {
+  font-size: 0.8rem;
+  color: var(--color-text-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tb-topbar__dropdown-role {
+  font-size: 0.75rem;
+  color: var(--color-text-medium);
+  margin-top: var(--space-xs);
+}
+
+.tb-topbar__dropdown-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--space-sm) 0;
+}
+
+.tb-topbar__dropdown-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.tb-topbar__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+}
+
+.tb-topbar__dropdown-item:hover {
+  background: var(--color-surface-300);
+}
+
+.tb-topbar__dropdown-item--logout {
+  color: var(--color-danger);
+}
+
+.tb-topbar__dropdown-item--logout:hover {
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.tb-topbar__dropdown-item-icon {
+  font-size: 1.125rem;
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tb-topbar__dropdown-item-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-high);
+}
+
+.tb-topbar__dropdown-item--logout .tb-topbar__dropdown-item-text {
+  color: var(--color-danger);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .tb-topbar {
+    padding: 0 var(--space-md);
+  }
+
+  .tb-topbar__user-name {
+    display: none;
+  }
+
+  .tb-topbar__user-button {
+    padding: var(--space-sm);
+  }
+
+  .tb-topbar__dropdown {
+    right: calc(-1 * var(--space-md));
+    width: 260px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tb-topbar__dropdown {
+    position: fixed;
+    right: var(--space-md);
+    left: var(--space-md);
+    width: auto;
+  }
+}
+
+/* Light mode adjustments */
+body.theme-light .tb-topbar {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+body.theme-light .tb-topbar.scrolled {
+  background: rgba(255, 255, 255, 0.98);
+}

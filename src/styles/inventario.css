@@ -12,10 +12,9 @@
 
 /* Layout principal */
 .m-inventory-layout {
-  margin-left: 240px; 
-  padding: var(--space-lg) var(--space-xl); 
   min-height: 100vh;
   max-width: 1400px; 
+  margin-left: auto;
   margin-right: auto;
 }
 

@@ -219,28 +219,25 @@ const AdminUsersPage = () => {
     };
 
     if (loading) {
-        return <div className="admin-loading-state">Cargando panel de administración...</div>;
+        return <div className="ap-loading-state">Cargando panel de administración...</div>;
     }
 
     return (
-        <div className="m-inventory-layout admin-panel-container">
-            <header className="admin-panel-header">
+        <div className="ap-container">
+            <header className="ap-header">
                 <div>
-                    <h1 className="admin-panel-title">Panel de Administración</h1>
-                    <p className="admin-panel-subtitle">Gestión de usuarios y accesos del sistema</p>
+                    <h1 className="ap-title">Panel de Administración</h1>
+                    <p className="ap-subtitle">Gestión de usuarios y accesos del sistema</p>
                 </div>
-                <div className="admin-panel-header-actions">
-                    <button onClick={() => setShowCreateModal(true)} className="admin-btn admin-btn-primary admin-btn-success">
+                <div className="ap-header-actions">
+                    <button onClick={() => setShowCreateModal(true)} className="ap-btn ap-btn-primary ap-btn-success">
                         + Crear Nuevo Usuario
-                    </button>
-                    <button onClick={logout} className="admin-btn admin-btn-secondary">
-                        Cerrar Sesión
                     </button>
                 </div>
             </header>
 
             {successMessage && (
-                <div className="admin-alert admin-alert-success" style={{
+                <div className="ap-alert ap-alert-success" style={{
                     whiteSpace: 'pre-line',
                     fontFamily: 'monospace',
                     fontSize: '0.95rem',
@@ -252,37 +249,37 @@ const AdminUsersPage = () => {
             )}
 
             {errorMessage && (
-                <div className="admin-alert admin-alert-error">
+                <div className="ap-alert ap-alert-error">
                     {errorMessage}
                 </div>
             )}
 
-            <div className="admin-stats-grid">
-                <div className="admin-stat-card">
-                    <div className="admin-stat-value">{usuarios.length}</div>
-                    <div className="admin-stat-label">Total Usuarios</div>
+            <div className="ap-stats-grid">
+                <div className="ap-stat-card">
+                    <div className="ap-stat-value">{usuarios.length}</div>
+                    <div className="ap-stat-label">Total Usuarios</div>
                 </div>
-                <div className="admin-stat-card">
-                    <div className="admin-stat-value">{usuarios.filter(u => u.activo).length}</div>
-                    <div className="admin-stat-label">Activos</div>
+                <div className="ap-stat-card">
+                    <div className="ap-stat-value">{usuarios.filter(u => u.activo).length}</div>
+                    <div className="ap-stat-label">Activos</div>
                 </div>
-                <div className="admin-stat-card">
-                    <div className="admin-stat-value">{usuarios.filter(u => !u.activo).length}</div>
-                    <div className="admin-stat-label">Inactivos</div>
+                <div className="ap-stat-card">
+                    <div className="ap-stat-value">{usuarios.filter(u => !u.activo).length}</div>
+                    <div className="ap-stat-label">Inactivos</div>
                 </div>
-                <div className="admin-stat-card">
-                    <div className="admin-stat-value">
+                <div className="ap-stat-card">
+                    <div className="ap-stat-value">
                         {usuarios.reduce((sum, u) => sum + (u.total_productos || 0), 0).toLocaleString('es-CO')}
                     </div>
-                    <div className="admin-stat-label">Total Productos</div>
+                    <div className="ap-stat-label">Total Productos</div>
                 </div>
             </div>
 
-            <div className="admin-users-card">
-                <h3 className="admin-users-card-title">Lista de Usuarios</h3>
+            <div className="ap-users-card">
+                <h3 className="ap-users-card-title">Lista de Usuarios</h3>
                 
-                <div className="admin-table-wrapper">
-                    <table className="admin-users-table">
+                <div className="ap-table-wrapper">
+                    <table className="ap-users-table">
                         <thead>
                             <tr>
                                 <th>Email</th>
@@ -303,12 +300,12 @@ const AdminUsersPage = () => {
                                 else if (productCount > 50) usageLevel = 'medium';
 
                                 return (
-                                    <tr key={user.id} className={!user.activo ? 'admin-row-inactive' : ''}>
+                                    <tr key={user.id} className={!user.activo ? 'ap-row-inactive' : ''}>
                                         <td>{user.email}</td>
                                         <td>{user.nombre_completo}</td>
                                         <td>{user.empresa_nombre || '-'}</td>
                                         <td>
-                                            <span className={`admin-role-badge admin-role-badge-${user.rol}`}>
+                                            <span className={`ap-role-badge ap-role-badge-${user.rol}`}>
                                                 {user.rol}
                                             </span>
                                         </td>
@@ -335,7 +332,7 @@ const AdminUsersPage = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <span className={`admin-status-badge ${user.activo ? 'admin-status-active' : 'admin-status-inactive'}`}>
+                                            <span className={`ap-status-badge ${user.activo ? 'ap-status-active' : 'ap-status-inactive'}`}>
                                                 {user.activo ? '✓ Activo' : '⏸ Inactivo'}
                                             </span>
                                         </td>
@@ -349,7 +346,7 @@ const AdminUsersPage = () => {
                                             {user.id !== perfil.id && (
                                                 <button
                                                     onClick={() => handleToggleStatus(user.id, user.activo)}
-                                                    className={`admin-btn admin-btn-sm ${user.activo ? 'admin-btn-warning' : 'admin-btn-success'}`}
+                                                    className={`ap-btn ap-btn-sm ${user.activo ? 'ap-btn-warning' : 'ap-btn-success'}`}
                                                 >
                                                     {user.activo ? 'Desactivar' : 'Activar'}
                                                 </button>
@@ -365,59 +362,59 @@ const AdminUsersPage = () => {
 
             {/* Modal para crear usuario */}
             {showCreateModal && (
-                <div className="admin-modal-overlay">
-                    <div className="admin-modal-content" style={{ maxWidth: 500 }}>
-                        <div className="admin-modal-header">
-                            <h3 className="admin-modal-title">Crear Nuevo Usuario</h3>
-                            <button onClick={() => setShowCreateModal(false)} className="admin-modal-close-btn">
+                <div className="ap-modal-overlay">
+                    <div className="ap-modal-content" style={{ maxWidth: 500 }}>
+                        <div className="ap-modal-header">
+                            <h3 className="ap-modal-title">Crear Nuevo Usuario</h3>
+                            <button onClick={() => setShowCreateModal(false)} className="ap-modal-close-btn">
                                 ×
                             </button>
                         </div>
                         
                         <form onSubmit={handleCreateUser}>
-                            <div className="admin-modal-body">
-                                <div className="admin-form-group">
-                                    <label className="admin-form-label">Email</label>
+                            <div className="ap-modal-body">
+                                <div className="ap-form-group">
+                                    <label className="ap-form-label">Email</label>
                                     <input
                                         type="email"
                                         required
                                         value={formData.email}
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                        className="admin-form-input"
+                                        className="ap-form-input"
                                         placeholder="usuario@ejemplo.com"
                                     />
                                 </div>
 
-                                <div className="admin-form-group">
-                                    <label className="admin-form-label">Nombre Completo</label>
+                                <div className="ap-form-group">
+                                    <label className="ap-form-label">Nombre Completo</label>
                                     <input
                                         type="text"
                                         required
                                         value={formData.nombre_completo}
                                         onChange={(e) => setFormData({...formData, nombre_completo: e.target.value})}
-                                        className="admin-form-input"
+                                        className="ap-form-input"
                                         placeholder="Juan Pérez"
                                     />
                                 </div>
 
-                                <div className="admin-form-group">
-                                    <label className="admin-form-label">Nombre de la Empresa</label>
+                                <div className="ap-form-group">
+                                    <label className="ap-form-label">Nombre de la Empresa</label>
                                     <input
                                         type="text"
                                         required
                                         value={formData.empresa_nombre}
                                         onChange={(e) => setFormData({...formData, empresa_nombre: e.target.value})}
-                                        className="admin-form-input"
+                                        className="ap-form-input"
                                         placeholder="Mi Negocio S.A.S"
                                     />
                                 </div>
 
-                                <div className="admin-form-group">
-                                    <label className="admin-form-label">Rol</label>
+                                <div className="ap-form-group">
+                                    <label className="ap-form-label">Rol</label>
                                     <select
                                         value={formData.rol}
                                         onChange={(e) => setFormData({...formData, rol: e.target.value})}
-                                        className="admin-form-input"
+                                        className="ap-form-input"
                                     >
                                         <option value="usuario">Usuario</option>
                                         <option value="admin">Administrador</option>
@@ -436,11 +433,11 @@ const AdminUsersPage = () => {
                                 </div>
                             </div>
 
-                            <div className="admin-modal-footer">
-                                <button type="button" onClick={() => setShowCreateModal(false)} className="admin-btn admin-btn-secondary">
+                            <div className="ap-modal-footer">
+                                <button type="button" onClick={() => setShowCreateModal(false)} className="ap-btn ap-btn-secondary">
                                     Cancelar
                                 </button>
-                                <button type="submit" disabled={actionLoading} className="admin-btn admin-btn-primary admin-btn-success">
+                                <button type="submit" disabled={actionLoading} className="ap-btn ap-btn-primary ap-btn-success">
                                     {actionLoading ? 'Creando...' : 'Crear Usuario'}
                                 </button>
                             </div>
@@ -451,13 +448,13 @@ const AdminUsersPage = () => {
 
             {/* Modal para mostrar contraseña generada */}
             {showPasswordModal && (
-                <div className="admin-modal-overlay">
-                    <div className="admin-modal-content" style={{ maxWidth: 500 }}>
-                        <div className="admin-modal-header">
-                            <h3 className="admin-modal-title">Usuario Creado Exitosamente</h3>
+                <div className="ap-modal-overlay">
+                    <div className="ap-modal-content" style={{ maxWidth: 500 }}>
+                        <div className="ap-modal-header">
+                            <h3 className="ap-modal-title">Usuario Creado Exitosamente</h3>
                         </div>
                         
-                        <div className="admin-modal-body" style={{ padding: '30px' }}>
+                        <div className="ap-modal-body" style={{ padding: '30px' }}>
                             <div style={{ 
                                 background: 'var(--color-surface-300)', 
                                 padding: '24px', 
@@ -534,7 +531,7 @@ const AdminUsersPage = () => {
                                                     btn.style.borderColor = '';
                                                 }, 2000);
                                             }}
-                                            className="admin-btn admin-btn-secondary"
+                                            className="ap-btn ap-btn-secondary"
                                             style={{
                                                 minWidth: '90px',
                                                 padding: '12px 16px',
@@ -573,10 +570,10 @@ const AdminUsersPage = () => {
                             </div>
                         </div>
 
-                        <div className="admin-modal-footer">
+                        <div className="ap-modal-footer">
                             <button 
                                 onClick={() => setShowPasswordModal(false)} 
-                                className="admin-btn admin-btn-primary"
+                                className="ap-btn ap-btn-primary"
                                 style={{ width: '100%' }}
                             >
                                 Entendido
@@ -590,3 +587,9 @@ const AdminUsersPage = () => {
 };
 
 export default AdminUsersPage;
+
+
+
+
+
+

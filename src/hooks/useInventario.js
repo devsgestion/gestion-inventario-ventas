@@ -78,7 +78,7 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
             return;
         }
 
-        console.log('🟢 [Realtime] useEffect ejecutado para empresa:', empresaId);
+        // (log eliminado para mayor fluidez)
 
         // Función local estable que no causa re-renders
         const loadProducts = async () => {
@@ -125,7 +125,7 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
         const subscribeTimeout = setTimeout(() => {
             if (!isSubscribed) return;
 
-            console.log('🟢 [Realtime] Iniciando suscripción para empresa:', empresaId);
+            // (log eliminado para mayor fluidez)
 
             // 1. Suscribirse a INSERTS, UPDATES, y DELETES en la tabla 'productos'
             channel = supabase
@@ -141,7 +141,7 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
                 )
                 .subscribe((status, err) => {
                     if (!isSubscribed) return;
-                    console.log('🔌 [Realtime] Estado de suscripción:', status);
+                    // (log eliminado para mayor fluidez)
                     
                     if (err) {
                         console.error('❌ [Realtime] Error en suscripción:', err);
@@ -149,7 +149,7 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
                     }
                     
                     if (status === 'SUBSCRIBED') {
-                        console.log('📥 [Realtime] Cargando inventario inicial');
+                        // (log eliminado para mayor fluidez)
                         loadProducts(); 
                     }
                     
@@ -161,12 +161,12 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
 
         // 4. Limpieza
         return () => {
-            console.log('🔴 [Realtime] Cleanup para empresa:', empresaId);
+            // (log eliminado para mayor fluidez)
             isSubscribed = false;
             clearTimeout(subscribeTimeout);
             
             if (channel) {
-                console.log('🧹 [Realtime] Removiendo canal');
+                // (log eliminado para mayor fluidez)
                 supabase.removeChannel(channel);
             }
         };
@@ -177,7 +177,7 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
     // 🔄 Este useEffect se usa para refrescos manuales desde el padre
     useEffect(() => {
         if (empresaId && refreshTrigger > 0) {
-            console.log('🔄 [Inventario] Refresco manual solicitado');
+            // (log eliminado para mayor fluidez)
             fetchProductos();
         }
     }, [refreshTrigger]); // ✅ SOLO refreshTrigger - fetchProductos se llama manualmente

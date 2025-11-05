@@ -1,0 +1,274 @@
+/* ============================================
+   PÁGINA PRINCIPAL DE PEDIDOS
+   ============================================ */
+
+.p-pedidos {
+  padding: var(--space-xl);
+  background: var(--color-surface-100);
+  min-height: 100vh;
+}
+
+.p-pedidos__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.p-pedidos h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--color-text-high);
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.p-pedidos__subtitle {
+  color: var(--color-text-medium);
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+/* ============================================
+   FILTROS
+   ============================================ */
+.p-pedidos__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-surface-200);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-base);
+}
+
+.p-pedidos__filters label {
+  font-weight: 500;
+  color: var(--color-text-high);
+  font-size: 0.9rem;
+}
+
+.p-pedidos__filter-select {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-300);
+  color: var(--color-text-high);
+  font-size: 0.9rem;
+  min-width: 180px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.p-pedidos__filter-select:hover {
+  border-color: var(--color-brand);
+}
+
+.p-pedidos__filter-select:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+/* ============================================
+   LISTA DE PEDIDOS
+   ============================================ */
+.p-pedidos__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-md);
+}
+
+.p-pedidos__item {
+  background: var(--color-surface-200);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--border-radius-lg);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-base);
+}
+
+.p-pedidos__item:hover {
+  border-color: var(--color-brand);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.p-pedidos__item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.p-pedidos__item-header h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text-high);
+}
+
+.p-pedidos__item-info {
+  display: flex;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  color: var(--color-text-medium);
+}
+
+.p-pedidos__item-info span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.p-pedidos__empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--color-surface-200);
+  border-radius: var(--border-radius-lg);
+  border: 2px dashed var(--color-border);
+}
+
+.p-pedidos__empty p {
+  font-size: 1.125rem;
+  margin-bottom: var(--space-lg);
+  color: var(--color-text-medium);
+}
+
+/* ============================================
+   BADGES DE ESTADO
+   ============================================ */
+.pedidos-page__badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  display: inline-flex;
+  align-items: center;
+}
+
+.pedidos-page__badge--warning {
+  background: rgba(243, 156, 18, 0.15);
+  color: var(--color-warning);
+  border: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+.pedidos-page__badge--info {
+  background: rgba(52, 152, 219, 0.15);
+  color: var(--color-brand);
+  border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.pedidos-page__badge--primary {
+  background: rgba(155, 89, 182, 0.15);
+  color: #9b59b6;
+  border: 1px solid rgba(155, 89, 182, 0.3);
+}
+
+.pedidos-page__badge--success {
+  background: rgba(46, 204, 113, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.pedidos-page__badge--danger {
+  background: rgba(231, 76, 60, 0.15);
+  color: var(--color-danger);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.pedidos-page__badge--secondary {
+  background: rgba(127, 140, 141, 0.15);
+  color: var(--color-text-medium);
+  border: 1px solid var(--color-border);
+}
+
+/* ============================================
+   BOTONES
+   ============================================ */
+.pedidos-page__btn {
+  padding: 0.625rem 1.125rem;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.pedidos-page__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pedidos-page__btn--primary {
+  background: var(--color-brand);
+  color: white;
+  box-shadow: var(--shadow-base);
+}
+
+.pedidos-page__btn--primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.pedidos-page__btn--secondary {
+  background: var(--color-surface-200);
+  color: var(--color-text-high);
+  border: 1px solid var(--color-border);
+}
+
+.pedidos-page__btn--secondary:hover:not(:disabled) {
+  background: var(--color-surface-300);
+  border-color: var(--color-brand);
+}
+
+/* ============================================
+   ESTADOS
+   ============================================ */
+.p-pedidos__loading,
+.p-pedidos__empty-state {
+  text-align: center;
+  padding: 3rem var(--space-md);
+  color: var(--color-text-medium);
+  font-size: 1rem;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  .p-pedidos {
+    padding: var(--space-lg) var(--space-md) var(--space-md) var(--space-md);
+  }
+
+  .p-pedidos h2 {
+    font-size: 1.5rem;
+  }
+
+  .p-pedidos__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .p-pedidos__item-info {
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+}

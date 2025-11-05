@@ -169,7 +169,7 @@ const InventarioPage = () => {
         return (
             <div className="c-state-message c-card">
                 <p>No se pudo cargar la información de la empresa.</p>
-                <button onClick={logout} className="btn btn-primary u-mt-lg">Cerrar Sesión e Intentar de Nuevo</button>
+                <p className="u-mt-lg">Por favor, contacta al administrador o recarga la página.</p>
             </div>
         );
     }
@@ -186,12 +186,6 @@ const InventarioPage = () => {
                          )}
                      </h1>
                  </div>
-                 <button
-                     onClick={logout}
-                     className="btn btn-secondary"
-                 >
-                     Cerrar Sesión
-                 </button>
             </header>
 
             {/* Contenido Principal */}
