@@ -31,3 +31,19 @@ export const parseInteger = (value, fallback = 0) => {
     const parsed = Number.parseInt(value, 10);
     return Number.isNaN(parsed) ? fallback : parsed;
 };
+
+// Alias para compatibilidad
+export const formatCurrency = formatCurrencyCOP;
+
+// Formatear fecha y hora
+export const formatDateTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('es-CO', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(date);
+};

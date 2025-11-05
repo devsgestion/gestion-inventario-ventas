@@ -75,6 +75,11 @@ const usePermissions = () => {
             canEditPedidos: ['superadmin', 'admin', 'gestor'].includes(normalizedRol),
             canDeletePedidos: ['superadmin', 'admin'].includes(normalizedRol),
             
+            // CAMBIOS Y DEVOLUCIONES
+            canProcessCambios: ['superadmin', 'admin', 'vendedor'].includes(normalizedRol),
+            canViewCambios: ['superadmin', 'admin', 'vendedor'].includes(normalizedRol),
+            canCancelCambios: ['superadmin', 'admin'].includes(normalizedRol),
+            
             // PERFIL
             canViewOwnProfile: true, // Todos
             canEditOwnProfile: true, // Todos
@@ -88,6 +93,7 @@ const usePermissions = () => {
                     '/inventario': ['superadmin', 'admin', 'vendedor', 'gestor'].includes(normalizedRol),
                     '/ventas': true, // Todos tienen acceso
                     '/pedidos': ['superadmin', 'admin', 'gestor'].includes(normalizedRol),
+                    '/cambios-devoluciones': ['superadmin', 'admin', 'vendedor'].includes(normalizedRol),
                     '/profile': true,
                 };
                 

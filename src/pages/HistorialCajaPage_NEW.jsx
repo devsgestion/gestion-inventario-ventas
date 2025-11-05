@@ -36,7 +36,7 @@ const HistorialCajaPage = () => {
             .from('cierres_caja')
             .select('*')
             .eq('empresa_id', empresaId)
-            .order('fecha_cierre', { ascending: false });
+            .order('fecha_cierre', { ascending: false});
 
         if (error) console.error("Error cargando historial de cierres:", error);
         
@@ -92,13 +92,13 @@ const HistorialCajaPage = () => {
     if (!perfil || !empresaId) return <div className="c-state-message c-card">No se pudo cargar la información de la empresa.</div>;
     
     const totalCierres = cierres.reduce((sum, c) => sum + Number(c.total_ingresos), 0);
+    const totalDiferenciaCambios = cambiosDia ? cambiosDia.reduce((sum, c) => sum + Number(c.diferencia), 0) : 0;
 
     return (
         <div className="m-inventory-layout p-page-layout"> 
             
             <h1 className="c-page-header__title">Historial de Cierres de Caja</h1>
             
-            {/* 💡 NUEVO: Contenedor para los totales globales (parte superior) */}
             <div className="p-historial-caja__global-summary u-mb-xl">
                 <div className="c-card p-historial-caja__summary-item badge-success">
                     <strong>Total Ingresos Históricos:</strong> {formatCurrencyCOP(totalCierres)}
@@ -110,10 +110,9 @@ const HistorialCajaPage = () => {
             
             <div className="p-historial-caja__grid">
                 
-                {/* 1. SIDEBAR DE CIERRES */}
                 <div className="c-card p-historial-caja__sidebar">
                     <h3 className="c-card__title">Cierres por Día</h3>
-                    <div className="p-historial-caja__items-list"> {/* Nuevo wrapper para la lista scrollable */}
+                    <div className="p-historial-caja__items-list">
                         {cierres.map(cierre => (
                             <div 
                                 key={cierre.id} 
@@ -130,7 +129,6 @@ const HistorialCajaPage = () => {
                     </div>
                 </div>
                 
-                {/* 2. DETALLE DE PRODUCTOS VENDIDOS */}
                 <div className="c-card p-historial-caja__detail">
                     <h3 className="c-card__title">Detalle del Día {selectedDate && `(${selectedDate})`}</h3>
                     
@@ -171,122 +169,13 @@ const HistorialCajaPage = () => {
                                                     {formatCurrencyCOP(item.total_linea)}
                                                 </td>
                                                 <td className="c-data-table__cell">
-                                                    {/* Muestra nota si el precio fue modificado */}
-                                                    {item.precio_modificado
-                                                        ? `Precio modificado en venta`
-                                                        : ''}
+                                                    {item.precio_modificado ? `Precio modificado en venta` : ''}
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
-
-                            {/* Sección de Cambios/Devoluciones */}
-                            {cambiosDia && cambiosDia.length > 0 && (
-                                <div style={{marginTop: 'var(--space-xl)'}}>
-                                    <h4 className="c-card__title" style={{marginBottom: 'var(--space-md)'}}>
-                                        🔄 Cambios y Devoluciones del Día
-                                    </h4>
-                                    <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--space-md)'}}>
-                                        {cambiosDia.map((cambio, index) => (
-                                            <div 
-                                                key={cambio.id}
-                                                style={{
-                                                    padding: 'var(--space-md)',
-                                                    background: 'var(--color-surface-200)',
-                                                    borderRadius: 'var(--border-radius-md)',
-                                                    border: '1px solid var(--color-border)'
-                                                }}
-                                            >
-                                                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)'}}>
-                                                    <div>
-                                                        <strong>Cambio #{index + 1}</strong>
-                                                        {cambio.venta_original?.numero_venta && (
-                                                            <span style={{marginLeft: 'var(--space-sm)', color: 'var(--color-text-medium)', fontSize: '0.875rem'}}>
-                                                                (Venta original: #{cambio.venta_original.numero_venta})
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <span style={{fontSize: '0.875rem', color: 'var(--color-text-medium)'}}>
-                                                        {new Date(cambio.created_at).toLocaleTimeString('es-CO', {hour: '2-digit', minute: '2-digit'})}
-                                                    </span>
-                                                </div>
-
-                                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-md)', marginBottom: 'var(--space-sm)'}}>
-                                                    <div>
-                                                        <div style={{fontSize: '0.75rem', color: 'var(--color-text-medium)', marginBottom: '0.25rem'}}>
-                                                            Devolvió
-                                                        </div>
-                                                        <div style={{fontWeight: 600, color: 'var(--color-warning)'}}>
-                                                            {formatCurrencyCOP(cambio.valor_devolucion)}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <div style={{fontSize: '0.75rem', color: 'var(--color-text-medium)', marginBottom: '0.25rem'}}>
-                                                            Nuevos
-                                                        </div>
-                                                        <div style={{fontWeight: 600, color: 'var(--color-info)'}}>
-                                                            {formatCurrencyCOP(cambio.valor_nuevos)}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <div style={{fontSize: '0.75rem', color: 'var(--color-text-medium)', marginBottom: '0.25rem'}}>
-                                                            Diferencia
-                                                        </div>
-                                                        <div style={{
-                                                            fontWeight: 700,
-                                                            color: cambio.diferencia > 0 ? 'var(--color-success)' : cambio.diferencia < 0 ? 'var(--color-danger)' : 'var(--color-text-medium)'
-                                                        }}>
-                                                            {cambio.diferencia > 0 ? '+' : ''}{formatCurrencyCOP(cambio.diferencia)}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {cambio.motivo && (
-                                                    <div style={{fontSize: '0.875rem', marginTop: 'var(--space-sm)'}}>
-                                                        <strong>Motivo:</strong> {cambio.motivo}
-                                                    </div>
-                                                )}
-
-                                                {cambio.observaciones && (
-                                                    <div style={{fontSize: '0.875rem', color: 'var(--color-text-medium)', marginTop: '0.25rem'}}>
-                                                        <strong>Observaciones:</strong> {cambio.observaciones}
-                                                    </div>
-                                                )}
-
-                                                {cambio.usuario && (
-                                                    <div style={{fontSize: '0.75rem', color: 'var(--color-text-medium)', marginTop: 'var(--space-sm)', paddingTop: 'var(--space-sm)', borderTop: '1px solid var(--color-border)'}}>
-                                                        👤 Procesado por: {cambio.usuario.nombre_completo || cambio.usuario.nombre}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-
-                                        {/* Resumen total de cambios */}
-                                        <div style={{
-                                            padding: 'var(--space-md)',
-                                            background: 'var(--color-surface-300)',
-                                            borderRadius: 'var(--border-radius-md)',
-                                            border: '2px solid var(--color-primary)',
-                                            fontWeight: 600
-                                        }}>
-                                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                                                <span>💰 Total diferencia en cambios del día:</span>
-                                                <span style={{
-                                                    fontSize: '1.25rem',
-                                                    color: cambiosDia.reduce((sum, c) => sum + Number(c.diferencia), 0) > 0 
-                                                        ? 'var(--color-success)' 
-                                                        : 'var(--color-danger)'
-                                                }}>
-                                                    {cambiosDia.reduce((sum, c) => sum + Number(c.diferencia), 0) > 0 ? '+' : ''}
-                                                    {formatCurrencyCOP(cambiosDia.reduce((sum, c) => sum + Number(c.diferencia), 0))}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </>
                     )}
 
@@ -385,12 +274,10 @@ const HistorialCajaPage = () => {
                                         <span>💰 Total diferencia en cambios del día:</span>
                                         <span style={{
                                             fontSize: '1.25rem',
-                                            color: cambiosDia.reduce((sum, c) => sum + Number(c.diferencia), 0) > 0 
-                                                ? 'var(--color-success)' 
-                                                : 'var(--color-danger)'
+                                            color: totalDiferenciaCambios > 0 ? 'var(--color-success)' : 'var(--color-danger)'
                                         }}>
-                                            {cambiosDia.reduce((sum, c) => sum + Number(c.diferencia), 0) > 0 ? '+' : ''}
-                                            {formatCurrencyCOP(cambiosDia.reduce((sum, c) => sum + Number(c.diferencia), 0))}
+                                            {totalDiferenciaCambios > 0 ? '+' : ''}
+                                            {formatCurrencyCOP(totalDiferenciaCambios)}
                                         </span>
                                     </div>
                                 </div>
@@ -399,8 +286,6 @@ const HistorialCajaPage = () => {
                     )}
                 </div>
             </div>
-            {/* 💡 ELIMINAMOS EL FOOTER, sus elementos ahora están en p-historial-caja__global-summary */}
-            {/* <div className="p-historial-caja__footer">...</div> */}
         </div>
     );
 };

@@ -75,6 +75,17 @@ const Sidebar = () => {
                                 </NavLink>
                             </li>
                         )}
+                        {permissions.canProcessCambios && (
+                            <li className="c-nav-item">
+                                <NavLink 
+                                    to="/cambios-devoluciones" 
+                                    className={({ isActive }) => `c-nav-link ${isActive ? 'c-nav-link-active' : ''}`}
+                                    onClick={closeSidebar}
+                                >
+                                    <span className="c-nav-link__icon">🔄</span><span className="c-nav-link__text">Cambios y Devoluciones</span>
+                                </NavLink>
+                            </li>
+                        )}
                         {(permissions.isSuperAdmin || permissions.isAdmin || permissions.isGestor) && (
                             <li className="c-nav-item">
                                 <NavLink 

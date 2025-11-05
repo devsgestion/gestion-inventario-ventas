@@ -109,15 +109,58 @@ const AjusteStockModal = ({ producto, onClose, onStockAdjusted }) => {
                     <form onSubmit={handleAjuste} className="c-form">
                         <div className="c-form-group">
                             <label className="c-form-label">Cantidad a Sumar/Restar:</label>
-                            <p className="c-form-message c-form-message--help u-mb-xs">(Ej: 5 para sumar, -3 para restar)</p>
-                            <input 
-                                type="number" 
-                                value={cantidadAjuste} 
-                                onChange={(e) => setCantidadAjuste(e.target.value)} 
-                                required 
-                                className={`c-form-input${error && error.toLowerCase().includes('cantidad') ? ' c-form-input--error' : ''}`}
-                                placeholder="Ej: 5 o -3"
-                            />
+                            <p className="c-form-message c-form-message--help u-mb-xs">(Usa los botones + y - o escribe directamente)</p>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <button 
+                                    type="button"
+                                    onClick={() => setCantidadAjuste(prev => {
+                                        const num = parseInteger(prev, 0);
+                                        return String(num - 1);
+                                    })}
+                                    className="btn btn-secondary"
+                                    style={{ 
+                                        fontSize: '1.5rem', 
+                                        padding: '0.5rem 1rem',
+                                        minWidth: '50px',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    −
+                                </button>
+                                <input 
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="-?[0-9]*"
+                                    value={cantidadAjuste} 
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        // Permitir solo números y el signo menos al inicio
+                                        if (value === '' || value === '-' || /^-?\d+$/.test(value)) {
+                                            setCantidadAjuste(value);
+                                        }
+                                    }} 
+                                    required 
+                                    className={`c-form-input${error && error.toLowerCase().includes('cantidad') ? ' c-form-input--error' : ''}`}
+                                    placeholder="Ej: 5 o -3"
+                                    style={{ flex: 1, textAlign: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setCantidadAjuste(prev => {
+                                        const num = parseInteger(prev, 0);
+                                        return String(num + 1);
+                                    })}
+                                    className="btn btn-primary"
+                                    style={{ 
+                                        fontSize: '1.5rem', 
+                                        padding: '0.5rem 1rem',
+                                        minWidth: '50px',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    +
+                                </button>
+                            </div>
                             {error && error.toLowerCase().includes('cantidad') && (
                                 <span className="c-form-message c-form-message--error">{error}</span>
                             )}

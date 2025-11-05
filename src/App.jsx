@@ -17,6 +17,7 @@ const HistorialCajaPage = lazy(() => import('./pages/HistorialCajaPage'));
 const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const CambiosDevolucionesPage = lazy(() => import('./pages/CambiosDevolucionesPage'));
 
 let appMountCount = 0;
 
@@ -45,6 +46,7 @@ function App() {
                     <Route path="/settings" element={<EmpresaSettings />} /> 
                     <Route path="/historial" element={<HistorialCajaPage />} />
                     <Route path="/admin" element={<AdminUsersPage />} />
+                    <Route path="/cambios-devoluciones" element={<CambiosDevolucionesPage />} />
                 </Route>
                 
                 {/* Redirección 404 */}
