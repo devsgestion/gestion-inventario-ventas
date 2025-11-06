@@ -4,6 +4,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../api/supabaseClient';
 import useAuth from '../hooks/useAuth.jsx';
 import usePermissions from '../hooks/usePermissions';
+import useCambiosDevoluciones from '../hooks/useCambiosDevoluciones';
+import ConfirmModal from '../components/common/ConfirmModal';
+import { ToastContainer } from '../components/common/Toast';
+import useToast from '../hooks/useToast';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrencyCOP } from '../utils/formatters';
 import '../styles/ventas.css'; 
@@ -13,20 +17,25 @@ const HistorialCajaPage = () => {
     const permissions = usePermissions();
     const navigate = useNavigate();
     const empresaId = perfil?.empresa_id;
+    const { anularCambio } = useCambiosDevoluciones(empresaId);
+    const { toasts, showToast, removeToast } = useToast();
 
     const [cierres, setCierres] = useState([]);
     const [detalleDia, setDetalleDia] = useState(null); 
     const [cambiosDia, setCambiosDia] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(null);
+    const [showAnularModal, setShowAnularModal] = useState(false);
+    const [cambioToAnular, setCambioToAnular] = useState(null);
+    const [procesandoAnulacion, setProcesandoAnulacion] = useState(false);
 
     // Verificar permisos
     useEffect(() => {
         if (perfil && !permissions.canViewCashHistory) {
-            alert('⛔ Acceso denegado: No tienes permisos para ver el historial de caja');
+            showToast('Acceso denegado: No tienes permisos para ver el historial de caja', 'error', 5000);
             navigate('/ventas');
         }
-    }, [perfil, permissions, navigate]);
+    }, [perfil, permissions, navigate, showToast]);
 
     const fetchCierres = useCallback(async () => {
         if (!empresaId) return;
@@ -80,6 +89,33 @@ const HistorialCajaPage = () => {
         if (cambiosError) console.error("Error cargando cambios:", cambiosError);
         setCambiosDia(cambiosData || []);
     }, [empresaId]);
+
+    const handleAnularClick = (cambioId) => {
+        setCambioToAnular(cambioId);
+        setShowAnularModal(true);
+    };
+
+    const handleConfirmAnular = async (motivo) => {
+        if (!cambioToAnular) return;
+
+        setProcesandoAnulacion(true);
+        setShowAnularModal(false);
+        
+        const resultado = await anularCambio(cambioToAnular, perfil?.id, motivo);
+        
+        setProcesandoAnulacion(false);
+        setCambioToAnular(null);
+
+        if (resultado.success) {
+            showToast('Cambio anulado correctamente', 'success');
+            // Recargar detalle del día seleccionado
+            if (selectedDate) {
+                handleVerDetalle(selectedDate);
+            }
+        } else {
+            showToast(`Error al anular: ${resultado.error}`, 'error');
+        }
+    };
 
 
     useEffect(() => {
@@ -260,6 +296,29 @@ const HistorialCajaPage = () => {
                                                         👤 Procesado por: {cambio.usuario.nombre_completo || cambio.usuario.nombre}
                                                     </div>
                                                 )}
+
+                                                {!cambio.anulado && (
+                                                    <div style={{marginTop: 'var(--space-md)', display: 'flex', justifyContent: 'flex-end'}}>
+                                                        <button
+                                                            onClick={() => handleAnularClick(cambio.id)}
+                                                            disabled={procesandoAnulacion}
+                                                            style={{
+                                                                padding: '0.5rem 1rem',
+                                                                background: 'var(--color-danger)',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: 'var(--border-radius-md)',
+                                                                cursor: procesandoAnulacion ? 'not-allowed' : 'pointer',
+                                                                fontSize: '0.875rem',
+                                                                fontWeight: 600,
+                                                                opacity: procesandoAnulacion ? 0.6 : 1
+                                                            }}
+                                                            title="Anular este cambio/devolución"
+                                                        >
+                                                            {procesandoAnulacion ? '⏳ Anulando...' : '❌ Anular Cambio'}
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
 
@@ -307,9 +366,26 @@ const HistorialCajaPage = () => {
                                             padding: 'var(--space-md)',
                                             background: 'var(--color-surface-200)',
                                             borderRadius: 'var(--border-radius-md)',
-                                            border: '1px solid var(--color-border)'
+                                            border: '1px solid var(--color-border)',
+                                            opacity: cambio.anulado ? 0.6 : 1
                                         }}
                                     >
+                                        {cambio.anulado && (
+                                            <div style={{
+                                                background: 'var(--color-danger-light)',
+                                                padding: 'var(--space-sm)',
+                                                borderRadius: 'var(--border-radius-sm)',
+                                                marginBottom: 'var(--space-sm)',
+                                                border: '2px solid var(--color-danger)'
+                                            }}>
+                                                <strong style={{color: 'var(--color-danger)'}}>❌ CAMBIO ANULADO</strong>
+                                                {cambio.motivo_anulacion && (
+                                                    <p style={{fontSize: '0.75rem', marginTop: '0.25rem', marginBottom: 0}}>
+                                                        {cambio.motivo_anulacion}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                         <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)'}}>
                                             <div>
                                                 <strong>Cambio #{index + 1}</strong>
@@ -401,6 +477,43 @@ const HistorialCajaPage = () => {
             </div>
             {/* 💡 ELIMINAMOS EL FOOTER, sus elementos ahora están en p-historial-caja__global-summary */}
             {/* <div className="p-historial-caja__footer">...</div> */}
+
+            <ConfirmModal
+                isOpen={showAnularModal}
+                onClose={() => {
+                    setShowAnularModal(false);
+                    setCambioToAnular(null);
+                }}
+                onConfirm={handleConfirmAnular}
+                title="¿Anular este cambio?"
+                message={
+                    <div>
+                        <p style={{marginBottom: 'var(--space-sm)'}}>
+                            Esta acción revertirá:
+                        </p>
+                        <ul style={{
+                            listStyle: 'disc',
+                            paddingLeft: 'var(--space-lg)',
+                            marginBottom: 'var(--space-md)'
+                        }}>
+                            <li>El inventario volverá a su estado original</li>
+                            <li>La diferencia se restará de la caja abierta</li>
+                            <li>El cambio quedará marcado como anulado</li>
+                        </ul>
+                        <p style={{fontWeight: 600, color: 'var(--color-danger)'}}>
+                            Esta operación no se puede deshacer
+                        </p>
+                    </div>
+                }
+                type="danger"
+                confirmText="Sí, anular cambio"
+                cancelText="Cancelar"
+                requireInput={true}
+                inputLabel="Motivo de la anulación *"
+                inputPlaceholder="Explica por qué estás anulando este cambio..."
+            />
+
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 };

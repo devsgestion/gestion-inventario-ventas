@@ -251,6 +251,48 @@ export const useCambiosDevoluciones = (empresaId) => {
         }
     };
 
+    // Anular un cambio/devolución
+    const anularCambio = async (cambioId, usuarioId, motivo_anulacion) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            console.log('🔄 Intentando anular cambio:', { cambioId, usuarioId, motivo_anulacion });
+
+            // Llamar a la función RPC que revierte todo el cambio
+            const { data, error: rpcError } = await supabase
+                .rpc('anular_cambio_devolucion', {
+                    p_cambio_id: cambioId,
+                    p_usuario_anula_id: usuarioId,
+                    p_motivo_anulacion: motivo_anulacion
+                });
+
+            if (rpcError) {
+                console.error('❌ Error RPC completo:', rpcError);
+                
+                // Si es error 404, significa que la función no existe
+                if (rpcError.code === 'PGRST202' || rpcError.message?.includes('not found')) {
+                    throw new Error('⚠️ La función anular_cambio_devolucion no existe en Supabase. Por favor ejecuta el script SQL: docs/CREAR_FUNCION_ANULAR_CAMBIO.sql');
+                }
+                
+                throw rpcError;
+            }
+
+            console.log('✅ Cambio anulado exitosamente:', data);
+
+            // Recargar lista de cambios
+            await fetchCambios();
+
+            return { success: true, message: 'Cambio anulado correctamente' };
+        } catch (err) {
+            console.error('❌ Error al anular cambio:', err);
+            setError(err.message);
+            return { success: false, error: err.message };
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Cargar cambios al montar el componente
     useEffect(() => {
         fetchCambios();
@@ -265,7 +307,8 @@ export const useCambiosDevoluciones = (empresaId) => {
         buscarVentasPorProducto,
         buscarVentas,
         obtenerProductosVenta,
-        procesarCambio
+        procesarCambio,
+        anularCambio
     };
 };
 

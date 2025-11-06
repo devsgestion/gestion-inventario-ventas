@@ -5,19 +5,50 @@ import React, { useState } from 'react';
 import useAuth from '../hooks/useAuth';
 import useCambiosDevoluciones from '../hooks/useCambiosDevoluciones';
 import ProcesarCambioModal from '../components/cambios/ProcesarCambioModal';
+import ConfirmModal from '../components/common/ConfirmModal';
+import { ToastContainer } from '../components/common/Toast';
+import useToast from '../hooks/useToast';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
 import '../styles/CambiosDevoluciones.css';
 
 const CambiosDevolucionesPage = () => {
     const { perfil } = useAuth();
     const empresaId = perfil?.empresa_id;
-    const { cambios, loading, error, fetchCambios } = useCambiosDevoluciones(empresaId);
+    const { cambios, loading, error, fetchCambios, anularCambio } = useCambiosDevoluciones(empresaId);
+    const { toasts, showToast, removeToast } = useToast();
     
     const [showModal, setShowModal] = useState(false);
+    const [showAnularModal, setShowAnularModal] = useState(false);
+    const [cambioToAnular, setCambioToAnular] = useState(null);
+    const [procesandoAnulacion, setProcesandoAnulacion] = useState(false);
 
     const handleCambioCompletado = () => {
         setShowModal(false);
         fetchCambios();
+    };
+
+    const handleAnularClick = (cambioId) => {
+        setCambioToAnular(cambioId);
+        setShowAnularModal(true);
+    };
+
+    const handleConfirmAnular = async (motivo) => {
+        if (!cambioToAnular) return;
+
+        setProcesandoAnulacion(true);
+        setShowAnularModal(false);
+        
+        const resultado = await anularCambio(cambioToAnular, perfil?.id, motivo);
+        
+        setProcesandoAnulacion(false);
+        setCambioToAnular(null);
+
+        if (resultado.success) {
+            showToast('Cambio anulado correctamente', 'success');
+            fetchCambios();
+        } else {
+            showToast(`Error al anular: ${resultado.error}`, 'error');
+        }
     };
 
     if (loading && cambios.length === 0) {
@@ -90,6 +121,25 @@ const CambiosDevolucionesPage = () => {
 
                         return (
                             <li key={cambio.id} className="cd-item">
+                                {cambio.anulado && (
+                                    <div style={{
+                                        background: 'var(--color-danger-light)',
+                                        padding: 'var(--space-sm)',
+                                        borderRadius: 'var(--border-radius-md)',
+                                        marginBottom: 'var(--space-md)',
+                                        border: '2px solid var(--color-danger)'
+                                    }}>
+                                        <strong>❌ CAMBIO ANULADO</strong>
+                                        <p style={{fontSize: '0.875rem', marginTop: '0.25rem'}}>
+                                            Fecha: {formatDateTime(cambio.fecha_anulacion)}
+                                        </p>
+                                        {cambio.motivo_anulacion && (
+                                            <p style={{fontSize: '0.875rem'}}>
+                                                Motivo: {cambio.motivo_anulacion}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                                 <div className="cd-item-header">
                                     <div>
                                         <h3 className="cd-item-title">
@@ -160,8 +210,20 @@ const CambiosDevolucionesPage = () => {
                                             Venta Original: #{cambio.venta_original_id?.substring(0, 8)}
                                         </span>
                                     </div>
-                                    <div className={`cd-diferencia ${diferenciaClass}`}>
-                                        {diferenciaText}
+                                    <div style={{display: 'flex', gap: 'var(--space-md)', alignItems: 'center'}}>
+                                        <div className={`cd-diferencia ${diferenciaClass}`}>
+                                            {diferenciaText}
+                                        </div>
+                                        {!cambio.anulado && (
+                                            <button
+                                                onClick={() => handleAnularClick(cambio.id)}
+                                                disabled={procesandoAnulacion}
+                                                className="cd-btn cd-btn--danger cd-btn--small"
+                                                title="Anular este cambio/devolución"
+                                            >
+                                                {procesandoAnulacion ? '⏳ Anulando...' : '❌ Anular'}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </li>
@@ -178,6 +240,43 @@ const CambiosDevolucionesPage = () => {
                     onCambioCompletado={handleCambioCompletado}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={showAnularModal}
+                onClose={() => {
+                    setShowAnularModal(false);
+                    setCambioToAnular(null);
+                }}
+                onConfirm={handleConfirmAnular}
+                title="¿Anular este cambio?"
+                message={
+                    <div>
+                        <p style={{marginBottom: 'var(--space-sm)'}}>
+                            Esta acción revertirá:
+                        </p>
+                        <ul style={{
+                            listStyle: 'disc',
+                            paddingLeft: 'var(--space-lg)',
+                            marginBottom: 'var(--space-md)'
+                        }}>
+                            <li>El inventario volverá a su estado original</li>
+                            <li>La diferencia se restará de la caja abierta</li>
+                            <li>El cambio quedará marcado como anulado</li>
+                        </ul>
+                        <p style={{fontWeight: 600, color: 'var(--color-danger)'}}>
+                            Esta operación no se puede deshacer
+                        </p>
+                    </div>
+                }
+                type="danger"
+                confirmText="Sí, anular cambio"
+                cancelText="Cancelar"
+                requireInput={true}
+                inputLabel="Motivo de la anulación *"
+                inputPlaceholder="Explica por qué estás anulando este cambio..."
+            />
+
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 };

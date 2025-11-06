@@ -446,6 +446,22 @@
     border-color: var(--color-brand);
 }
 
+.cd-btn--danger {
+    background: var(--color-danger);
+    color: white;
+    box-shadow: var(--shadow-base);
+}
+
+.cd-btn--danger:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.cd-btn--small {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
 /* ============================================
    RESPONSIVE
    ============================================ */
