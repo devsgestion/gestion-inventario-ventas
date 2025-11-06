@@ -229,7 +229,56 @@ CREATE TABLE public.cierres_caja (
 
 ---
 
-### 9. **configuraciones_empresa** 🆕
+### 9. **cambios_devoluciones** 🆕
+```sql
+CREATE TABLE IF NOT EXISTS cambios_devoluciones (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    empresa_id UUID NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+    usuario_id UUID NOT NULL REFERENCES perfiles(id),
+    venta_original_id UUID NOT NULL REFERENCES ventas(id),
+    
+    -- Productos devueltos (JSON array)
+    productos_devueltos JSONB NOT NULL,
+    -- Productos nuevos entregados (JSON array)
+    productos_nuevos JSONB NOT NULL,
+    
+    -- Valores calculados
+    valor_devolucion DECIMAL(15, 2) NOT NULL,
+    valor_nuevos DECIMAL(15, 2) NOT NULL,
+    diferencia DECIMAL(15, 2) NOT NULL,
+    
+    -- Información adicional
+    motivo TEXT,
+    estado VARCHAR(20) DEFAULT 'procesado',
+    
+    -- Anulación
+    anulado BOOLEAN DEFAULT FALSE,
+    fecha_anulacion TIMESTAMPTZ,
+    usuario_anula_id UUID REFERENCES perfiles(id),
+    motivo_anulacion TEXT,
+    
+    -- Auditoría
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    CONSTRAINT fk_empresa FOREIGN KEY (empresa_id) REFERENCES empresas(id),
+    CONSTRAINT fk_usuario FOREIGN KEY (usuario_id) REFERENCES perfiles(id),
+    CONSTRAINT fk_venta_original FOREIGN KEY (venta_original_id) REFERENCES ventas(id)
+);
+```
+**📝 Descripción:** Registro de cambios y devoluciones de productos
+**🔑 Características:**
+- `productos_devueltos`: Array JSON con productos que el cliente devuelve
+- `productos_nuevos`: Array JSON con productos nuevos entregados
+- `diferencia`: Puede ser positiva (cliente paga) o negativa (se le devuelve dinero)
+- `anulado`: Marca si el cambio fue revertido
+- Vinculado a venta original para trazabilidad
+- Actualiza automáticamente inventario y estado de caja
+**✅ Estado:** ACTIVA - Módulo de cambios/devoluciones
+
+---
+
+### 10. **configuraciones_empresa**
 ```sql
 CREATE TABLE IF NOT EXISTS configuraciones_empresa (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -265,8 +314,8 @@ perfiles (rol: superadmin/admin/usuario) ← empresas (owner_id)
     ↓                                    movimientos_inventario
     ↓                                          ↓
     ↓                                      ventas → detalle_venta
-    ↓                                          ↓
-    ↓                                      estado_caja
+    ↓                                          ↓       ↓
+    ↓                                      estado_caja cambios_devoluciones
     ↓                                          ↓
     ↓                                      cierres_caja
     ↓                                          ↓
@@ -290,6 +339,13 @@ CREATE INDEX idx_detalle_venta_producto_id ON detalle_venta(producto_id);
 -- Índices de movimientos
 CREATE INDEX idx_movimientos_producto_fecha ON movimientos_inventario(producto_id, fecha);
 CREATE INDEX idx_movimientos_empresa_tipo ON movimientos_inventario(empresa_id, tipo_movimiento);
+
+-- 🆕 Índices de cambios/devoluciones
+CREATE INDEX idx_cambios_empresa ON cambios_devoluciones(empresa_id);
+CREATE INDEX idx_cambios_usuario ON cambios_devoluciones(usuario_id);
+CREATE INDEX idx_cambios_venta_original ON cambios_devoluciones(venta_original_id);
+CREATE INDEX idx_cambios_created_at ON cambios_devoluciones(created_at);
+CREATE INDEX idx_cambios_anulado ON cambios_devoluciones(anulado);
 
 -- 🆕 Índices del sistema de admin
 CREATE INDEX idx_perfiles_rol ON perfiles(rol);
@@ -339,6 +395,25 @@ AFTER INSERT ON auth.users
 FOR EACH ROW EXECUTE FUNCTION update_last_login();
 ```
 **📝 Estado:** ACTIVO - Actualiza `last_login` en cada inicio de sesión
+
+---
+
+### 3. **update_cambios_devoluciones_updated_at** - Actualización automática de cambios 🆕
+```sql
+CREATE OR REPLACE FUNCTION update_cambios_devoluciones_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_cambios_devoluciones_updated_at
+    BEFORE UPDATE ON cambios_devoluciones
+    FOR EACH ROW
+    EXECUTE FUNCTION update_cambios_devoluciones_updated_at();
+```
+**📝 Estado:** ACTIVO - Actualiza timestamp en cada modificación de cambio
 
 ---
 
@@ -422,10 +497,11 @@ Al crear un usuario, asegúrate de incluir:
 | `movimientos_inventario` | Muy Alto | Auditoría | ✅ Activa |
 | `estado_caja` | Bajo | Control | ✅ Activa |
 | `cierres_caja` | Medio | Historial | ✅ Activa |
+| `cambios_devoluciones` | Medio | Transaccional | ✅ Activa |
 | `configuraciones_empresa` | Bajo | Configuración | ✅ Activa |
 
 ---
 
-**📝 Última actualización:** 28 de Octubre, 2025
+**📝 Última actualización:** 6 de Noviembre, 2025
 **👤 Mantenido por:** Equipo de Desarrollo GestiON
 **🔢 Versión del Schema:** 2.0.0

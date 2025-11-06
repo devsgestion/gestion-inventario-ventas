@@ -27,6 +27,8 @@
 | `toggle_user_status()` | Admin | ✅ Activa | AdminUsersPage.jsx |
 | `update_user_role()` | Admin | ✅ Activa | AdminUsersPage.jsx |
 | `update_last_login()` | Admin | ✅ Activa | Trigger automático |
+| `procesar_cambio_devolucion()` | Cambios | ✅ Activa | useCambiosDevoluciones.js |
+| `anular_cambio_devolucion()` | Cambios | ✅ Activa | useCambiosDevoluciones.js |
 | `add_profile_to_tenant()` | Setup | ⚠️ Legacy | No usado |
 | `get_ventas_por_fecha()` | Reportes | ⚠️ Legacy | No usado |
 | `get_reporte_ventas()` | Reportes | ⚠️ Legacy | No usado |
@@ -294,7 +296,8 @@ CREATE OR REPLACE FUNCTION public.get_ventas_del_dia(
 ) RETURNS TABLE(
     total_ventas NUMERIC,
     cantidad_transacciones BIGINT,
-    total_items_vendidos BIGINT
+    total_items_vendidos BIGINT,
+    total_diferencia_cambios NUMERIC
 ) AS $$
     SELECT
         COALESCE(SUM(v.total_venta), 0) AS total_ventas,
@@ -306,7 +309,15 @@ CREATE OR REPLACE FUNCTION public.get_ventas_del_dia(
             JOIN public.ventas sv ON dv.venta_id = sv.id
             WHERE sv.empresa_id = p_empresa_id 
             AND sv.fecha_venta::date = (now() AT TIME ZONE 'America/Bogota')::date
-        ) AS total_items_vendidos
+        ) AS total_items_vendidos,
+        
+        (
+            SELECT COALESCE(SUM(diferencia), 0)
+            FROM cambios_devoluciones
+            WHERE empresa_id = p_empresa_id
+            AND DATE(created_at AT TIME ZONE 'America/Bogota') = CURRENT_DATE
+            AND anulado = FALSE
+        ) AS total_diferencia_cambios
         
     FROM public.ventas v
     WHERE 
@@ -315,11 +326,12 @@ CREATE OR REPLACE FUNCTION public.get_ventas_del_dia(
     GROUP BY v.empresa_id;
 $$ LANGUAGE sql;
 ```
-**🎯 Propósito:** Resumen de ventas del día actual
+**🎯 Propósito:** Resumen de ventas del día actual incluyendo diferencias de cambios/devoluciones
 **📤 Retorna:**
 - `total_ventas`: Suma de ingresos del día
 - `cantidad_transacciones`: Número de ventas
 - `total_items_vendidos`: Cantidad total de productos vendidos
+- `total_diferencia_cambios`: 🆕 Suma de diferencias de cambios del día (+ o -)
 
 **✅ Estado:** ACTIVA - Usado en InventarioPage.jsx y useInventario.js
 
@@ -672,6 +684,174 @@ FOR EACH ROW EXECUTE FUNCTION update_last_login();
 
 ---
 
+## 🔄 FUNCIONES DE CAMBIOS Y DEVOLUCIONES (Nuevas) 🆕
+
+### 16. **procesar_cambio_devolucion** 🔄 PROCESAR CAMBIOS COMPLETOS
+```sql
+CREATE OR REPLACE FUNCTION procesar_cambio_devolucion(
+    p_empresa_id UUID,
+    p_usuario_id UUID,
+    p_venta_original_id UUID,
+    p_productos_devueltos JSONB,
+    p_productos_nuevos JSONB,
+    p_valor_devolucion DECIMAL,
+    p_valor_nuevos DECIMAL,
+    p_diferencia DECIMAL,
+    p_motivo TEXT,
+    p_observaciones TEXT DEFAULT NULL
+)
+RETURNS UUID AS $$
+DECLARE
+    v_cambio_id UUID;
+    v_producto JSONB;
+BEGIN
+    -- 1. Crear registro del cambio
+    INSERT INTO cambios_devoluciones (...)
+    VALUES (...) RETURNING id INTO v_cambio_id;
+
+    -- 2. DEVOLVER productos al stock (incrementar)
+    FOR v_producto IN SELECT * FROM jsonb_array_elements(p_productos_devueltos)
+    LOOP
+        UPDATE productos
+        SET stock_actual = stock_actual + (v_producto->>'cantidad')::INTEGER
+        WHERE id = (v_producto->>'producto_id')::UUID;
+        
+        -- Registrar movimiento
+        INSERT INTO movimientos_inventario (...) VALUES (...);
+    END LOOP;
+
+    -- 3. RESTAR productos nuevos del stock (decrementar)
+    FOR v_producto IN SELECT * FROM jsonb_array_elements(p_productos_nuevos)
+    LOOP
+        UPDATE productos
+        SET stock_actual = stock_actual - (v_producto->>'cantidad')::INTEGER
+        WHERE id = (v_producto->>'producto_id')::UUID;
+        
+        -- Registrar movimiento
+        INSERT INTO movimientos_inventario (...) VALUES (...);
+    END LOOP;
+
+    -- 4. Actualizar caja con diferencia (si diferencia != 0)
+    IF p_diferencia != 0 THEN
+        UPDATE estado_caja
+        SET monto_inicial = monto_inicial + p_diferencia
+        WHERE empresa_id = p_empresa_id AND estado = 'abierta';
+    END IF;
+
+    RETURN v_cambio_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+**🎯 Propósito:** Procesar cambios/devoluciones completos con ajuste automático de inventario y caja
+**📥 Parámetros:**
+- `p_productos_devueltos`: JSON array con productos devueltos por el cliente
+  ```json
+  [{"producto_id": "uuid", "nombre": "Bermuda", "cantidad": 2, "precio_unitario": 50000}]
+  ```
+- `p_productos_nuevos`: JSON array con productos nuevos entregados
+- `p_diferencia`: Diferencia de precio (+ cliente paga, - se le devuelve)
+
+**🔄 Flujo Transaccional:**
+1. Registra el cambio en `cambios_devoluciones`
+2. Devuelve productos al inventario (suma stock)
+3. Resta productos nuevos del inventario
+4. Actualiza `estado_caja` con la diferencia de dinero
+5. Registra todos los movimientos de inventario
+
+**📤 Retorna:** UUID del cambio creado
+
+**✅ Estado:** ACTIVA - Usado en useCambiosDevoluciones.js
+
+---
+
+### 17. **anular_cambio_devolucion** ↩️ REVERTIR CAMBIOS
+```sql
+CREATE OR REPLACE FUNCTION anular_cambio_devolucion(
+    p_cambio_id UUID,
+    p_usuario_anula_id UUID,
+    p_motivo_anulacion TEXT
+)
+RETURNS TEXT AS $$
+DECLARE
+    v_cambio RECORD;
+    v_producto RECORD;
+    v_estado_caja_id UUID;
+BEGIN
+    -- 1. Obtener información del cambio
+    SELECT * INTO v_cambio FROM cambios_devoluciones WHERE id = p_cambio_id;
+
+    -- Validar que no esté anulado
+    IF v_cambio.anulado = TRUE THEN
+        RAISE EXCEPTION 'Este cambio ya fue anulado anteriormente';
+    END IF;
+
+    -- 2. Obtener caja abierta (si existe)
+    SELECT id INTO v_estado_caja_id
+    FROM estado_caja
+    WHERE empresa_id = v_cambio.empresa_id AND estado = 'abierta';
+
+    -- 3. REVERTIR productos devueltos (RESTAR del stock)
+    FOR v_producto IN 
+        SELECT * FROM jsonb_to_recordset(v_cambio.productos_devueltos) 
+        AS x(producto_id UUID, cantidad INTEGER)
+    LOOP
+        UPDATE productos
+        SET stock_actual = stock_actual - v_producto.cantidad
+        WHERE id = v_producto.producto_id;
+    END LOOP;
+
+    -- 4. REVERTIR productos nuevos (SUMAR al stock)
+    FOR v_producto IN 
+        SELECT * FROM jsonb_to_recordset(v_cambio.productos_nuevos) 
+        AS x(producto_id UUID, cantidad INTEGER)
+    LOOP
+        UPDATE productos
+        SET stock_actual = stock_actual + v_producto.cantidad
+        WHERE id = v_producto.producto_id;
+    END LOOP;
+
+    -- 5. REVERTIR diferencia en caja (si existe caja abierta)
+    IF v_estado_caja_id IS NOT NULL THEN
+        UPDATE estado_caja
+        SET monto_inicial = monto_inicial - v_cambio.diferencia
+        WHERE id = v_estado_caja_id;
+    END IF;
+
+    -- 6. Marcar cambio como anulado
+    UPDATE cambios_devoluciones
+    SET anulado = TRUE,
+        fecha_anulacion = NOW(),
+        usuario_anula_id = p_usuario_anula_id,
+        motivo_anulacion = p_motivo_anulacion
+    WHERE id = p_cambio_id;
+
+    RETURN 'Cambio anulado correctamente';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+**🎯 Propósito:** Revertir completamente un cambio/devolución (inventario + caja)
+**📥 Parámetros:**
+- `p_cambio_id`: UUID del cambio a anular
+- `p_usuario_anula_id`: Usuario que ejecuta la anulación
+- `p_motivo_anulacion`: Razón de la anulación (obligatorio en UI)
+
+**🔄 Flujo de Reversión:**
+1. Valida que el cambio no esté anulado previamente
+2. Revierte productos devueltos (los quita del inventario nuevamente)
+3. Revierte productos nuevos (los devuelve al inventario)
+4. Revierte la diferencia de dinero en caja abierta
+5. Marca el cambio como `anulado = TRUE`
+
+**🔒 Seguridad:**
+- Cualquier usuario autenticado puede anular (GRANT EXECUTE TO authenticated)
+- Registra auditoría completa (fecha, usuario, motivo)
+
+**📤 Retorna:** Mensaje de éxito
+
+**✅ Estado:** ACTIVA - Usado en useCambiosDevoluciones.js
+
+---
+
 ## 🏷️ FUNCIONES POR CATEGORÍA
 
 ### 🏗️ **Setup y Gestión de Usuarios**
@@ -684,20 +864,11 @@ FOR EACH ROW EXECUTE FUNCTION update_last_login();
 ### 🛒 **Procesamiento de Ventas**
 - ✅ `registrar_venta()` - Ventas completas con actualización de stock
 
-## 🏷️ FUNCIONES POR CATEGORÍA
+### 🔄 **Cambios y Devoluciones**
+- ✅ `procesar_cambio_devolucion()` - Procesar cambios completos con ajustes de inventario y caja
+- ✅ `anular_cambio_devolucion()` - Revertir cambios completamente (inventario + caja)
 
-### 🏗️ **Setup y Gestión de Usuarios**
-- ✅ `create_tenant_and_profile()` - Crear nueva empresa + admin inicial
-- ✅ `create_user_profile_admin()` - Crear usuarios desde panel admin
-- ⚠️ `add_profile_to_tenant()` - Agregar empleados (no usado)
-
-### � **Gestión de Inventario**
-- ✅ `registrar_compra()` - Ingresos de stock con CPP automático
-
-### 🛒 **Procesamiento de Ventas**
-- ✅ `registrar_venta()` - Ventas completas con actualización de stock
-
-### �📊 **Reportes y Analytics**
+### 📊 **Reportes y Analytics**
 - ✅ `get_ventas_del_dia()` - Dashboard diario (ACTIVA)
 - ✅ `get_utilidad_del_dia()` - Análisis de rentabilidad (ACTIVA)
 - ✅ `get_detalle_venta_by_date()` - Análisis por producto (ACTIVA)
@@ -799,6 +970,8 @@ SELECT '✅ Funciones legacy eliminadas' as status;
 - ✅ `create_user_profile_admin` - Crear usuarios desde admin
 - ✅ `registrar_compra` - Compras de inventario
 - ✅ `registrar_venta` - Ventas del POS
+- ✅ `procesar_cambio_devolucion` - Cambios y devoluciones
+- ✅ `anular_cambio_devolucion` - Anular cambios
 - ✅ `get_ventas_del_dia` - Dashboard principal
 - ✅ `get_utilidad_del_dia` - Métricas de rentabilidad
 - ✅ `get_detalle_venta_by_date` - Historial de caja
@@ -834,6 +1007,6 @@ SELECT '✅ Funciones legacy eliminadas' as status;
 
 ---
 
-**📝 Última actualización:** 30 de Octubre, 2025
+**📝 Última actualización:** 6 de Noviembre, 2025
 **👤 Mantenido por:** Equipo de Desarrollo GestiON
-**🔢 Versión de Funciones:** 2.0.0
+**🔢 Versión de Funciones:** 2.1.0
