@@ -40,7 +40,6 @@ const ProcesarCambioModal = ({ empresaId, usuarioId, onClose, onCambioCompletado
     const [productosDevueltos, setProductosDevueltos] = useState({});
     const [productosNuevos, setProductosNuevos] = useState({});
     const [motivo, setMotivo] = useState('');
-    const [observaciones, setObservaciones] = useState('');
 
     // Búsqueda de productos vendidos
     const [searchTerm, setSearchTerm] = useState('');
@@ -188,11 +187,6 @@ const ProcesarCambioModal = ({ empresaId, usuarioId, onClose, onCambioCompletado
 
     // Procesar el cambio
     const handleProcesarCambio = async () => {
-        if (!motivo.trim()) {
-            setError('El motivo del cambio es obligatorio');
-            return;
-        }
-
         if (Object.keys(productosDevueltos).length === 0) {
             setError('Debes seleccionar al menos un producto a devolver');
             return;
@@ -216,7 +210,6 @@ const ProcesarCambioModal = ({ empresaId, usuarioId, onClose, onCambioCompletado
             valorNuevos,
             diferencia,
             motivo,
-            observaciones,
             usuarioId
         });
 
@@ -619,7 +612,7 @@ const ProcesarCambioModal = ({ empresaId, usuarioId, onClose, onCambioCompletado
 
                             <div style={{marginTop: 'var(--space-lg)'}}>
                                 <label style={{display: 'block', marginBottom: 'var(--space-sm)', fontWeight: 600}}>
-                                    Motivo del Cambio: <span style={{color: 'var(--color-danger)'}}>*</span>
+                                    Motivo del Cambio(Opcional): <span style={{color: 'var(--color-danger)'}}>*</span>
                                 </label>
                                 <input 
                                     type="text"
@@ -634,27 +627,6 @@ const ProcesarCambioModal = ({ empresaId, usuarioId, onClose, onCambioCompletado
                                         borderRadius: 'var(--border-radius-sm)',
                                         background: 'var(--color-surface-300)',
                                         color: 'var(--color-text-high)'
-                                    }}
-                                />
-                            </div>
-
-                            <div style={{marginTop: 'var(--space-md)'}}>
-                                <label style={{display: 'block', marginBottom: 'var(--space-sm)', fontWeight: 600}}>
-                                    Observaciones (Opcional):
-                                </label>
-                                <textarea 
-                                    placeholder="Información adicional..."
-                                    value={observaciones}
-                                    onChange={(e) => setObservaciones(e.target.value)}
-                                    rows="3"
-                                    style={{
-                                        width: '100%',
-                                        padding: 'var(--space-sm)',
-                                        border: '1px solid var(--color-border)',
-                                        borderRadius: 'var(--border-radius-sm)',
-                                        background: 'var(--color-surface-300)',
-                                        color: 'var(--color-text-high)',
-                                        resize: 'vertical'
                                     }}
                                 />
                             </div>
