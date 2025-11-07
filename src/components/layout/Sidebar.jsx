@@ -53,6 +53,20 @@ const Sidebar = () => {
                 </div>
                 <nav className="c-sidebar__nav">
                     <ul className="c-nav-list">
+                        {/* Dashboard - Accesible para todos los roles */}
+                        {permissions.canViewDashboard && (
+                            <li className="c-nav-item">
+                                <NavLink 
+                                    to="/dashboard" 
+                                    className={({ isActive }) => `c-nav-link ${isActive ? 'c-nav-link-active' : ''}`}
+                                    onClick={closeSidebar}
+                                >
+                                    <span className="c-nav-link__icon">📊</span><span className="c-nav-link__text">Dashboard</span>
+                                </NavLink>
+                            </li>
+                        )}
+
+                        {/* Inventario - gestor, admin_gestor, admin, superadmin, vendedor (solo consulta) */}
                         {permissions.canViewInventory && (
                             <li className="c-nav-item">
                                 <NavLink 
@@ -64,6 +78,8 @@ const Sidebar = () => {
                                 </NavLink>
                             </li>
                         )}
+
+                        {/* Punto de Venta - vendedor, admin_vendedor, admin, superadmin */}
                         {permissions.canViewSales && (
                             <li className="c-nav-item">
                                 <NavLink 
@@ -75,7 +91,9 @@ const Sidebar = () => {
                                 </NavLink>
                             </li>
                         )}
-                        {permissions.canProcessCambios && (
+
+                        {/* Cambios y Devoluciones - vendedor, admin_vendedor, admin, superadmin */}
+                        {permissions.canViewCambios && (
                             <li className="c-nav-item">
                                 <NavLink 
                                     to="/cambios-devoluciones" 
@@ -86,7 +104,9 @@ const Sidebar = () => {
                                 </NavLink>
                             </li>
                         )}
-                        {(permissions.isSuperAdmin || permissions.isAdmin || permissions.isGestor) && (
+
+                        {/* Gestor de Pedidos - gestor, admin_gestor, admin, superadmin */}
+                        {permissions.canViewPedidos && (
                             <li className="c-nav-item">
                                 <NavLink 
                                     to="/pedidos" 
@@ -97,6 +117,8 @@ const Sidebar = () => {
                                 </NavLink>
                             </li>
                         )}
+
+                        {/* Historial de Caja - admin_vendedor, admin_gestor, admin, superadmin */}
                         {permissions.canViewCashHistory && (
                             <li className="c-nav-item">
                                 <NavLink 
@@ -108,7 +130,9 @@ const Sidebar = () => {
                                 </NavLink>
                             </li>
                         )}
-                        {permissions.canManageUsers && (
+
+                        {/* Panel de Admin - SOLO superadmin */}
+                        {permissions.canAccessAdminPanel && (
                             <li className="c-nav-item">
                                 <NavLink 
                                     to="/admin" 

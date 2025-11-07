@@ -18,6 +18,7 @@ const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const CambiosDevolucionesPage = lazy(() => import('./pages/CambiosDevolucionesPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 
 let appMountCount = 0;
 
@@ -37,6 +38,7 @@ function App() {
                     <Route path="/" element={<Navigate to="/ventas" replace />} /> 
                     
                     {/* Rutas accesibles para todos los usuarios autenticados */}
+                    <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/inventario" element={<InventarioPage />} />
                     <Route path="/ventas" element={<VentasPage />} />
                     <Route path="/pedidos" element={<PedidosPage />} />
