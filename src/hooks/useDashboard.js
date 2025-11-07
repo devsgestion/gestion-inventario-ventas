@@ -159,10 +159,21 @@ const useDashboard = (empresaId) => {
         if (!empresaId) return;
 
         try {
-            const params = { p_empresa_id: empresaId };
-            if (fecha) {
-                params.p_fecha = fecha;
+            // Si no se pasa fecha, usar fecha actual en Colombia
+            let fechaParam = fecha;
+            if (!fechaParam) {
+                const now = new Date();
+                const colombiaDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                const year = colombiaDate.getFullYear();
+                const month = String(colombiaDate.getMonth() + 1).padStart(2, '0');
+                const day = String(colombiaDate.getDate()).padStart(2, '0');
+                fechaParam = `${year}-${month}-${day}`;
             }
+            
+            const params = { 
+                p_empresa_id: empresaId,
+                p_fecha: fechaParam
+            };
 
             // Intentar usar la nueva función con productos
             const { data, error } = await supabase.rpc('get_ventas_por_hora_con_productos', params);

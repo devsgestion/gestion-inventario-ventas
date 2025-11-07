@@ -19,8 +19,13 @@ const VentasDelDiaModal = ({ isOpen, onClose, empresaId }) => {
         setError(null);
 
         try {
-            // Obtener ventas del día
-            const hoy = new Date().toISOString().split('T')[0];
+            // Obtener fecha actual en Colombia (America/Bogota)
+            const now = new Date();
+            const colombiaDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+            const year = colombiaDate.getFullYear();
+            const month = String(colombiaDate.getMonth() + 1).padStart(2, '0');
+            const day = String(colombiaDate.getDate()).padStart(2, '0');
+            const hoy = `${year}-${month}-${day}`;
             
             const { data, error } = await supabase
                 .from('ventas')
@@ -37,8 +42,8 @@ const VentasDelDiaModal = ({ isOpen, onClose, empresaId }) => {
                     )
                 `)
                 .eq('empresa_id', empresaId)
-                .gte('fecha_venta', `${hoy}T00:00:00`)
-                .lte('fecha_venta', `${hoy}T23:59:59`)
+                .gte('fecha_venta', `${hoy}T00:00:00-05:00`)
+                .lte('fecha_venta', `${hoy}T23:59:59-05:00`)
                 .order('fecha_venta', { ascending: false });
 
             if (error) throw error;
@@ -53,10 +58,13 @@ const VentasDelDiaModal = ({ isOpen, onClose, empresaId }) => {
     };
 
     const formatHora = (fecha) => {
-        return new Date(fecha).toLocaleTimeString('es-CO', {
+        // Convertir a hora de Colombia
+        const date = new Date(fecha);
+        return date.toLocaleTimeString('es-CO', {
             hour: '2-digit',
             minute: '2-digit',
-            hour12: true
+            hour12: true,
+            timeZone: 'America/Bogota'
         });
     };
 

@@ -1,8 +1,34 @@
 -- ========================================================
--- FUNCIÓN: get_ventas_por_hora_con_productos
--- Obtiene ventas por hora del día CON lista de productos vendidos
+-- ACTUALIZACIÓN DE FUNCIONES DE VENTAS POR HORA
+-- Ejecuta este archivo en Supabase SQL Editor
 -- ========================================================
 
+-- 1. Actualizar función básica (asegurando zona horaria Colombia)
+CREATE OR REPLACE FUNCTION get_ventas_por_hora(
+    p_empresa_id UUID,
+    p_fecha DATE DEFAULT CURRENT_DATE
+)
+RETURNS TABLE(
+    hora INTEGER,
+    total_ventas NUMERIC,
+    cantidad_transacciones BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        EXTRACT(HOUR FROM v.fecha_venta AT TIME ZONE 'America/Bogota')::INTEGER as hora,
+        COALESCE(SUM(v.total_venta), 0) as total_ventas,
+        COUNT(v.id) as cantidad_transacciones
+    FROM ventas v
+    WHERE 
+        v.empresa_id = p_empresa_id
+        AND DATE(v.fecha_venta AT TIME ZONE 'America/Bogota') = p_fecha
+    GROUP BY EXTRACT(HOUR FROM v.fecha_venta AT TIME ZONE 'America/Bogota')
+    ORDER BY hora;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 2. Actualizar función con productos (corrigiendo nombres de tabla y campos)
 CREATE OR REPLACE FUNCTION get_ventas_por_hora_con_productos(
     p_empresa_id UUID,
     p_fecha DATE DEFAULT CURRENT_DATE
@@ -59,36 +85,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ========================================================
--- PERMISOS
--- ========================================================
+-- 3. Otorgar permisos
+GRANT EXECUTE ON FUNCTION get_ventas_por_hora(UUID, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_ventas_por_hora(UUID, DATE) TO anon;
 
 GRANT EXECUTE ON FUNCTION get_ventas_por_hora_con_productos(UUID, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_ventas_por_hora_con_productos(UUID, DATE) TO anon;
+
+-- 4. Recargar schema de PostgREST
+NOTIFY pgrst, 'reload schema';
 
 -- ========================================================
--- COMENTARIOS
+-- TEST: Verifica que funciona correctamente
 -- ========================================================
 
-COMMENT ON FUNCTION get_ventas_por_hora_con_productos IS 
-'Retorna ventas agrupadas por hora del día, incluyendo:
-- Hora en formato HH:00
-- Total de ventas ($)
-- Cantidad de transacciones
-- Lista de productos vendidos con cantidad y subtotal (JSONB)';
-
--- ========================================================
--- EJEMPLO DE USO
--- ========================================================
-
-/*
--- Obtener ventas por hora de hoy con productos
-SELECT * FROM get_ventas_por_hora_con_productos('tu-empresa-id', CURRENT_DATE);
-
--- Resultado esperado:
-hora  | hora_numero | total_ventas | transacciones | productos
-------|-------------|--------------|---------------|--------------------------------------------------
-08:00 | 8           | 150000       | 3             | [{"nombre": "Camisa Polo", "cantidad": 2, ...}]
-09:00 | 9           | 0            | 0             | []
-10:00 | 10          | 250000       | 5             | [{"nombre": "Jean Slim", "cantidad": 4, ...}]
-...
-*/
+-- Reemplaza 'tu-empresa-id' con tu ID real de empresa
+-- SELECT * FROM get_ventas_por_hora_con_productos('tu-empresa-id'::UUID, CURRENT_DATE);
