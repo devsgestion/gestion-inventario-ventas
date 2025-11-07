@@ -1,7 +1,7 @@
 // src/pages/DashboardPage.jsx
 // Dashboard principal con métricas y gráficos analíticos
 
-import React from 'react';
+import React, { useState } from 'react';
 import useAuth from '../hooks/useAuth';
 import useDashboard from '../hooks/useDashboard';
 import VentasChart from '../components/dashboard/VentasChart';
@@ -9,12 +9,14 @@ import ProductosChart from '../components/dashboard/ProductosChart';
 import StockChart from '../components/dashboard/StockChart';
 import ComparacionChart from '../components/dashboard/ComparacionChart';
 import VentasPorHoraChart from '../components/dashboard/VentasPorHoraChart';
+import VentasDelDiaModal from '../components/dashboard/VentasDelDiaModal';
 import { formatCurrencyCOP } from '../utils/formatters';
 import '../styles/Dashboard.css';
 
 const DashboardPage = () => {
     const { perfil } = useAuth();
     const empresaId = perfil?.empresa_id;
+    const [showVentasModal, setShowVentasModal] = useState(false);
 
     const {
         loading,
@@ -73,9 +75,17 @@ const DashboardPage = () => {
                         {perfil?.empresa?.nombre || 'Tu Negocio'}
                     </p>
                 </div>
-                <button onClick={refresh} className="btn btn-secondary dashboard-refresh-btn">
-                    🔄 Actualizar
-                </button>
+                <div className="dashboard-actions">
+                    <button 
+                        onClick={() => setShowVentasModal(true)} 
+                        className="btn btn-primary dashboard-ventas-btn"
+                    >
+                        🛍️ Ver Ventas de Hoy
+                    </button>
+                    <button onClick={refresh} className="btn btn-secondary dashboard-refresh-btn">
+                        🔄 Actualizar
+                    </button>
+                </div>
             </header>
 
             {/* Tarjetas de Resumen (KPIs) */}
@@ -255,6 +265,13 @@ const DashboardPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Ventas del Día */}
+            <VentasDelDiaModal 
+                isOpen={showVentasModal}
+                onClose={() => setShowVentasModal(false)}
+                empresaId={empresaId}
+            />
         </div>
     );
 };

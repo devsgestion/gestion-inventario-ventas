@@ -24,6 +24,26 @@
     border-bottom: 2px solid var(--color-border);
 }
 
+.dashboard-actions {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+}
+
+.dashboard-ventas-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 12px 20px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.dashboard-ventas-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
 .dashboard-title {
     font-size: 2rem;
     font-weight: 700;
@@ -341,6 +361,11 @@
    RESPONSIVE
    ======================================== */
 
+/* Clase para colorear textos de ejes en modo oscuro */
+[data-theme="dark"] .chart-axis {
+    color: rgba(255, 255, 255, 0.75);
+}
+
 @media (max-width: 1400px) {
     .chart-card-tall {
         grid-column: span 12;
@@ -375,6 +400,17 @@
         flex-direction: column;
         align-items: flex-start;
         gap: var(--space-md);
+    }
+
+    .dashboard-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .dashboard-ventas-btn,
+    .dashboard-refresh-btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .dashboard-title {
@@ -450,16 +486,151 @@
 [data-theme="dark"] .kpi-card,
 [data-theme="dark"] .chart-card {
     background: var(--color-surface-200);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .kpi-card:hover,
+[data-theme="dark"] .chart-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="dark"] .chart-card-header,
 [data-theme="dark"] .chart-card-footer {
     background: var(--color-surface-300);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="dark"] .custom-tooltip {
     background: var(--color-surface-300);
-    border-color: var(--color-border);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* Mejorar legibilidad de valores en modo oscuro */
+[data-theme="dark"] .kpi-value {
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .kpi-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .kpi-detail {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .chart-card-header h3 {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .chart-card-subtitle {
+    color: rgba(255, 255, 255, 0.65);
+}
+
+[data-theme="dark"] .tooltip-label {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .dashboard-title {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .dashboard-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .stat-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .stat-value {
+    color: #ffffff;
+}
+
+/* Mejor contraste para estados vacíos */
+[data-theme="dark"] .chart-empty-state {
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.02);
+    padding: var(--space-xl);
+    border-radius: var(--border-radius-md);
+}
+
+/* Loading spinner en modo oscuro */
+[data-theme="dark"] .loading-spinner {
+    border-color: rgba(255, 255, 255, 0.15);
+    border-top-color: var(--color-primary);
+}
+
+/* Estilos para ejes y grillas de gráficos Recharts */
+[data-theme="dark"] .chart-grid {
+    stroke: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .chart-axis {
+    fill: rgba(255, 255, 255, 0.7) !important;
+    stroke: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="dark"] .chart-axis text {
+    fill: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="dark"] .chart-legend {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-theme="dark"] .chart-legend text {
+    fill: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Mejorar tooltip en todos los gráficos */
+[data-theme="dark"] .custom-tooltip p {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .custom-tooltip .tooltip-label {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* ========================================
+   RECHARTS - ESTILOS GLOBALES MODO OSCURO
+   ======================================== */
+
+/* Forzar estilos en todos los elementos SVG de Recharts */
+[data-theme="dark"] .recharts-wrapper .recharts-cartesian-axis-tick text,
+[data-theme="dark"] .recharts-wrapper .recharts-text {
+    fill: rgba(255, 255, 255, 0.75) !important;
+}
+
+[data-theme="dark"] .recharts-wrapper .recharts-cartesian-grid line {
+    stroke: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .recharts-wrapper .recharts-legend-item-text {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-theme="dark"] .recharts-wrapper .recharts-label {
+    fill: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* Ejes específicos */
+[data-theme="dark"] .recharts-wrapper .recharts-xAxis .recharts-text,
+[data-theme="dark"] .recharts-wrapper .recharts-yAxis .recharts-text {
+    fill: rgba(255, 255, 255, 0.75) !important;
+    font-size: 12px;
+}
+
+/* Líneas de los ejes */
+[data-theme="dark"] .recharts-wrapper .recharts-cartesian-axis-line {
+    stroke: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Ticks de los ejes */
+[data-theme="dark"] .recharts-wrapper .recharts-cartesian-axis-tick-line {
+    stroke: rgba(255, 255, 255, 0.2) !important;
 }
 
 /* ========================================

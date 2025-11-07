@@ -1,0 +1,446 @@
+/* ================================================
+   MODAL DE VENTAS DEL DÍA - Diseño Profesional
+   ================================================ */
+
+/* Overlay */
+.vdm-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: vdmFadeIn 0.2s ease-out;
+}
+
+@keyframes vdmFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Container */
+.vdm-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: vdmSlideUp 0.3s ease-out;
+}
+
+@keyframes vdmSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.vdm-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.vdm-header-content {
+  flex: 1;
+}
+
+.vdm-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vdm-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.vdm-close-btn {
+  background: #f3f4f6;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1.25rem;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.vdm-close-btn:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+/* Summary Cards */
+.vdm-summary {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.vdm-summary-card {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.vdm-summary-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin: 0 0 0.5rem 0;
+}
+
+.vdm-summary-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+/* Content Area */
+.vdm-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 2rem;
+}
+
+.vdm-loading,
+.vdm-error,
+.vdm-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.vdm-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: vdmSpin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes vdmSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vdm-loading p,
+.vdm-error p,
+.vdm-empty p {
+  color: #6b7280;
+  margin: 0.5rem 0 0 0;
+}
+
+.vdm-error-icon,
+.vdm-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Sales List */
+.vdm-sales-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vdm-sale-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  transition: all 0.2s;
+}
+
+.vdm-sale-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.vdm-sale-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.vdm-sale-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0 0.5rem;
+}
+
+.vdm-sale-time {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Products List */
+.vdm-products {
+  margin-bottom: 0.75rem;
+}
+
+.vdm-product-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.vdm-product-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.vdm-product-qty {
+  color: #6b7280;
+  margin: 0 1rem;
+  font-size: 0.85rem;
+}
+
+.vdm-product-price {
+  font-weight: 600;
+  color: #111827;
+  min-width: 100px;
+  text-align: right;
+}
+
+/* Sale Total */
+.vdm-sale-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+.vdm-total-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.vdm-total-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+/* Footer */
+.vdm-footer {
+  padding: 1.25rem 2rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.vdm-close-footer-btn {
+  padding: 0.625rem 1.5rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vdm-close-footer-btn:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .vdm-modal {
+  background: #1e293b;
+}
+
+[data-theme="dark"] .vdm-header,
+[data-theme="dark"] .vdm-summary,
+[data-theme="dark"] .vdm-footer {
+  border-color: #334155;
+}
+
+[data-theme="dark"] .vdm-title,
+[data-theme="dark"] .vdm-summary-value,
+[data-theme="dark"] .vdm-product-price {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .vdm-date,
+[data-theme="dark"] .vdm-summary-label,
+[data-theme="dark"] .vdm-sale-time,
+[data-theme="dark"] .vdm-product-qty,
+[data-theme="dark"] .vdm-total-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .vdm-close-btn {
+  background: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .vdm-close-btn:hover {
+  background: #475569;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .vdm-summary-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .vdm-sale-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .vdm-sale-card:hover {
+  border-color: #475569;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .vdm-sale-header {
+  border-color: #334155;
+}
+
+[data-theme="dark"] .vdm-product-item,
+[data-theme="dark"] .vdm-product-name {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .vdm-sale-total {
+  border-color: #334155;
+}
+
+[data-theme="dark"] .vdm-total-value {
+  color: #10b981;
+}
+
+[data-theme="dark"] .vdm-close-footer-btn {
+  background: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .vdm-close-footer-btn:hover {
+  background: #475569;
+  border-color: #64748b;
+}
+
+[data-theme="dark"] .vdm-loading-spinner {
+  border-color: #334155;
+  border-top-color: #667eea;
+}
+
+[data-theme="dark"] .vdm-loading p,
+[data-theme="dark"] .vdm-error p,
+[data-theme="dark"] .vdm-empty p {
+  color: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .vdm-modal {
+    max-height: 95vh;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .vdm-header,
+  .vdm-summary,
+  .vdm-content,
+  .vdm-footer {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .vdm-title {
+    font-size: 1.25rem;
+  }
+
+  .vdm-summary {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .vdm-summary-value {
+    font-size: 1.5rem;
+  }
+
+  .vdm-sale-card {
+    padding: 1rem;
+  }
+
+  .vdm-product-item {
+    flex-wrap: wrap;
+  }
+
+  .vdm-product-name {
+    flex: 1 1 100%;
+    margin-bottom: 0.25rem;
+  }
+
+  .vdm-product-qty {
+    margin: 0;
+  }
+}

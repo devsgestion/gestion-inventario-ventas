@@ -198,7 +198,7 @@ const usePermissions = () => {
                 canExportDashboard: true,
                 
                 // Configuración y Reportes
-                canAccessSettings: false,
+                canAccessSettings: true,      // ✅ Acceso a configuración
                 canEditCompanyInfo: false,
                 canViewAdvancedReports: true,
                 canViewCashHistory: true,
@@ -257,7 +257,7 @@ const usePermissions = () => {
                 canExportDashboard: true,
                 
                 // Configuración y Reportes
-                canAccessSettings: false,
+                canAccessSettings: true,      // ✅ Acceso a configuración
                 canEditCompanyInfo: false,
                 canViewAdvancedReports: true,
                 canViewCashHistory: true,

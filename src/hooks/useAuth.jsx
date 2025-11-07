@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
           // Verificar si el usuario está desactivado
           if (profile.activo === false) {
             authLog('⛔ Usuario desactivado detectado, cerrando sesión');
-            await supabase.auth.signOut();
+            await supabase.auth.signOut({ scope: 'local' });
             setPerfil(null);
             setSession(null);
             setError('Tu cuenta ha sido desactivada. Contacta al administrador.');
@@ -295,7 +295,7 @@ export const AuthProvider = ({ children }) => {
       // 3. Si el usuario está desactivado, hacer logout inmediato
       if (!perfilData.activo) {
         authLog('⛔ Usuario desactivado, bloqueando acceso');
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: 'local' });
         if (isMountedRef.current) setIsLoading(false);
         return { error: new Error('Tu cuenta ha sido desactivada. Contacta al administrador.') };
       }
@@ -328,8 +328,6 @@ export const AuthProvider = ({ children }) => {
     // Marcar que se va a hacer logout antes de la llamada
     isLoggedOutRef.current = true;
     
-    const { error: authError } = await supabase.auth.signOut();
-    
     // 🛑 PRESERVAR preferencias de tours antes de limpiar localStorage 🛑
     const tourPreferences = {};
     try {
@@ -339,6 +337,13 @@ export const AuthProvider = ({ children }) => {
           tourPreferences[key] = localStorage.getItem(key);
         }
       });
+      
+      // Intentar cerrar sesión, pero continuar incluso si falla (token corrupto)
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+      } catch (signOutError) {
+        console.warn('Error al cerrar sesión en Supabase (continuando de todos modos):', signOutError);
+      }
       
       // Limpiar localStorage (incluye auth de Supabase)
       localStorage.removeItem('supabase.auth.token');
@@ -353,14 +358,15 @@ export const AuthProvider = ({ children }) => {
       console.warn('No se pudo limpiar localStorage:', e);
     }
     
-    if (!authError && isMountedRef.current) {
+    // Siempre limpiar estado y redirigir, incluso si signOut falló
+    if (isMountedRef.current) {
       setSession(null);
       setPerfil(null);
       lastUserIdRef.current = null;
       navigate('/login', { replace: true });
     }
     if (isMountedRef.current) setIsLoading(false);
-    return { error: authError };
+    return { error: null };
   };
 
   // Función para forzar finalización del bootstrap (para uso externo)

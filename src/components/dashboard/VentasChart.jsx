@@ -56,21 +56,24 @@ const VentasChart = ({ data, height = 300 }) => {
                 data={data}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <CartesianGrid strokeDasharray="3 3" className="chart-grid" />
                 <XAxis 
                     dataKey="fecha" 
-                    stroke="#666"
-                    style={{ fontSize: '12px' }}
+                    className="chart-axis"
+                    tick={{ fill: 'currentColor' }}
+                    stroke="currentColor"
                 />
                 <YAxis 
-                    stroke="#666"
-                    style={{ fontSize: '12px' }}
+                    className="chart-axis"
                     tickFormatter={formatYAxis}
+                    tick={{ fill: 'currentColor' }}
+                    stroke="currentColor"
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend 
                     wrapperStyle={{ fontSize: '14px' }}
                     iconType="line"
+                    className="chart-legend"
                 />
                 <Line
                     type="monotone"

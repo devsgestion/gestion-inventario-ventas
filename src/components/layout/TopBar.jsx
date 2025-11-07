@@ -10,7 +10,7 @@ export default function TopBar() {
   const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
-  const { perfil } = useAuth();
+  const { perfil, logout } = useAuth();
   const permissions = usePermissions();
 
   // Cerrar dropdown al hacer click fuera
@@ -37,8 +37,14 @@ export default function TopBar() {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/login');
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      // Forzar navegación incluso si hay error
+      navigate('/login');
+    }
   };
 
   const goToProfile = () => {
@@ -64,6 +70,8 @@ export default function TopBar() {
   const getRoleDisplay = () => {
     if (permissions.isSuperAdmin) return '👑 Super Admin';
     if (permissions.isAdmin) return '🔧 Administrador';
+    if (permissions.isAdminVendedor) return '💼 Admin Vendedor';
+    if (permissions.isAdminGestor) return '📋 Admin Gestor';
     if (permissions.isVendedor) return '🛍️ Vendedor';
     if (permissions.isGestor) return '📦 Gestor';
     return '👤 Usuario';

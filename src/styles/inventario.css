@@ -445,3 +445,68 @@ body.theme-light .c-alert--error {
   color: #a8071a;
   border-color: #ffa39e;
 }
+
+/* ---------------------------------------------------- */
+/* BOTÓN VER VENTAS DE HOY - Inventario */
+/* ---------------------------------------------------- */
+.inv-ventas-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #4b5563;
+  color: white;
+  border: 1px solid #6b7280;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.inv-ventas-btn:hover {
+  background: #374151;
+  border-color: #4b5563;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.inv-ventas-btn:active {
+  transform: scale(0.98);
+}
+
+.inv-ventas-btn__icon {
+  font-size: 1.2rem;
+}
+
+.inv-ventas-btn__text {
+  white-space: nowrap;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .inv-ventas-btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+[data-theme="dark"] .inv-ventas-btn:hover {
+  background: #4b5563;
+  border-color: #6b7280;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+  .inv-ventas-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .inv-ventas-btn__text {
+    display: none;
+  }
+  
+  .inv-ventas-btn__icon {
+    font-size: 1.4rem;
+  }
+}

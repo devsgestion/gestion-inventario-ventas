@@ -72,21 +72,23 @@ const ProductosChart = ({ data, height = 400 }) => {
                 layout="vertical"
                 margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
             >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <CartesianGrid strokeDasharray="3 3" className="chart-grid" />
                 <XAxis 
                     type="number" 
-                    stroke="#666"
-                    style={{ fontSize: '12px' }}
+                    className="chart-axis"
+                    tick={{ fill: 'currentColor' }}
+                    stroke="currentColor"
                 />
                 <YAxis 
                     dataKey="nombreCorto" 
                     type="category"
-                    stroke="#666"
-                    style={{ fontSize: '11px' }}
+                    className="chart-axis"
                     width={90}
+                    tick={{ fill: 'currentColor' }}
+                    stroke="currentColor"
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: '14px' }} />
+                <Legend wrapperStyle={{ fontSize: '14px' }} className="chart-legend" />
                 <Bar 
                     dataKey="cantidad" 
                     name="Unidades Vendidas"

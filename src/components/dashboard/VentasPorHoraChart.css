@@ -1,0 +1,457 @@
+/* src/components/dashboard/VentasPorHoraChart.css */
+/* Estilos para el gráfico de ventas por hora con productos */
+
+.ventas-hora-chart-wrapper {
+    position: relative;
+}
+
+/* ========================================
+   TOOLTIP PERSONALIZADO
+   ======================================== */
+
+.ventas-hora-tooltip {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    min-width: 260px;
+    max-width: 350px;
+}
+
+.tooltip-header {
+    margin-bottom: 8px;
+}
+
+.tooltip-label {
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.tooltip-stats {
+    margin: 8px 0;
+}
+
+.tooltip-stats p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+}
+
+.tooltip-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+    margin: 12px 0;
+}
+
+.tooltip-productos {
+    margin-top: 12px;
+}
+
+.tooltip-productos-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tooltip-productos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.tooltip-producto-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 8px;
+    background: rgba(33, 150, 243, 0.05);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.producto-nombre {
+    color: #333;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.producto-cantidad {
+    color: #666;
+    font-weight: 600;
+    padding: 2px 6px;
+    background: rgba(33, 150, 243, 0.1);
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.producto-subtotal {
+    color: #2196F3;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.tooltip-productos-more {
+    font-size: 0.8rem;
+    color: #999;
+    font-style: italic;
+    margin: 4px 0 0;
+    text-align: center;
+}
+
+.tooltip-click-hint {
+    margin-top: 10px;
+    margin-bottom: 0;
+    font-size: 0.75rem;
+    color: #999;
+    text-align: center;
+    font-style: italic;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================
+   PANEL LATERAL DE PRODUCTOS
+   ======================================== */
+
+.productos-detalle-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 380px;
+    max-height: 100%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    border: 2px solid #2196F3;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+}
+
+.panel-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.panel-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: background 0.2s ease;
+}
+
+.panel-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.panel-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 16px 20px;
+    background: rgba(33, 150, 243, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.panel-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.panel-stat .stat-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.panel-stat .stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2196F3;
+}
+
+.panel-productos {
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.panel-productos-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+    margin: 0 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.panel-productos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.panel-producto-item {
+    padding: 12px;
+    background: rgba(33, 150, 243, 0.04);
+    border-radius: 8px;
+    border-left: 3px solid #2196F3;
+    transition: all 0.2s ease;
+}
+
+.panel-producto-item:hover {
+    background: rgba(33, 150, 243, 0.08);
+    transform: translateX(4px);
+}
+
+.producto-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.panel-producto-item .producto-nombre {
+    font-weight: 600;
+    color: #1a1a1a;
+    font-size: 0.95rem;
+}
+
+.panel-producto-item .producto-cantidad {
+    font-size: 0.8rem;
+    color: #666;
+    background: none;
+    padding: 0;
+}
+
+.producto-precios {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.producto-precio-unit {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.panel-producto-item .producto-subtotal {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2196F3;
+}
+
+/* ========================================
+   ESTILOS PARA EJES DEL GRÁFICO
+   ======================================== */
+
+.chart-grid {
+    stroke: rgba(0, 0, 0, 0.1);
+}
+
+.chart-axis {
+    font-size: 11px;
+    fill: #666;
+}
+
+/* ========================================
+   DARK MODE
+   ======================================== */
+
+[data-theme="dark"] .ventas-hora-tooltip {
+    background: #2a2a2a;
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .tooltip-label {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .tooltip-stats p {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .tooltip-divider {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .tooltip-productos-title {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .tooltip-producto-item {
+    background: rgba(33, 150, 243, 0.15);
+}
+
+[data-theme="dark"] .producto-nombre {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .producto-cantidad {
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(33, 150, 243, 0.25);
+}
+
+[data-theme="dark"] .producto-subtotal {
+    color: #64B5F6;
+}
+
+[data-theme="dark"] .tooltip-productos-more,
+[data-theme="dark"] .tooltip-click-hint {
+    color: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .productos-detalle-panel {
+    background: #2a2a2a;
+    border-color: #2196F3;
+}
+
+[data-theme="dark"] .panel-stats {
+    background: rgba(33, 150, 243, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .panel-stat .stat-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .panel-stat .stat-value {
+    color: #64B5F6;
+}
+
+[data-theme="dark"] .panel-productos-title {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .panel-producto-item {
+    background: rgba(33, 150, 243, 0.1);
+    border-left-color: #64B5F6;
+}
+
+[data-theme="dark"] .panel-producto-item:hover {
+    background: rgba(33, 150, 243, 0.2);
+}
+
+[data-theme="dark"] .panel-producto-item .producto-nombre {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .panel-producto-item .producto-cantidad {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .producto-precio-unit {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .producto-precios {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .panel-producto-item .producto-subtotal {
+    color: #64B5F6;
+}
+
+[data-theme="dark"] .chart-grid {
+    stroke: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .chart-axis {
+    fill: rgba(255, 255, 255, 0.7);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 1024px) {
+    .productos-detalle-panel {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 450px;
+        max-height: 80vh;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .ventas-hora-tooltip {
+        min-width: 200px;
+        max-width: 280px;
+        padding: 12px;
+    }
+
+    .tooltip-label {
+        font-size: 0.9rem;
+    }
+
+    .tooltip-productos-list {
+        max-height: 150px;
+    }
+
+    .productos-detalle-panel {
+        width: 95%;
+        max-height: 85vh;
+    }
+}

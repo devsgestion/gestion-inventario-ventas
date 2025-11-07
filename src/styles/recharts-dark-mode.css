@@ -1,0 +1,119 @@
+/* ========================================
+   RECHARTS DARK MODE - Estilos Globales
+   ======================================== */
+
+/* ========================================
+   TEXTOS DE EJES (XAxis, YAxis)
+   ======================================== */
+
+[data-theme="dark"] .recharts-cartesian-axis-tick text,
+[data-theme="dark"] .recharts-text,
+[data-theme="dark"] .recharts-label {
+    fill: #B0BEC5 !important;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .recharts-cartesian-axis text {
+    fill: #B0BEC5 !important;
+}
+
+/* Forzar color en todos los elementos text dentro de SVG */
+[data-theme="dark"] .recharts-wrapper svg text {
+    fill: #B0BEC5 !important;
+}
+
+/* Específico para XAxis y YAxis */
+[data-theme="dark"] .recharts-xAxis text,
+[data-theme="dark"] .recharts-yAxis text {
+    fill: #B0BEC5 !important;
+    font-size: 12px !important;
+}
+
+/* ========================================
+   GRILLA (CartesianGrid)
+   ======================================== */
+
+[data-theme="dark"] .recharts-cartesian-grid-horizontal line,
+[data-theme="dark"] .recharts-cartesian-grid-vertical line {
+    stroke: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ========================================
+   LÍNEAS DE EJES
+   ======================================== */
+
+[data-theme="dark"] .recharts-cartesian-axis-line {
+    stroke: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="dark"] .recharts-cartesian-axis-tick-line {
+    stroke: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ========================================
+   LEYENDA (Legend)
+   ======================================== */
+
+[data-theme="dark"] .recharts-legend-wrapper {
+    color: #B0BEC5 !important;
+}
+
+[data-theme="dark"] .recharts-legend-item-text {
+    color: #B0BEC5 !important;
+    fill: #B0BEC5 !important;
+}
+
+[data-theme="dark"] .recharts-default-legend .recharts-legend-item-text {
+    color: #B0BEC5 !important;
+}
+
+[data-theme="dark"] .recharts-legend-wrapper text {
+    fill: #B0BEC5 !important;
+}
+
+/* ========================================
+   LABELS DEL PIE CHART
+   ======================================== */
+
+[data-theme="dark"] .recharts-pie-label-text {
+    fill: #FFFFFF !important;
+    font-weight: 700;
+    font-size: 14px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Asegurar que TODOS los textos en PIE sean visibles */
+[data-theme="dark"] .recharts-pie text {
+    fill: #FFFFFF !important;
+}
+
+/* ========================================
+   TOOLTIP (ya definido en Dashboard.css pero reforzamos)
+   ======================================== */
+
+[data-theme="dark"] .recharts-tooltip-wrapper .custom-tooltip {
+    background: #2a2a2a !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* ========================================
+   MODO CLARO (Light Mode)
+   ======================================== */
+
+[data-theme="light"] .recharts-cartesian-axis-tick text,
+[data-theme="light"] .recharts-text,
+[data-theme="light"] .recharts-label,
+[data-theme="light"] .recharts-wrapper svg text {
+    fill: #546E7A !important;
+}
+
+[data-theme="light"] .recharts-legend-wrapper,
+[data-theme="light"] .recharts-legend-item-text {
+    color: #546E7A !important;
+    fill: #546E7A !important;
+}
+
+[data-theme="light"] .recharts-cartesian-grid-horizontal line,
+[data-theme="light"] .recharts-cartesian-grid-vertical line {
+    stroke: rgba(0, 0, 0, 0.1) !important;
+}

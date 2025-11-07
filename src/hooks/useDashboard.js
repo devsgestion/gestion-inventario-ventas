@@ -153,7 +153,7 @@ const useDashboard = (empresaId) => {
     }, [empresaId]);
 
     /**
-     * Carga las ventas por hora del día actual
+     * Carga las ventas por hora del día actual con productos
      */
     const fetchVentasPorHora = useCallback(async (fecha = null) => {
         if (!empresaId) return;
@@ -164,22 +164,43 @@ const useDashboard = (empresaId) => {
                 params.p_fecha = fecha;
             }
 
-            const { data, error } = await supabase.rpc('get_ventas_por_hora', params);
+            // Intentar usar la nueva función con productos
+            const { data, error } = await supabase.rpc('get_ventas_por_hora_con_productos', params);
 
-            if (error) throw error;
+            if (error) {
+                // Si falla, intentar con la función antigua
+                console.warn('Función con productos no disponible, usando función básica:', error.message);
+                const fallback = await supabase.rpc('get_ventas_por_hora', params);
+                
+                if (fallback.error) throw fallback.error;
+                
+                // Crear array con todas las horas (0-23) para visualización completa
+                const allHours = Array.from({ length: 24 }, (_, i) => {
+                    const hourData = (fallback.data || []).find(item => item.hora === i);
+                    return {
+                        hora: `${i}:00`,
+                        horaNum: i,
+                        ventas: hourData ? parseFloat(hourData.total_ventas || 0) : 0,
+                        transacciones: hourData ? parseInt(hourData.cantidad_transacciones || 0) : 0,
+                        productos: []
+                    };
+                });
+
+                setVentasPorHora(allHours);
+                return;
+            }
             
-            // Crear array con todas las horas (0-23) para visualización completa
-            const allHours = Array.from({ length: 24 }, (_, i) => {
-                const hourData = (data || []).find(item => item.hora === i);
-                return {
-                    hora: `${i}:00`,
-                    horaNum: i,
-                    ventas: hourData ? parseFloat(hourData.total_ventas || 0) : 0,
-                    transacciones: hourData ? parseInt(hourData.cantidad_transacciones || 0) : 0
-                };
-            });
+            // Formatear datos con productos
+            const formattedData = (data || []).map(item => ({
+                hora: item.hora,
+                horaNum: item.hora_numero,
+                ventas: parseFloat(item.total_ventas || 0),
+                total_ventas: parseFloat(item.total_ventas || 0),
+                transacciones: parseInt(item.transacciones || 0),
+                productos: Array.isArray(item.productos) ? item.productos : []
+            }));
 
-            setVentasPorHora(allHours);
+            setVentasPorHora(formattedData);
         } catch (err) {
             console.error('Error cargando ventas por hora:', err);
             setError(err.message);

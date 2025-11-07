@@ -82,6 +82,7 @@ const StockChart = ({ data, height = 300 }) => {
                     align="right"
                     verticalAlign="middle"
                     iconType="circle"
+                    className="chart-legend"
                 />
             </PieChart>
         </ResponsiveContainer>

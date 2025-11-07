@@ -70,21 +70,24 @@ const ComparacionChart = ({ data, height = 300 }) => {
         <ResponsiveContainer width="100%" height={height}>
             <BarChart
                 data={chartData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
+                barCategoryGap="25%"
             >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <CartesianGrid strokeDasharray="3 3" className="chart-grid" />
                 <XAxis 
                     dataKey="categoria" 
-                    stroke="#666"
-                    style={{ fontSize: '12px' }}
+                    className="chart-axis"
+                    tick={{ fill: 'currentColor' }}
+                    stroke="currentColor"
                 />
                 <YAxis 
-                    stroke="#666"
-                    style={{ fontSize: '12px' }}
+                    className="chart-axis"
                     tickFormatter={formatYAxis}
+                    tick={{ fill: 'currentColor' }}
+                    stroke="currentColor"
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: '14px' }} />
+                <Legend wrapperStyle={{ fontSize: '14px' }} className="chart-legend" />
                 <Bar 
                     dataKey="Mes Anterior" 
                     fill="#9E9E9E"

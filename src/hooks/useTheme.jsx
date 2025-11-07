@@ -15,6 +15,10 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     // Aplica la clase al BODY para que CSS reaccione
     document.body.className = theme === 'light' ? 'theme-light' : '';
+    
+    // También agregar data-theme para compatibilidad con otros estilos
+    document.documentElement.setAttribute('data-theme', theme);
+    
     // Guarda la preferencia en localStorage
     localStorage.setItem('app-theme', theme);
   }, [theme]);

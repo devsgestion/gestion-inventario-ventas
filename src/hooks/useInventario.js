@@ -189,21 +189,32 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
     // Función central para verificar el estado de la caja
     const checkCajaStatus = useCallback(async (empresaIdParam) => {
         const eid = empresaIdParam || userProfile?.empresa_id || empresaId;
-        if (!eid) {
+        
+        // Verificar que haya empresa_id Y sesión activa
+        if (!eid || !session?.user) {
             setIsCajaAbierta(false);
             setCajaStatus(null);
             setIsLoadingCaja(false);
             return;
         }
+        
         setIsLoadingCaja(true);
         try {
             const { data, error } = await supabase
                 .from('estado_caja')
                 .select('*')
                 .eq('empresa_id', eid)
-                .single();
+                .maybeSingle(); // Usar maybeSingle() en lugar de single() para evitar error 406
 
-            if (error && error.code !== 'PGRST116') {
+            if (error) {
+                console.warn('Error al consultar estado_caja:', error);
+                // Si es error de permisos, establecer estado cerrada
+                if (error.code === '406' || error.code === 'PGRST116') {
+                    setIsCajaAbierta(false);
+                    setCajaStatus(null);
+                    setIsLoadingCaja(false);
+                    return;
+                }
                 throw error;
             }
 

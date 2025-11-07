@@ -5,6 +5,7 @@ import { supabase } from '../api/supabaseClient';
 import ProductoForm from '../components/inventario/ProductoForm';
 import ProductosLista from '../components/inventario/ProductosLista';
 import RegistroCompraForm from '../components/inventario/RegistroCompraForm'; // 🛑 Importar nuevo formulario
+import VentasDelDiaModal from '../components/dashboard/VentasDelDiaModal';
 import GuidedTour from '../components/layout/GuidedTour';
 import HelpButton from '../components/layout/HelpButton';
 import { inventarioTourSteps, isTourCompleted } from '../config/tourSteps';
@@ -98,6 +99,7 @@ const InventarioPage = () => {
     const [refreshKey, setRefreshKey] = useState(0);
     // 🛑 NUEVO ESTADO: Para mostrar/ocultar productos inactivos 🛑
     const [mostrarInactivos, setMostrarInactivos] = useState(false);
+    const [showVentasModal, setShowVentasModal] = useState(false);
     
     // ✨ Estados para el tour guiado
     const [runTour, setRunTour] = useState(false);
@@ -178,13 +180,21 @@ const InventarioPage = () => {
         <div className="m-inventory-layout">
             {/* Header Principal */}
             <header className="c-header-main u-mb-lg">
-                 <div className="u-flex u-align-center">
+                 <div className="u-flex u-align-center u-justify-between" style={{ gap: '2rem' }}>
                      <h1 className="c-header-main__title">
                          Gestión de Inventario
                          {perfil?.empresa?.nombre && (
                              <> - <span className="c-header-main__company">{perfil.empresa.nombre}</span></>
                          )}
                      </h1>
+                     <button 
+                        className="inv-ventas-btn"
+                        onClick={() => setShowVentasModal(true)}
+                        title="Ver todas las ventas de hoy"
+                     >
+                        <span className="inv-ventas-btn__icon">📊</span>
+                        <span className="inv-ventas-btn__text">Ventas de Hoy</span>
+                     </button>
                  </div>
             </header>
 
@@ -248,6 +258,13 @@ const InventarioPage = () => {
                         onClose={handleCloseCompraForm}
                     />
                 )}
+                
+                {/* Modal de Ventas del Día */}
+                <VentasDelDiaModal
+                    isOpen={showVentasModal}
+                    onClose={() => setShowVentasModal(false)}
+                    empresaId={empresaId}
+                />
                 
                 {/* ✨ Tour Guiado */}
                 <GuidedTour
