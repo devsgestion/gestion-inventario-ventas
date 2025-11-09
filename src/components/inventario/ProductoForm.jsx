@@ -81,6 +81,7 @@ const ProductoForm = ({ empresaId, onProductSaved, onClose }) => {
             // CRÍTICO: Dejar los campos numéricos vacíos para que la UX de 'escribir encima' funcione
             codigo_referencia: '',
             nombre: '',
+            categoria: '',
             stock_actual: '', 
             precio_costo: '', 
             precio_venta: '',
@@ -170,6 +171,19 @@ const ProductoForm = ({ empresaId, onProductSaved, onClose }) => {
                                     disabled={isSubmitting || !empresaId}
                                     className="c-form-input"
                                     {...register("codigo_referencia")}
+                                />
+                            </div>
+
+                            {/* Categoría */}
+                            <div className="c-form-group">
+                                <label className="c-form-label" htmlFor="categoria">Categoría:</label>
+                                <input
+                                    id="categoria"
+                                    type="text"
+                                    placeholder="Ej: Cadenas, Aretes, Pulseras"
+                                    disabled={isSubmitting || !empresaId}
+                                    className="c-form-input"
+                                    {...register("categoria")}
                                 />
                             </div>
                             

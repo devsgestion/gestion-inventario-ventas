@@ -5,6 +5,7 @@ import { supabase } from '../api/supabaseClient';
 import ProductoForm from '../components/inventario/ProductoForm';
 import ProductosLista from '../components/inventario/ProductosLista';
 import RegistroCompraForm from '../components/inventario/RegistroCompraForm'; // 🛑 Importar nuevo formulario
+import ImportarProductosModal from '../components/inventario/ImportarProductosModal'; // 🛑 NUEVO: Modal de importación
 import VentasDelDiaModal from '../components/dashboard/VentasDelDiaModal';
 import GuidedTour from '../components/layout/GuidedTour';
 import HelpButton from '../components/layout/HelpButton';
@@ -100,6 +101,7 @@ const InventarioPage = () => {
     // 🛑 NUEVO ESTADO: Para mostrar/ocultar productos inactivos 🛑
     const [mostrarInactivos, setMostrarInactivos] = useState(false);
     const [showVentasModal, setShowVentasModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false); // 🛑 NUEVO: Modal de importación
     
     // ✨ Estados para el tour guiado
     const [runTour, setRunTour] = useState(false);
@@ -222,6 +224,15 @@ const InventarioPage = () => {
                                 Mostrar productos inactivos
                             </label>
                             
+                            {/* 🛑 NUEVO: Botón Importar Excel 🛑 */}
+                            <button
+                                onClick={() => setShowImportModal(true)}
+                                className="btn btn-secondary"
+                                title="Importar productos desde Excel"
+                            >
+                                📥 Importar Excel
+                            </button>
+                            
                             <button
                                 onClick={() => setMostrarFormulario(true)}
                                 className="btn btn-primary btn-success btn-new-product-action c-inventario__add-btn"
@@ -256,6 +267,15 @@ const InventarioPage = () => {
                         productoInicial={productoSeleccionado} 
                         onCompraRegistrada={handleProductSaved} 
                         onClose={handleCloseCompraForm}
+                    />
+                )}
+                
+                {/* 🛑 MODAL: Importar Productos desde Excel 🛑 */}
+                {showImportModal && isDataReady && (
+                    <ImportarProductosModal
+                        empresaId={empresaId}
+                        onClose={() => setShowImportModal(false)}
+                        onImportComplete={handleProductSaved}
                     />
                 )}
                 

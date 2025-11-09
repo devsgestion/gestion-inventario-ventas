@@ -1,69 +1,121 @@
 /*
   ==============================================
-  🛒 COMPONENTE: RegistroCompraForm
+  🛒 COMPONENTE: RegistroCompraForm - DISEÑO PROFESIONAL
   ==============================================
   Estilos específicos para el formulario de registro de compras.
 */
 
 /* Modal específico para registro de compras */
 .c-modal-content--compra {
-    max-width: 500px;
-    background: linear-gradient(135deg, var(--color-surface-300) 0%, var(--color-surface-200) 100%);
-    border: 1px solid var(--color-brand);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+    max-width: 550px;
+    max-height: 90vh;
+    background: var(--color-surface-200);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border-radius: var(--border-radius-lg);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Scrollbar personalizado para el modal */
+.c-modal-content--compra::-webkit-scrollbar {
+    width: 8px;
+}
+
+.c-modal-content--compra::-webkit-scrollbar-track {
+    background: var(--color-surface-300);
+    border-radius: 0 var(--border-radius-lg) var(--border-radius-lg) 0;
+}
+
+.c-modal-content--compra::-webkit-scrollbar-thumb {
+    background: var(--color-brand);
+    border-radius: 4px;
+}
+
+.c-modal-content--compra::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
 }
 
 /* Header del formulario de compras */
 .c-compra-header {
-    background: linear-gradient(135deg, var(--color-brand) 0%, #2ecc71 100%);
-    color: var(--color-text-on-dark);
-    padding: var(--space-lg);
+    background: #2e3b52;
+    color: white;
+    padding: var(--space-lg) var(--space-xl);
     border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
     margin: calc(-1 * var(--space-xl)) calc(-1 * var(--space-lg)) var(--space-lg) calc(-1 * var(--space-lg));
     text-align: center;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    border-bottom: 2px solid var(--color-brand);
+}
+
+.c-compra-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { transform: translateX(-50%) translateY(-50%); opacity: 0.5; }
+    50% { transform: translateX(-30%) translateY(-30%); opacity: 0.8; }
 }
 
 .c-compra-header h3 {
     margin: 0;
-    font-size: 1.4rem;
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1;
+    letter-spacing: 0.5px;
 }
 
 /* Información del producto seleccionado */
 .c-producto-info {
-    background: var(--color-surface-200);
-    border: 2px solid var(--color-brand);
+    background: linear-gradient(135deg, var(--color-surface-300) 0%, var(--color-surface-200) 100%);
+    border: 2px solid var(--color-border);
+    border-left: 4px solid var(--color-brand);
     border-radius: var(--border-radius-md);
-    padding: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
     margin-bottom: var(--space-lg);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.c-producto-info::before {
-    content: "";
+.c-producto-info::after {
+    content: "🛒";
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--color-brand) 0%, #2ecc71 100%);
+    bottom: -20px;
+    right: -10px;
+    font-size: 6rem;
+    opacity: 0.05;
+    transform: rotate(-15deg);
 }
 
 .c-producto-info__title {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.2rem;
+    font-weight: 800;
     color: var(--color-text-high);
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-md);
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+    position: relative;
+    z-index: 1;
 }
 
 .c-producto-info__title::before {
     content: "📦";
-    font-size: 1.2rem;
+    font-size: 1.4rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .c-producto-info__details {
@@ -71,30 +123,35 @@
     grid-template-columns: 1fr 1fr;
     gap: var(--space-md);
     font-size: 0.9rem;
-    color: var(--color-text-medium);
+    position: relative;
+    z-index: 1;
 }
 
 .c-producto-info__detail {
     display: flex;
     flex-direction: column;
+    gap: var(--space-xs);
 }
 
 .c-producto-info__label {
-    font-weight: 600;
-    color: var(--color-text-high);
-    margin-bottom: var(--space-xs);
+    font-weight: 700;
+    color: var(--color-text-medium);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
 }
 
 .c-producto-info__value {
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: 1.1rem;
+    font-weight: 800;
     color: var(--color-brand);
 }
 
 /* Formulario de compra con grid mejorado */
 .c-compra-form {
     display: grid;
-    gap: var(--space-lg);
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
 }
 
 .c-compra-form__group {
@@ -103,47 +160,57 @@
 
 .c-compra-form__label {
     display: block;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--color-text-high);
     margin-bottom: var(--space-sm);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .c-compra-form__label--required::after {
     content: " *";
     color: var(--color-danger);
-    font-weight: 700;
+    font-weight: 800;
+    font-size: 1.1rem;
 }
 
 .c-compra-form__input {
     width: 100%;
-    padding: var(--space-md);
-    border: 2px solid var(--color-surface-300);
+    padding: var(--space-md) var(--space-lg);
+    border: 2px solid var(--color-border);
     border-radius: var(--border-radius-md);
-    background-color: var(--color-surface-100);
+    background-color: var(--color-surface-300);
     color: var(--color-text-high);
     font-size: 1rem;
+    font-weight: 500;
     transition: all 0.3s ease;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.c-compra-form__input:hover {
+    border-color: var(--color-brand);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
 }
 
 .c-compra-form__input:focus {
     border-color: var(--color-brand);
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
     outline: none;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
 .c-compra-form__input:invalid {
     border-color: var(--color-danger);
-    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+    box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.15);
 }
 
 .c-compra-form__help {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--color-text-medium);
-    margin-top: var(--space-xs);
-    font-style: italic;
+    margin-top: var(--space-sm);
+    font-style: normal;
     display: flex;
     align-items: center;
     gap: var(--space-xs);
@@ -151,7 +218,8 @@
 
 .c-compra-form__help::before {
     content: "💡";
-    font-size: 0.9rem;
+    font-size: 1rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 /* Footer del modal de compras */
@@ -159,9 +227,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: var(--space-xl);
+    margin-top: var(--space-lg);
     padding-top: var(--space-md);
-    border-top: 1px solid var(--color-surface-300);
+    border-top: 2px solid var(--color-border);
+    flex-shrink: 0;
 }
 
 .c-compra-footer__actions {
@@ -171,68 +240,101 @@
     justify-content: flex-end;
 }
 
-/* Botones del formulario de compras */
+/* Botones del formulario de compras - DISEÑO PROFESIONAL */
 .btn--compra-cancelar {
-    background-color: var(--color-surface-300);
+    background: var(--color-surface-300);
     color: var(--color-text-high);
-    border: 2px solid var(--color-surface-400);
-    padding: var(--space-sm) var(--space-lg);
+    border: 2px solid var(--color-border);
+    padding: var(--space-md) var(--space-xl);
     border-radius: var(--border-radius-md);
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.95rem;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn--compra-cancelar:hover {
-    background-color: var(--color-danger);
-    color: var(--color-text-on-dark);
+    background: var(--color-danger);
+    color: white;
     border-color: var(--color-danger);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+}
+
+.btn--compra-cancelar:active {
+    transform: translateY(0) scale(0.98);
 }
 
 .btn--compra-guardar {
     background: linear-gradient(135deg, var(--color-success) 0%, #27ae60 100%);
-    color: var(--color-text-on-dark);
+    color: white;
     border: 2px solid var(--color-success);
-    padding: var(--space-sm) var(--space-xl);
+    padding: var(--space-md) var(--space-xl);
     border-radius: var(--border-radius-md);
-    font-weight: 700;
+    font-weight: 800;
     font-size: 1rem;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn--compra-guardar::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn--compra-guardar:hover:not(:disabled)::before {
+    width: 300px;
+    height: 300px;
 }
 
 .btn--compra-guardar:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(46, 204, 113, 0.4);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(46, 204, 113, 0.5);
     background: linear-gradient(135deg, #27ae60 0%, var(--color-success) 100%);
 }
 
 .btn--compra-guardar:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
-    box-shadow: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: var(--color-text-medium);
+    border-color: var(--color-text-medium);
+}
+
+.btn--compra-guardar:active:not(:disabled) {
+    transform: translateY(-1px) scale(1.02);
 }
 
 /* Animación de loading en el botón */
 .btn--compra-guardar--loading {
     position: relative;
     color: transparent;
+    pointer-events: none;
 }
 
 .btn--compra-guardar--loading::after {
     content: "";
     position: absolute;
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     top: 50%;
     left: 50%;
-    margin: -8px 0 0 -8px;
-    border: 2px solid transparent;
-    border-top: 2px solid var(--color-text-on-dark);
+    margin: -10px 0 0 -10px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {

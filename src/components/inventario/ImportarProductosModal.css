@@ -1,0 +1,311 @@
+/* src/components/inventario/ImportarProductosModal.css */
+
+/* Overlay */
+.import-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: var(--space-lg);
+}
+
+/* Modal principal */
+.import-modal {
+    background-color: var(--color-surface-200);
+    border-radius: var(--border-radius-lg);
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Header */
+.import-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-surface-100);
+}
+
+.import-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--color-text-high);
+}
+
+.import-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--color-text-medium);
+    padding: var(--space-sm);
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.import-modal-close:hover {
+    color: var(--color-text-high);
+}
+
+/* Body */
+.import-modal-body {
+    padding: var(--space-lg);
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Pasos */
+.import-step {
+    margin-bottom: var(--space-lg);
+}
+
+.import-step h3 {
+    margin-top: 0;
+    margin-bottom: var(--space-sm);
+    font-size: 1.125rem;
+    color: var(--color-text-high);
+}
+
+.import-step p {
+    margin-bottom: var(--space-md);
+    color: var(--color-text-medium);
+}
+
+/* Botón de plantilla */
+.btn-download-template {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--border-radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-download-template:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+/* Divider */
+.import-divider {
+    height: 1px;
+    background-color: var(--color-border);
+    margin: var(--space-lg) 0;
+}
+
+/* Input de archivo */
+.import-file-input {
+    display: block;
+    width: 100%;
+    padding: var(--space-md);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--border-radius-md);
+    background-color: var(--color-surface-300);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.import-file-input:hover {
+    border-color: var(--color-brand);
+}
+
+.import-file-name {
+    margin-top: var(--space-sm);
+    color: var(--color-brand);
+    font-weight: 500;
+}
+
+/* Mensajes de error */
+.import-error {
+    background-color: rgba(231, 76, 60, 0.1);
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+    padding: var(--space-md);
+    border-radius: var(--border-radius-md);
+    margin: var(--space-md) 0;
+}
+
+/* Preview */
+.import-preview {
+    margin-top: var(--space-lg);
+    padding: var(--space-lg);
+    background-color: var(--color-surface-300);
+    border-radius: var(--border-radius-md);
+}
+
+.import-preview h3 {
+    margin-top: 0;
+    margin-bottom: var(--space-md);
+    color: var(--color-text-high);
+}
+
+.import-preview-table-wrapper {
+    overflow-x: auto;
+    margin-bottom: var(--space-md);
+}
+
+.import-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.import-preview-table th {
+    background-color: var(--color-surface-100);
+    padding: var(--space-sm) var(--space-md);
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-border);
+    color: var(--color-text-high);
+}
+
+.import-preview-table td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-medium);
+}
+
+.import-preview-table tbody tr:hover {
+    background-color: var(--color-surface-200);
+}
+
+.import-preview-table .invalid-row {
+    background-color: rgba(231, 76, 60, 0.05);
+}
+
+.import-preview-table em {
+    color: var(--color-text-light);
+    font-style: italic;
+}
+
+/* Badges */
+.valid-badge {
+    display: inline-block;
+    background-color: #27ae60;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.invalid-badge {
+    display: inline-block;
+    background-color: #e74c3c;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.import-preview-note {
+    color: var(--color-text-medium);
+    font-style: italic;
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+/* Resumen */
+.import-summary {
+    display: flex;
+    gap: var(--space-lg);
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background-color: var(--color-surface-200);
+    border-radius: var(--border-radius-md);
+}
+
+.import-summary p {
+    margin: 0;
+    color: var(--color-text-medium);
+}
+
+.import-summary strong {
+    color: var(--color-text-high);
+    font-size: 1.125rem;
+}
+
+/* Resultado */
+.import-result {
+    background-color: rgba(39, 174, 96, 0.1);
+    border: 1px solid #27ae60;
+    padding: var(--space-lg);
+    border-radius: var(--border-radius-md);
+    margin-top: var(--space-lg);
+}
+
+.import-result h3 {
+    margin-top: 0;
+    color: #27ae60;
+}
+
+.import-result-stats p {
+    margin: var(--space-sm) 0;
+    color: var(--color-text-medium);
+}
+
+.import-result-stats strong {
+    color: var(--color-text-high);
+}
+
+/* Footer */
+.import-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-surface-100);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .import-modal {
+        max-width: 95%;
+    }
+    
+    .import-summary {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+}
+
+/* Modo claro */
+body.theme-light .import-modal {
+    background-color: white;
+}
+
+body.theme-light .import-modal-header {
+    background-color: #f8f9fa;
+}
+
+body.theme-light .import-step h3 {
+    color: #2c3e50;
+}
+
+body.theme-light .import-preview {
+    background-color: #f8f9fa;
+}
+
+body.theme-light .import-preview-table th {
+    background-color: #e9ecef;
+}
+
+body.theme-light .import-summary {
+    background-color: white;
+}

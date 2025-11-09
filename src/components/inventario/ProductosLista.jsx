@@ -22,6 +22,7 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
     const [showDeactivateModal, setShowDeactivateModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showEditNameModal, setShowEditNameModal] = useState(false);
+    const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
     const [productToAction, setProductToAction] = useState(null);
 
     // 🛑 NUEVOS ESTADOS: Para toast de éxito 🛑
@@ -33,6 +34,13 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
     
     // 🛑 NUEVO ESTADO: Para edición de nombre 🛑
     const [editedName, setEditedName] = useState('');
+    
+    // 🛑 NUEVO ESTADO: Para edición de categoría 🛑
+    const [editedCategory, setEditedCategory] = useState('');
+    
+    // 🛑 NUEVO ESTADO: Para filtros avanzados 🛑
+    const [selectedCategory, setSelectedCategory] = useState('todas');
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     
     // 🛑 NUEVO ESTADO: Para menú contextual de acciones 🛑
     const [openMenuId, setOpenMenuId] = useState(null);
@@ -64,8 +72,34 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
             p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.codigo_referencia.toLowerCase().includes(searchTerm.toLowerCase());
         
-        return cumpleAlertas && cumpleEstado && cumpleBusqueda;
+        // 🛑 NUEVO: Filtro por categoría 🛑
+        const cumpleCategoria = selectedCategory === 'todas' || 
+            selectedCategory === 'sin-categoria' && !p.categoria ||
+            p.categoria?.toLowerCase() === selectedCategory.toLowerCase();
+        
+        return cumpleAlertas && cumpleEstado && cumpleBusqueda && cumpleCategoria;
     });
+    
+    // 🛑 NUEVO: Obtener lista de categorías únicas 🛑
+    const categoriasUnicas = React.useMemo(() => {
+        const cats = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
+        return cats.sort((a, b) => a.localeCompare(b));
+    }, [productos]);
+    
+    // 🛑 NUEVO: Estadísticas por categoría 🛑
+    const estadisticasPorCategoria = React.useMemo(() => {
+        if (selectedCategory === 'todas') return null;
+        
+        const productosFiltradosCat = productos.filter(p => 
+            selectedCategory === 'sin-categoria' ? !p.categoria : p.categoria?.toLowerCase() === selectedCategory.toLowerCase()
+        );
+        
+        const cantidad = productosFiltradosCat.length;
+        const stockTotal = productosFiltradosCat.reduce((sum, p) => sum + (p.stock_actual || 0), 0);
+        const valorInventario = productosFiltradosCat.reduce((sum, p) => sum + ((p.stock_actual || 0) * (p.precio_costo || 0)), 0);
+        
+        return { cantidad, stockTotal, valorInventario };
+    }, [productos, selectedCategory]);
         
     const countTotal = productos.length;
     const countAlertas = productosBajoStock.length;
@@ -231,6 +265,44 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
         setProductToAction(null);
     };
 
+    // 🛑 NUEVA FUNCIÓN: Editar categoría de producto 🛑
+    const handleEditCategory = (producto) => {
+        setProductToAction(producto);
+        setEditedCategory(producto.categoria || '');
+        setShowEditCategoryModal(true);
+    };
+
+    const saveProductCategory = async () => {
+        const categoriaTrimmed = editedCategory.trim();
+        
+        // Si es la misma categoría, no hacer nada
+        if (categoriaTrimmed === (productToAction.categoria || '')) {
+            setShowEditCategoryModal(false);
+            setProductToAction(null);
+            return;
+        }
+        
+        setActionLoading(true);
+        
+        const { error } = await supabase
+            .from('productos')
+            .update({ categoria: categoriaTrimmed || null })
+            .eq('id', productToAction.id);
+
+        if (error) {
+            alert(`Error al actualizar la categoría: ${error.message}`);
+        } else {
+            fetchProductos();
+            setSuccessMessage('Categoría actualizada correctamente');
+            setShowSuccessToast(true);
+            setTimeout(() => setShowSuccessToast(false), 3000);
+        }
+        
+        setActionLoading(false);
+        setShowEditCategoryModal(false);
+        setProductToAction(null);
+    };
+
     const deleteProducto = async (productoId) => {
         setActionLoading(true);
         
@@ -307,12 +379,92 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                 )}
             </div>
             
+            {/* 🛑 NUEVO: Filtros avanzados 🛑 */}
+            <div className="c-productos-lista__advanced-filters">
+                <button 
+                    className={`c-productos-lista__filter-toggle ${showAdvancedFilters ? 'active' : ''}`}
+                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                >
+                    <span className="c-productos-lista__filter-icon">⚙️</span>
+                    <span>Filtros Avanzados</span>
+                    <span className="c-productos-lista__filter-arrow">{showAdvancedFilters ? '▲' : '▼'}</span>
+                </button>
+                
+                {showAdvancedFilters && (
+                    <div className="c-productos-lista__filter-panel">
+                        <div className="c-productos-lista__filter-group">
+                            <label className="c-productos-lista__filter-label">
+                                <span className="c-productos-lista__filter-label-icon">🏷️</span>
+                                <span>Filtrar por Categoría:</span>
+                            </label>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                className="c-productos-lista__filter-select"
+                            >
+                                <option value="todas">📦 Todas las categorías</option>
+                                {categoriasUnicas.length > 0 && (
+                                    <>
+                                        {categoriasUnicas.map(cat => (
+                                            <option key={cat} value={cat}>
+                                                {cat}
+                                            </option>
+                                        ))}
+                                    </>
+                                )}
+                                <option value="sin-categoria">❌ Sin categoría</option>
+                            </select>
+                        </div>
+                        
+                        {estadisticasPorCategoria && (
+                            <div className="c-productos-lista__category-stats">
+                                <div className="c-productos-lista__stat-card">
+                                    <span className="c-productos-lista__stat-icon">📊</span>
+                                    <div className="c-productos-lista__stat-content">
+                                        <span className="c-productos-lista__stat-label">Productos</span>
+                                        <span className="c-productos-lista__stat-value">{estadisticasPorCategoria.cantidad}</span>
+                                    </div>
+                                </div>
+                                <div className="c-productos-lista__stat-card">
+                                    <span className="c-productos-lista__stat-icon">📦</span>
+                                    <div className="c-productos-lista__stat-content">
+                                        <span className="c-productos-lista__stat-label">Stock Total</span>
+                                        <span className="c-productos-lista__stat-value">{estadisticasPorCategoria.stockTotal} unidades</span>
+                                    </div>
+                                </div>
+                                <div className="c-productos-lista__stat-card">
+                                    <span className="c-productos-lista__stat-icon">💰</span>
+                                    <div className="c-productos-lista__stat-content">
+                                        <span className="c-productos-lista__stat-label">Valor Inventario</span>
+                                        <span className="c-productos-lista__stat-value">{formatCurrencyCOP(estadisticasPorCategoria.valorInventario)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {selectedCategory !== 'todas' && (
+                            <button
+                                onClick={() => setSelectedCategory('todas')}
+                                className="c-productos-lista__clear-filters-btn"
+                            >
+                                ✕ Limpiar filtro de categoría
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+            
             <div className="c-productos-lista__filters-info">
                 <p className="c-form-message c-form-message--help">
                     Mostrando {productosFiltrados.length} de {countTotal} referencias
                     {searchTerm && (
                         <span style={{ color: 'var(--color-brand)', fontWeight: 'bold' }}>
                             {' '}(búsqueda: "{searchTerm}")
+                        </span>
+                    )}
+                    {selectedCategory !== 'todas' && (
+                        <span style={{ color: 'var(--color-brand)', fontWeight: 'bold' }}>
+                            {' '}(categoría: {selectedCategory === 'sin-categoria' ? 'Sin categoría' : selectedCategory})
                         </span>
                     )}
                     {!mostrarInactivos && (
@@ -451,6 +603,18 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                                                 >
                                                                     <span className="c-productos-lista__menu-icon">✏️</span>
                                                                     <span>Editar Nombre</span>
+                                                                </button>
+                                                                
+                                                                <button
+                                                                    onClick={() => {
+                                                                        handleEditCategory(p);
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="c-productos-lista__menu-item c-productos-lista__menu-item--edit"
+                                                                    disabled={actionLoading}
+                                                                >
+                                                                    <span className="c-productos-lista__menu-icon">🏷️</span>
+                                                                    <span>Editar Categoría</span>
                                                                 </button>
                                                                 
                                                                 <button
@@ -712,6 +876,82 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                 onClick={saveProductName}
                                 className="btn btn-primary"
                                 disabled={actionLoading || !editedName.trim()}
+                            >
+                                {actionLoading ? 'Guardando...' : 'Guardar Cambios'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 🛑 NUEVO MODAL: Editar categoría de producto 🛑 */}
+            {showEditCategoryModal && productToAction && (
+                <div className="c-modal-overlay">
+                    <div className="c-modal-content c-modal-content--edit-category">
+                        <div className="c-modal-header">
+                            <h3 className="c-modal-title">🏷️ Editar Categoría del Producto</h3>
+                            <button 
+                                onClick={() => setShowEditCategoryModal(false)}
+                                className="c-modal-close-btn"
+                                disabled={actionLoading}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        
+                        <div className="c-modal-body">
+                            <div className="c-simple-product-card">
+                                <p><strong>Producto:</strong> {productToAction.nombre}</p>
+                                <p><strong>Referencia:</strong> {productToAction.codigo_referencia}</p>
+                            </div>
+                            
+                            <div className="c-form-group">
+                                <label className="c-form-label">
+                                    <strong>Categoría</strong>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editedCategory}
+                                    onChange={(e) => setEditedCategory(e.target.value)}
+                                    className="c-productos-lista__category-input"
+                                    placeholder="Ej: Cadenas, Aretes, Pulseras... (Dejar vacío para quitar categoría)"
+                                    autoFocus
+                                    disabled={actionLoading}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') saveProductCategory();
+                                        if (e.key === 'Escape') setShowEditCategoryModal(false);
+                                    }}
+                                />
+                                <small className="c-form-message c-form-message--help">
+                                    La categoría te ayuda a organizar y filtrar tus productos
+                                </small>
+                            </div>
+                            
+                            {editedCategory.trim() && editedCategory.trim() !== (productToAction.categoria || '') && (
+                                <div className="c-simple-suggestion">
+                                    💡 Nueva categoría: <strong>"{editedCategory.trim()}"</strong>
+                                </div>
+                            )}
+                            
+                            {!editedCategory.trim() && productToAction.categoria && (
+                                <div className="c-simple-suggestion">
+                                    ⚠️ Se quitará la categoría actual: <strong>"{productToAction.categoria}"</strong>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="c-modal-footer">
+                            <button 
+                                onClick={() => setShowEditCategoryModal(false)}
+                                className="btn btn-secondary"
+                                disabled={actionLoading}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={saveProductCategory}
+                                className="btn btn-primary"
+                                disabled={actionLoading}
                             >
                                 {actionLoading ? 'Guardando...' : 'Guardar Cambios'}
                             </button>

@@ -178,7 +178,7 @@ export const printInventoryList = (productos, empresaNombre) => {
                 <div class="stat-item">
                     <div class="stat-label">Valor Total Inventario</div>
                     <div class="stat-value">${formatCurrencyCOP(
-                        productos.reduce((sum, p) => sum + (p.stock_actual * p.precio_venta), 0)
+                        productos.reduce((sum, p) => sum + (p.stock_actual * p.precio_costo), 0)
                     )}</div>
                 </div>
             </div>

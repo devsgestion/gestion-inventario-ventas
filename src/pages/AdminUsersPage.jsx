@@ -17,6 +17,8 @@ const AdminUsersPage = () => {
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [showEditRoleModal, setShowEditRoleModal] = useState(false);
+    const [userToEdit, setUserToEdit] = useState(null);
     const [newUserCredentials, setNewUserCredentials] = useState({ email: '', password: '' });
     const [actionLoading, setActionLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
@@ -28,7 +30,7 @@ const AdminUsersPage = () => {
         password: '',
         nombre_completo: '',
         empresa_nombre: '',
-        rol: 'usuario'
+        rol: 'vendedor'
     });
 
     // Verificar que el usuario tiene permisos de superadmin
@@ -218,6 +220,48 @@ const AdminUsersPage = () => {
         }
     };
 
+    const handleEditRole = async (e) => {
+        e.preventDefault();
+        setActionLoading(true);
+        setErrorMessage('');
+
+        // Validación: no permitir que el usuario edite su propio rol
+        if (userToEdit.id === perfil.id) {
+            setErrorMessage('No puedes cambiar tu propio rol');
+            setActionLoading(false);
+            return;
+        }
+
+        try {
+            // Llamar a RPC para actualizar el rol
+            const { error } = await supabase.rpc('update_user_role', {
+                p_admin_id: perfil.id,
+                p_user_id: userToEdit.id,
+                p_new_rol: userToEdit.rol
+            });
+
+            if (error) throw error;
+
+            setSuccessMessage(`Rol actualizado correctamente para ${userToEdit.nombre_completo}`);
+            setShowEditRoleModal(false);
+            setUserToEdit(null);
+            loadUsers();
+            setTimeout(() => setSuccessMessage(''), 3000);
+
+        } catch (error) {
+            console.error('Error:', error);
+            setErrorMessage(`Error al actualizar rol: ${error.message}`);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const openEditRoleModal = (user) => {
+        setUserToEdit({ ...user });
+        setShowEditRoleModal(true);
+        setErrorMessage('');
+    };
+
     if (loading) {
         return <div className="ap-loading-state">Cargando panel de administración...</div>;
     }
@@ -343,14 +387,26 @@ const AdminUsersPage = () => {
                                             }
                                         </td>
                                         <td>
-                                            {user.id !== perfil.id && (
-                                                <button
-                                                    onClick={() => handleToggleStatus(user.id, user.activo)}
-                                                    className={`ap-btn ap-btn-sm ${user.activo ? 'ap-btn-warning' : 'ap-btn-success'}`}
-                                                >
-                                                    {user.activo ? 'Desactivar' : 'Activar'}
-                                                </button>
-                                            )}
+                                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                                {user.id !== perfil.id && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => openEditRoleModal(user)}
+                                                            className="ap-btn ap-btn-sm ap-btn-primary"
+                                                            style={{ minWidth: '90px' }}
+                                                        >
+                                                            Editar Rol
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleToggleStatus(user.id, user.activo)}
+                                                            className={`ap-btn ap-btn-sm ${user.activo ? 'ap-btn-warning' : 'ap-btn-success'}`}
+                                                            style={{ minWidth: '90px' }}
+                                                        >
+                                                            {user.activo ? 'Desactivar' : 'Activar'}
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -416,10 +472,27 @@ const AdminUsersPage = () => {
                                         onChange={(e) => setFormData({...formData, rol: e.target.value})}
                                         className="ap-form-input"
                                     >
-                                        <option value="usuario">Usuario</option>
+                                        <option value="vendedor">Vendedor</option>
+                                        <option value="gestor">Gestor</option>
+                                        <option value="admin_vendedor">Admin Vendedor</option>
+                                        <option value="admin_gestor">Admin Gestor</option>
                                         <option value="admin">Administrador</option>
                                         <option value="superadmin">Superadministrador</option>
                                     </select>
+                                    <small style={{ 
+                                        display: 'block', 
+                                        marginTop: '6px',
+                                        fontSize: '0.8rem',
+                                        color: 'var(--color-text-medium)',
+                                        lineHeight: '1.4'
+                                    }}>
+                                        <strong>Vendedor:</strong> Inventario + POS + Cambios/Devoluciones | 
+                                        <strong>Gestor:</strong> Inventario + Pedidos | 
+                                        <strong>Admin Vendedor:</strong> Vendedor + Dashboard | 
+                                        <strong>Admin Gestor:</strong> Gestor + Dashboard | 
+                                        <strong>Admin:</strong> Todos los módulos excepto Panel Admin | 
+                                        <strong>Superadmin:</strong> Control total
+                                    </small>
                                 </div>
                                 
                                 <div className="admin-form-note" style={{ 
@@ -579,6 +652,131 @@ const AdminUsersPage = () => {
                                 Entendido
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal para editar rol */}
+            {showEditRoleModal && userToEdit && (
+                <div className="ap-modal-overlay">
+                    <div className="ap-modal-content" style={{ maxWidth: 500 }}>
+                        <div className="ap-modal-header">
+                            <h3 className="ap-modal-title">Editar Rol de Usuario</h3>
+                            <button 
+                                onClick={() => {
+                                    setShowEditRoleModal(false);
+                                    setUserToEdit(null);
+                                    setErrorMessage('');
+                                }} 
+                                className="ap-modal-close-btn"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={handleEditRole}>
+                            <div className="ap-modal-body">
+                                {errorMessage && (
+                                    <div className="ap-alert ap-alert-error" style={{ marginBottom: '20px' }}>
+                                        {errorMessage}
+                                    </div>
+                                )}
+
+                                <div style={{
+                                    background: 'var(--color-surface-300)',
+                                    padding: '16px',
+                                    borderRadius: 'var(--border-radius-sm)',
+                                    marginBottom: '20px',
+                                    border: '1px solid var(--color-border)'
+                                }}>
+                                    <div style={{ marginBottom: '8px' }}>
+                                        <strong style={{ color: 'var(--color-text-high)' }}>Usuario:</strong>{' '}
+                                        <span style={{ color: 'var(--color-text-medium)' }}>{userToEdit.nombre_completo}</span>
+                                    </div>
+                                    <div style={{ marginBottom: '8px' }}>
+                                        <strong style={{ color: 'var(--color-text-high)' }}>Email:</strong>{' '}
+                                        <span style={{ color: 'var(--color-text-medium)' }}>{userToEdit.email}</span>
+                                    </div>
+                                    <div>
+                                        <strong style={{ color: 'var(--color-text-high)' }}>Rol Actual:</strong>{' '}
+                                        <span className={`ap-role-badge ap-role-badge-${userToEdit.rol}`}>
+                                            {userToEdit.rol}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="ap-form-group">
+                                    <label className="ap-form-label">Nuevo Rol</label>
+                                    <select
+                                        value={userToEdit.rol}
+                                        onChange={(e) => setUserToEdit({...userToEdit, rol: e.target.value})}
+                                        className="ap-form-input"
+                                        required
+                                    >
+                                        <option value="vendedor">Vendedor</option>
+                                        <option value="gestor">Gestor</option>
+                                        <option value="admin_vendedor">Admin Vendedor</option>
+                                        <option value="admin_gestor">Admin Gestor</option>
+                                        <option value="admin">Administrador</option>
+                                        <option value="superadmin">Superadministrador</option>
+                                    </select>
+                                    <small style={{ 
+                                        display: 'block', 
+                                        marginTop: '8px',
+                                        fontSize: '0.8rem',
+                                        color: 'var(--color-text-medium)',
+                                        lineHeight: '1.4'
+                                    }}>
+                                        <strong>Vendedor:</strong> Inventario + POS + Cambios/Devoluciones<br/>
+                                        <strong>Gestor:</strong> Solo Inventario + Pedidos<br/>
+                                        <strong>Admin Vendedor:</strong> Todo lo de vendedor + Dashboard avanzado<br/>
+                                        <strong>Admin Gestor:</strong> Todo lo de gestor + Dashboard avanzado<br/>
+                                        <strong>Admin:</strong> Todos los módulos excepto Panel de Admin (usuarios)<br/>
+                                        <strong>Superadmin:</strong> Control total del sistema
+                                    </small>
+                                </div>
+                                
+                                <div style={{ 
+                                    padding: '12px', 
+                                    background: 'rgba(255, 193, 7, 0.1)', 
+                                    border: '1px solid rgba(255, 193, 7, 0.3)',
+                                    borderRadius: 'var(--border-radius-sm)',
+                                    fontSize: '0.85rem',
+                                    color: 'var(--color-text-medium)',
+                                    display: 'flex',
+                                    gap: '10px',
+                                    alignItems: 'flex-start'
+                                }}>
+                                    <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>⚠️</span>
+                                    <span>
+                                        Al cambiar el rol, los permisos del usuario se actualizarán inmediatamente. 
+                                        Asegúrate de que el nuevo rol sea apropiado para este usuario.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="ap-modal-footer">
+                                <button 
+                                    type="button" 
+                                    onClick={() => {
+                                        setShowEditRoleModal(false);
+                                        setUserToEdit(null);
+                                        setErrorMessage('');
+                                    }} 
+                                    className="ap-btn ap-btn-secondary"
+                                    disabled={actionLoading}
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    disabled={actionLoading} 
+                                    className="ap-btn ap-btn-primary"
+                                >
+                                    {actionLoading ? 'Actualizando...' : 'Actualizar Rol'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
