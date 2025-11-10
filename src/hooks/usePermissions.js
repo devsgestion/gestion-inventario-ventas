@@ -86,6 +86,11 @@ const usePermissions = () => {
                 canViewCashHistory: false,
                 canExportData: false,
                 
+                // Gastos
+                canViewExpenses: false,
+                canRegisterExpenses: false,
+                canCancelExpenses: false,
+                
                 // Perfil
                 canViewOwnProfile: true,
                 canEditOwnProfile: true,
@@ -144,6 +149,11 @@ const usePermissions = () => {
                 canViewAdvancedReports: false,
                 canViewCashHistory: false,
                 canExportData: false,
+                
+                // Gastos
+                canViewExpenses: false,
+                canRegisterExpenses: false,
+                canCancelExpenses: false,
                 
                 // Perfil
                 canViewOwnProfile: true,
@@ -204,6 +214,11 @@ const usePermissions = () => {
                 canViewCashHistory: true,
                 canExportData: true,
                 
+                // Gastos
+                canViewExpenses: true,
+                canRegisterExpenses: true,
+                canCancelExpenses: true,
+                
                 // Perfil
                 canViewOwnProfile: true,
                 canEditOwnProfile: true,
@@ -262,6 +277,11 @@ const usePermissions = () => {
                 canViewAdvancedReports: true,
                 canViewCashHistory: true,
                 canExportData: true,
+                
+                // Gastos
+                canViewExpenses: true,
+                canRegisterExpenses: true,
+                canCancelExpenses: true,
                 
                 // Perfil
                 canViewOwnProfile: true,
@@ -322,6 +342,11 @@ const usePermissions = () => {
                 canViewCashHistory: true,
                 canExportData: true,
                 
+                // Gastos
+                canViewExpenses: true,
+                canRegisterExpenses: true,
+                canCancelExpenses: true,
+                
                 // Perfil
                 canViewOwnProfile: true,
                 canEditOwnProfile: true,
@@ -381,6 +406,11 @@ const usePermissions = () => {
                 canViewCashHistory: true,
                 canExportData: true,
                 
+                // Gastos
+                canViewExpenses: true,
+                canRegisterExpenses: true,
+                canCancelExpenses: true,
+                
                 // Perfil
                 canViewOwnProfile: true,
                 canEditOwnProfile: true,
@@ -418,6 +448,7 @@ const usePermissions = () => {
                     '/cambios-devoluciones': currentPermissions.canViewCambios,
                     '/historial': currentPermissions.canViewCashHistory,
                     '/historial-caja': currentPermissions.canViewCashHistory,
+                    '/gastos': currentPermissions.canViewExpenses,
                     '/settings': currentPermissions.canAccessSettings,
                     '/configuracion': currentPermissions.canAccessSettings,
                     '/profile': true,

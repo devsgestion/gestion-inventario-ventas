@@ -5,11 +5,13 @@ import { supabase } from '../api/supabaseClient';
 import useAuth from '../hooks/useAuth.jsx';
 import usePermissions from '../hooks/usePermissions';
 import useCambiosDevoluciones from '../hooks/useCambiosDevoluciones';
+import useGastos from '../hooks/useGastos';
 import ConfirmModal from '../components/common/ConfirmModal';
 import { ToastContainer } from '../components/common/Toast';
 import useToast from '../hooks/useToast';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrencyCOP } from '../utils/formatters';
+import { CATEGORIAS_GASTOS } from '../components/gastos/RegistrarGastoModal';
 import '../styles/ventas.css'; 
 
 const HistorialCajaPage = () => {
@@ -18,11 +20,13 @@ const HistorialCajaPage = () => {
     const navigate = useNavigate();
     const empresaId = perfil?.empresa_id;
     const { anularCambio } = useCambiosDevoluciones(empresaId);
+    const { obtenerGastosPorFecha } = useGastos(empresaId);
     const { toasts, showToast, removeToast } = useToast();
 
     const [cierres, setCierres] = useState([]);
     const [detalleDia, setDetalleDia] = useState(null); 
     const [cambiosDia, setCambiosDia] = useState(null);
+    const [gastosDia, setGastosDia] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(null);
     const [showAnularModal, setShowAnularModal] = useState(false);
@@ -58,6 +62,7 @@ const HistorialCajaPage = () => {
         setSelectedDate(fechaCierre);
         setDetalleDia(null);
         setCambiosDia(null);
+        setGastosDia(null);
 
         const fechaInicio = fechaCierre + 'T00:00:00.000Z';
         const diaSiguiente = new Date(new Date(fechaCierre).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -88,7 +93,11 @@ const HistorialCajaPage = () => {
 
         if (cambiosError) console.error("Error cargando cambios:", cambiosError);
         setCambiosDia(cambiosData || []);
-    }, [empresaId]);
+
+        // Cargar gastos del día
+        const gastosData = await obtenerGastosPorFecha(fechaCierre);
+        setGastosDia(gastosData || []);
+    }, [empresaId, obtenerGastosPorFecha]);
 
     const handleAnularClick = (cambioId) => {
         setCambioToAnular(cambioId);
@@ -340,6 +349,178 @@ const HistorialCajaPage = () => {
                                                 }}>
                                                     {cambiosDia.reduce((sum, c) => sum + Number(c.diferencia), 0) > 0 ? '+' : ''}
                                                     {formatCurrencyCOP(cambiosDia.reduce((sum, c) => sum + Number(c.diferencia), 0))}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 💸 Sección de Gastos del Día */}
+                            {selectedDate && gastosDia && gastosDia.length > 0 && (
+                                <div style={{
+                                    marginTop: 'var(--space-xl)',
+                                    padding: 'var(--space-lg)',
+                                    background: 'white',
+                                    borderRadius: 'var(--border-radius-lg)',
+                                    boxShadow: 'var(--shadow-md)',
+                                    border: '2px solid #f59e0b'
+                                }}>
+                                    <h3 style={{
+                                        fontSize: '1.25rem',
+                                        fontWeight: 700,
+                                        color: '#d97706',
+                                        marginBottom: 'var(--space-lg)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 'var(--space-sm)'
+                                    }}>
+                                        <span>💸</span> Gastos del Día
+                                    </h3>
+
+                                    <div style={{display: 'grid', gap: 'var(--space-md)'}}>
+                                        {gastosDia.map((gasto) => {
+                                            const categoriaInfo = CATEGORIAS_GASTOS.find(cat => cat.value === gasto.categoria) || 
+                                                                 { label: gasto.categoria, color: '#6b7280' };
+                                            
+                                            return (
+                                                <div key={gasto.id} style={{
+                                                    padding: 'var(--space-md)',
+                                                    background: gasto.anulado ? '#f3f4f6' : '#fef3c7',
+                                                    borderRadius: 'var(--border-radius-md)',
+                                                    borderLeft: `4px solid ${categoriaInfo.color}`,
+                                                    opacity: gasto.anulado ? 0.6 : 1
+                                                }}>
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'flex-start',
+                                                        marginBottom: 'var(--space-sm)'
+                                                    }}>
+                                                        <div>
+                                                            <div style={{
+                                                                display: 'inline-block',
+                                                                padding: '0.25rem 0.75rem',
+                                                                borderRadius: '12px',
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: 600,
+                                                                color: 'white',
+                                                                background: categoriaInfo.color,
+                                                                marginBottom: 'var(--space-xs)'
+                                                            }}>
+                                                                {categoriaInfo.label}
+                                                            </div>
+                                                            <h4 style={{
+                                                                fontSize: '1rem',
+                                                                fontWeight: 600,
+                                                                color: '#1f2937',
+                                                                margin: '0.5rem 0'
+                                                            }}>
+                                                                {gasto.concepto}
+                                                            </h4>
+                                                        </div>
+                                                        <div style={{
+                                                            fontSize: '1.25rem',
+                                                            fontWeight: 700,
+                                                            color: '#dc2626'
+                                                        }}>
+                                                            -{formatCurrencyCOP(gasto.monto)}
+                                                        </div>
+                                                    </div>
+
+                                                    {gasto.proveedor && (
+                                                        <div style={{fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem'}}>
+                                                            🏪 Proveedor: {gasto.proveedor}
+                                                        </div>
+                                                    )}
+
+                                                    {gasto.numero_factura && (
+                                                        <div style={{fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem'}}>
+                                                            📄 Factura: {gasto.numero_factura}
+                                                        </div>
+                                                    )}
+
+                                                    {gasto.descripcion && (
+                                                        <div style={{
+                                                            fontSize: '0.875rem',
+                                                            color: '#6b7280',
+                                                            fontStyle: 'italic',
+                                                            marginTop: 'var(--space-xs)',
+                                                            paddingTop: 'var(--space-xs)',
+                                                            borderTop: '1px solid #e5e7eb'
+                                                        }}>
+                                                            {gasto.descripcion}
+                                                        </div>
+                                                    )}
+
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        marginTop: 'var(--space-sm)',
+                                                        paddingTop: 'var(--space-sm)',
+                                                        borderTop: '1px solid #e5e7eb',
+                                                        fontSize: '0.75rem',
+                                                        color: '#6b7280'
+                                                    }}>
+                                                        <div style={{display: 'flex', gap: 'var(--space-md)'}}>
+                                                            <span>
+                                                                {gasto.metodo_pago === 'efectivo' && '💵 Efectivo'}
+                                                                {gasto.metodo_pago === 'transferencia' && '🏦 Transferencia'}
+                                                                {gasto.metodo_pago === 'tarjeta' && '💳 Tarjeta'}
+                                                            </span>
+                                                            {gasto.usuario && (
+                                                                <span>
+                                                                    👤 {gasto.usuario.nombre_completo || gasto.usuario.nombre}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {gasto.anulado && (
+                                                            <span style={{
+                                                                padding: '0.25rem 0.75rem',
+                                                                background: '#ef4444',
+                                                                color: 'white',
+                                                                borderRadius: '12px',
+                                                                fontSize: '0.7rem',
+                                                                fontWeight: 600
+                                                            }}>
+                                                                ❌ ANULADO
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {gasto.anulado && gasto.motivo_anulacion && (
+                                                        <div style={{
+                                                            marginTop: 'var(--space-sm)',
+                                                            padding: 'var(--space-sm)',
+                                                            background: '#fee2e2',
+                                                            borderRadius: 'var(--border-radius-sm)',
+                                                            fontSize: '0.8rem',
+                                                            color: '#991b1b'
+                                                        }}>
+                                                            <strong>Motivo anulación:</strong> {gasto.motivo_anulacion}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* Resumen total de gastos */}
+                                        <div style={{
+                                            padding: 'var(--space-md)',
+                                            background: '#fee2e2',
+                                            borderRadius: 'var(--border-radius-md)',
+                                            border: '2px solid #dc2626',
+                                            fontWeight: 600
+                                        }}>
+                                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                                <span>💸 Total gastos del día:</span>
+                                                <span style={{fontSize: '1.25rem', color: '#dc2626'}}>
+                                                    -{formatCurrencyCOP(
+                                                        gastosDia
+                                                            .filter(g => !g.anulado)
+                                                            .reduce((sum, g) => sum + Number(g.monto), 0)
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>

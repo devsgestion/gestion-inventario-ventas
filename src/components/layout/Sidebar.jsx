@@ -131,6 +131,19 @@ const Sidebar = () => {
                             </li>
                         )}
 
+                        {/* Gastos Varios - admin_vendedor, admin_gestor, admin, superadmin */}
+                        {permissions.canViewExpenses && (
+                            <li className="c-nav-item">
+                                <NavLink 
+                                    to="/gastos" 
+                                    className={({ isActive }) => `c-nav-link ${isActive ? 'c-nav-link-active' : ''}`}
+                                    onClick={closeSidebar}
+                                >
+                                    <span className="c-nav-link__icon">💸</span><span className="c-nav-link__text">Gastos Varios</span>
+                                </NavLink>
+                            </li>
+                        )}
+
                         {/* Panel de Admin - SOLO superadmin */}
                         {permissions.canAccessAdminPanel && (
                             <li className="c-nav-item">

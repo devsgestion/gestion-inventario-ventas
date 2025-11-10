@@ -1,0 +1,684 @@
+/* =========================================================================
+   💸 ESTILOS DEL MÓDULO DE GASTOS - Design System Coherente
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   PÁGINA PRINCIPAL - GastosPage
+   ------------------------------------------------------------------------- */
+.gastos-page {
+    padding: var(--space-xl);
+    max-width: 1400px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease-in;
+}
+
+/* Header */
+.gastos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.gastos-header-title h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text-high);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.gastos-subtitle {
+    color: var(--color-text-medium);
+    margin: var(--space-xs) 0 0 0;
+    font-size: 0.875rem;
+}
+
+.gastos-btn-nuevo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-lg);
+    font-weight: 600;
+    background: var(--color-brand);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gastos-btn-nuevo:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-base);
+}
+
+/* -------------------------------------------------------------------------
+   FILTROS
+   ------------------------------------------------------------------------- */
+.gastos-filtros {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--color-surface-200);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border);
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.gastos-filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    min-width: 200px;
+    flex: 1;
+}
+
+.gastos-filtro-grupo label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-high);
+}
+
+.gastos-filtro-input,
+.gastos-filtro-select {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9375rem;
+    transition: all 0.2s;
+    background: var(--color-surface-300);
+    color: var(--color-text-high);
+}
+
+.gastos-filtro-input:focus,
+.gastos-filtro-select:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.gastos-btn-actualizar {
+    padding: var(--space-sm) var(--space-lg);
+    margin-top: auto;
+    background: var(--color-surface-300);
+    color: var(--color-text-high);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.gastos-btn-actualizar:hover {
+    background: var(--color-surface-200);
+    border-color: var(--color-brand);
+}
+
+/* -------------------------------------------------------------------------
+   RESUMEN (Cards Superiores)
+   ------------------------------------------------------------------------- */
+.gastos-resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.gastos-resumen-card {
+    background: var(--color-surface-200);
+    padding: var(--space-lg);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    transition: all 0.2s;
+}
+
+.gastos-resumen-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-base);
+    border-color: var(--color-brand);
+}
+
+.gastos-resumen-total {
+    background: linear-gradient(135deg, var(--color-brand) 0%, #2980b9 100%);
+    border-color: var(--color-brand);
+}
+
+.gastos-resumen-icon {
+    font-size: 2rem;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: var(--border-radius-md);
+}
+
+.gastos-resumen-total .gastos-resumen-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.gastos-resumen-info {
+    flex: 1;
+}
+
+.gastos-resumen-info h3 {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    margin: 0 0 var(--space-xs) 0;
+    color: var(--color-text-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gastos-resumen-total .gastos-resumen-info h3 {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.gastos-resumen-valor {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text-high);
+}
+
+.gastos-resumen-total .gastos-resumen-valor {
+    color: white;
+}
+
+/* -------------------------------------------------------------------------
+   RESUMEN POR CATEGORÍA
+   ------------------------------------------------------------------------- */
+.gastos-categorias-resumen {
+    background: var(--color-surface-200);
+    padding: var(--space-lg);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--space-xl);
+}
+
+.gastos-categorias-resumen h3 {
+    margin: 0 0 var(--space-lg) 0;
+    font-size: 1.125rem;
+    color: var(--color-text-high);
+    font-weight: 600;
+}
+
+.gastos-categorias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-md);
+}
+
+.gastos-categoria-card {
+    padding: var(--space-md);
+    background: var(--color-surface-300);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border);
+    transition: all 0.2s;
+}
+
+.gastos-categoria-card:hover {
+    background: var(--color-surface-200);
+    transform: translateX(2px);
+}
+
+.gastos-categoria-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+
+.gastos-categoria-nombre {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-text-high);
+}
+
+.gastos-categoria-cantidad {
+    font-size: 0.75rem;
+    color: var(--color-text-medium);
+    background: var(--color-surface-200);
+    padding: 0.25rem var(--space-sm);
+    border-radius: 12px;
+}
+
+.gastos-categoria-total {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-text-high);
+}
+
+/* -------------------------------------------------------------------------
+   LISTA DE GASTOS
+   ------------------------------------------------------------------------- */
+.gastos-lista-container {
+    background: var(--color-surface-200);
+    padding: var(--space-lg);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border);
+}
+
+.gastos-lista-container h3 {
+    margin: 0 0 var(--space-lg) 0;
+    font-size: 1.125rem;
+    color: var(--color-text-high);
+    font-weight: 600;
+}
+
+.gastos-lista {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.gasto-card {
+    background: var(--color-surface-300);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--space-lg);
+    transition: all 0.2s;
+}
+
+.gasto-card:hover {
+    box-shadow: var(--shadow-base);
+    transform: translateY(-2px);
+    border-color: var(--color-brand);
+}
+
+.gasto-anulado {
+    opacity: 0.5;
+    background: var(--color-surface-200);
+}
+
+.gasto-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+    gap: var(--space-md);
+}
+
+.gasto-categoria-badge {
+    display: inline-block;
+    padding: 0.375rem var(--space-md);
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+}
+
+.gasto-monto {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--color-text-high);
+}
+
+.gasto-card-body {
+    margin-bottom: var(--space-md);
+}
+
+.gasto-concepto {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-high);
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.gasto-proveedor,
+.gasto-descripcion,
+.gasto-factura {
+    font-size: 0.875rem;
+    color: var(--color-text-medium);
+    margin: var(--space-xs) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.gasto-descripcion {
+    font-style: italic;
+}
+
+.gasto-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border);
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.gasto-meta {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    font-size: 0.8125rem;
+    color: var(--color-text-medium);
+}
+
+.gasto-metodo-pago,
+.gasto-fecha-hora,
+.gasto-usuario {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.gasto-btn-anular {
+    padding: var(--space-xs) var(--space-md);
+    font-size: 0.8125rem;
+    background: var(--color-danger);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.gasto-btn-anular:hover {
+    filter: brightness(1.1);
+}
+
+.gasto-anulado-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.gasto-anulado-badge {
+    display: inline-block;
+    padding: 0.25rem var(--space-sm);
+    background: var(--color-danger);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    align-self: flex-start;
+}
+
+.gasto-anulado-motivo {
+    font-size: 0.8125rem;
+    color: var(--color-text-medium);
+    font-style: italic;
+    margin: 0;
+}
+
+/* Estados vacío y loading */
+.gastos-empty,
+.gastos-loading {
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--color-text-medium);
+}
+
+.gastos-empty-icon {
+    font-size: 3.5rem;
+    display: block;
+    margin-bottom: var(--space-md);
+    opacity: 0.5;
+}
+
+.gastos-loading .spinner {
+    margin: 0 auto var(--space-md);
+}
+
+/* -------------------------------------------------------------------------
+   MODAL REGISTRAR GASTO
+   ------------------------------------------------------------------------- */
+.gastos-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: var(--space-md);
+    animation: fadeIn 0.2s ease-in;
+    backdrop-filter: blur(4px);
+}
+
+.gastos-modal-content {
+    background: var(--color-surface-200);
+    border-radius: var(--border-radius-lg);
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.3s ease-out;
+    border: 1px solid var(--color-border);
+}
+
+.gastos-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.gastos-modal-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--color-text-high);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.gastos-modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--color-text-medium);
+    cursor: pointer;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s;
+}
+
+.gastos-modal-close-btn:hover {
+    background: var(--color-surface-300);
+    color: var(--color-text-high);
+}
+
+.gastos-modal-body {
+    padding: var(--space-lg);
+}
+
+.gastos-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+/* -------------------------------------------------------------------------
+   FORMULARIO GASTOS
+   ------------------------------------------------------------------------- */
+.gastos-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.gastos-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.gastos-full-width {
+    grid-column: 1 / -1;
+}
+
+.gastos-form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-high);
+}
+
+.required {
+    color: var(--color-danger);
+    margin-left: 0.25rem;
+}
+
+.gastos-form-input,
+.gastos-form-select,
+.gastos-form-textarea {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9375rem;
+    transition: all 0.2s;
+    font-family: inherit;
+    background: var(--color-surface-300);
+    color: var(--color-text-high);
+}
+
+.gastos-form-input:focus,
+.gastos-form-select:focus,
+.gastos-form-textarea:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.gastos-form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.gastos-form-error {
+    font-size: 0.8125rem;
+    color: var(--color-danger);
+    margin-top: 0.25rem;
+}
+
+/* -------------------------------------------------------------------------
+   ALERTAS
+   ------------------------------------------------------------------------- */
+.gastos-alert {
+    padding: var(--space-md);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.875rem;
+    border: 1px solid;
+}
+
+.gastos-alert-error {
+    background: rgba(231, 76, 60, 0.1);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.gastos-alert-info {
+    background: rgba(52, 152, 219, 0.1);
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+}
+
+/* -------------------------------------------------------------------------
+   ANIMACIONES
+   ------------------------------------------------------------------------- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* -------------------------------------------------------------------------
+   RESPONSIVE
+   ------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .gastos-page {
+        padding: var(--space-md);
+    }
+
+    .gastos-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gastos-header-title h1 {
+        font-size: 1.5rem;
+    }
+
+    .gastos-btn-nuevo {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .gastos-filtros {
+        flex-direction: column;
+    }
+
+    .gastos-filtro-grupo {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .gastos-resumen {
+        grid-template-columns: 1fr;
+    }
+
+    .gastos-categorias-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gastos-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gasto-card-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .gasto-meta {
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .gastos-modal-content {
+        max-height: 95vh;
+    }
+}
