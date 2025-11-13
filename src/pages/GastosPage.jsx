@@ -39,6 +39,8 @@ const GastosPage = () => {
     const [filtroFecha, setFiltroFecha] = useState(new Date().toISOString().split('T')[0]);
     const [resumenCategorias, setResumenCategorias] = useState({});
     const [totalGastos, setTotalGastos] = useState(0);
+    const [vistaActual, setVistaActual] = useState('cards'); // 'cards' o 'tabla'
+    const [busqueda, setBusqueda] = useState('');
 
     // Verificar permisos
     useEffect(() => {
@@ -109,9 +111,25 @@ const GastosPage = () => {
         }
     };
 
+    // Filtrado mejorado con búsqueda
     const gastosFiltrados = gastos.filter(gasto => {
-        if (filtroCategoria === 'todas') return true;
-        return gasto.categoria === filtroCategoria;
+        // Filtro de categoría
+        if (filtroCategoria !== 'todas' && gasto.categoria !== filtroCategoria) {
+            return false;
+        }
+        
+        // Filtro de búsqueda
+        if (busqueda) {
+            const searchLower = busqueda.toLowerCase();
+            return (
+                gasto.concepto?.toLowerCase().includes(searchLower) ||
+                gasto.proveedor?.toLowerCase().includes(searchLower) ||
+                gasto.descripcion?.toLowerCase().includes(searchLower) ||
+                gasto.numero_factura?.toLowerCase().includes(searchLower)
+            );
+        }
+        
+        return true;
     });
 
     const getCategoriaInfo = (categoriaValue) => {
@@ -144,110 +162,213 @@ const GastosPage = () => {
         <div className="gastos-page">
             <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-            {/* Header */}
-            <div className="gastos-header">
-                <div className="gastos-header-title">
-                    <h1>💸 Gastos Varios</h1>
-                    <p className="gastos-subtitle">Control de gastos operacionales del negocio</p>
+            {/* Header Moderno */}
+            <div className="gastos-header-modern">
+                <div className="gastos-header-content">
+                    <div className="gastos-header-icon">💸</div>
+                    <div className="gastos-header-text">
+                        <h1>Gestión de Gastos</h1>
+                        <p className="gastos-subtitle">Control total de los gastos operacionales de tu empresa</p>
+                    </div>
                 </div>
                 {permissions.canRegisterExpenses && (
                     <button 
-                        className="btn btn-primary gastos-btn-nuevo"
+                        className="btn btn-primary gastos-btn-nuevo-modern"
                         onClick={() => setShowRegistrarModal(true)}
                         disabled={loading || procesando}
                     >
-                        <span>➕</span> Registrar Gasto
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                        Registrar Gasto
                     </button>
                 )}
             </div>
 
-            {/* Filtros */}
-            <div className="gastos-filtros">
-                <div className="gastos-filtro-grupo">
-                    <label htmlFor="filtro-fecha">📅 Fecha:</label>
-                    <input
-                        id="filtro-fecha"
-                        type="date"
-                        value={filtroFecha}
-                        onChange={(e) => setFiltroFecha(e.target.value)}
-                        className="gastos-filtro-input"
-                    />
+            {/* Resumen Dashboard Mejorado */}
+            <div className="gastos-dashboard-resumen">
+                <div className="gastos-stats-card total-card">
+                    <div className="stats-icon total-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                    </div>
+                    <div className="stats-content">
+                        <span className="stats-label">Total de Gastos</span>
+                        <h2 className="stats-value">{formatCurrencyCOP(totalGastos)}</h2>
+                        <span className="stats-date">{formatFecha(filtroFecha)}</span>
+                    </div>
                 </div>
-                
-                <div className="gastos-filtro-grupo">
-                    <label htmlFor="filtro-categoria">🏷️ Categoría:</label>
-                    <select
-                        id="filtro-categoria"
-                        value={filtroCategoria}
-                        onChange={(e) => setFiltroCategoria(e.target.value)}
-                        className="gastos-filtro-select"
+
+                <div className="gastos-stats-card">
+                    <div className="stats-icon count-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                    </div>
+                    <div className="stats-content">
+                        <span className="stats-label">Cantidad de Gastos</span>
+                        <h2 className="stats-value">{gastosFiltrados.length}</h2>
+                        <span className="stats-sublabel">{gastosFiltrados.length === 1 ? 'registro' : 'registros'}</span>
+                    </div>
+                </div>
+
+                <div className="gastos-stats-card">
+                    <div className="stats-icon category-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                    </div>
+                    <div className="stats-content">
+                        <span className="stats-label">Categorías Activas</span>
+                        <h2 className="stats-value">{Object.keys(resumenCategorias).length}</h2>
+                        <span className="stats-sublabel">del total de {CATEGORIAS_GASTOS.length}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filtros Mejorados */}
+            <div className="gastos-filtros-modern">
+                <div className="filtros-left">
+                    <div className="filtro-search">
+                        <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
+                            <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Buscar por concepto, proveedor, factura..."
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                            className="search-input"
+                        />
+                        {busqueda && (
+                            <button 
+                                className="clear-search"
+                                onClick={() => setBusqueda('')}
+                                aria-label="Limpiar búsqueda"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="filtro-wrapper">
+                        <svg className="filtro-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                        <select
+                            value={filtroCategoria}
+                            onChange={(e) => setFiltroCategoria(e.target.value)}
+                            className="filtro-select-modern"
+                        >
+                            <option value="todas">Todas las categorías</option>
+                            {CATEGORIAS_GASTOS.map(cat => (
+                                <option key={cat.value} value={cat.value}>
+                                    {cat.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="filtro-wrapper">
+                        <svg className="filtro-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                            <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                        <input
+                            type="date"
+                            value={filtroFecha}
+                            onChange={(e) => setFiltroFecha(e.target.value)}
+                            className="filtro-date-modern"
+                        />
+                    </div>
+                </div>
+
+                <div className="filtros-right">
+                    <div className="vista-toggle">
+                        <button 
+                            className={`vista-btn ${vistaActual === 'cards' ? 'active' : ''}`}
+                            onClick={() => setVistaActual('cards')}
+                            aria-label="Vista de tarjetas"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                                <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                                <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                                <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                            </svg>
+                        </button>
+                        <button 
+                            className={`vista-btn ${vistaActual === 'tabla' ? 'active' : ''}`}
+                            onClick={() => setVistaActual('tabla')}
+                            aria-label="Vista de tabla"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button 
+                        className="btn-icon-modern"
+                        onClick={cargarDatos}
+                        disabled={loading}
+                        title="Actualizar datos"
                     >
-                        <option value="todas">Todas las categorías</option>
-                        {CATEGORIAS_GASTOS.map(cat => (
-                            <option key={cat.value} value={cat.value}>
-                                {cat.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <button 
-                    className="btn btn-secondary gastos-btn-actualizar"
-                    onClick={cargarDatos}
-                    disabled={loading}
-                >
-                    🔄 Actualizar
-                </button>
-            </div>
-
-            {/* Resumen */}
-            <div className="gastos-resumen">
-                <div className="gastos-resumen-card gastos-resumen-total">
-                    <div className="gastos-resumen-icon">💰</div>
-                    <div className="gastos-resumen-info">
-                        <h3>Total Gastos</h3>
-                        <p className="gastos-resumen-valor">{formatCurrencyCOP(totalGastos)}</p>
-                    </div>
-                </div>
-
-                <div className="gastos-resumen-card">
-                    <div className="gastos-resumen-icon">📊</div>
-                    <div className="gastos-resumen-info">
-                        <h3>Cantidad de Gastos</h3>
-                        <p className="gastos-resumen-valor">{gastosFiltrados.length}</p>
-                    </div>
-                </div>
-
-                <div className="gastos-resumen-card">
-                    <div className="gastos-resumen-icon">📅</div>
-                    <div className="gastos-resumen-info">
-                        <h3>Fecha Seleccionada</h3>
-                        <p className="gastos-resumen-valor">{formatFecha(filtroFecha)}</p>
-                    </div>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
 
-            {/* Resumen por Categoría */}
+            {/* Resumen por Categoría Mejorado */}
             {Object.keys(resumenCategorias).length > 0 && (
-                <div className="gastos-categorias-resumen">
-                    <h3>📈 Resumen por Categoría</h3>
-                    <div className="gastos-categorias-grid">
-                        {Object.entries(resumenCategorias).map(([categoria, datos]) => {
+                <div className="gastos-categorias-section">
+                    <div className="section-header">
+                        <h3>� Distribución por Categoría</h3>
+                        <span className="section-count">{Object.keys(resumenCategorias).length} categorías</span>
+                    </div>
+                    <div className="gastos-categorias-grid-modern">
+                        {Object.entries(resumenCategorias)
+                            .sort((a, b) => b[1].total - a[1].total)
+                            .map(([categoria, datos]) => {
                             const catInfo = getCategoriaInfo(categoria);
+                            const porcentaje = ((datos.total / totalGastos) * 100).toFixed(1);
                             return (
                                 <div 
                                     key={categoria} 
-                                    className="gastos-categoria-card"
-                                    style={{ borderLeft: `4px solid ${catInfo.color}` }}
+                                    className="categoria-card-modern"
                                 >
-                                    <div className="gastos-categoria-header">
-                                        <span className="gastos-categoria-nombre">{catInfo.label}</span>
-                                        <span className="gastos-categoria-cantidad">
+                                    <div className="categoria-header-modern">
+                                        <div 
+                                            className="categoria-badge-modern"
+                                            style={{ backgroundColor: catInfo.color }}
+                                        >
+                                            {catInfo.label.split(' ')[0]}
+                                        </div>
+                                        <span className="categoria-porcentaje">{porcentaje}%</span>
+                                    </div>
+                                    <h4 className="categoria-nombre-modern">{catInfo.label.substring(catInfo.label.indexOf(' ') + 1)}</h4>
+                                    <div className="categoria-stats">
+                                        <span className="categoria-total-modern">{formatCurrencyCOP(datos.total)}</span>
+                                        <span className="categoria-cantidad-modern">
                                             {datos.cantidad} {datos.cantidad === 1 ? 'gasto' : 'gastos'}
                                         </span>
                                     </div>
-                                    <div className="gastos-categoria-total">
-                                        {formatCurrencyCOP(datos.total)}
+                                    <div className="categoria-progress-bar">
+                                        <div 
+                                            className="categoria-progress-fill"
+                                            style={{ 
+                                                width: `${porcentaje}%`,
+                                                backgroundColor: catInfo.color 
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             );
@@ -256,30 +377,52 @@ const GastosPage = () => {
                 </div>
             )}
 
-            {/* Lista de Gastos */}
-            <div className="gastos-lista-container">
-                <h3>📋 Listado de Gastos</h3>
+            {/* Lista de Gastos Mejorada */}
+            <div className="gastos-content-section">
+                <div className="section-header">
+                    <h3>📋 Listado de Gastos</h3>
+                    <div className="section-info">
+                        {busqueda && (
+                            <span className="results-info">
+                                {gastosFiltrados.length} {gastosFiltrados.length === 1 ? 'resultado' : 'resultados'}
+                            </span>
+                        )}
+                    </div>
+                </div>
                 
                 {loading ? (
-                    <div className="gastos-loading">
-                        <div className="spinner"></div>
+                    <div className="gastos-loading-modern">
+                        <div className="spinner-modern"></div>
                         <p>Cargando gastos...</p>
                     </div>
                 ) : gastosFiltrados.length === 0 ? (
-                    <div className="gastos-empty">
-                        <span className="gastos-empty-icon">📭</span>
-                        <p>No hay gastos registrados para esta fecha y categoría</p>
-                        {permissions.canRegisterExpenses && (
+                    <div className="gastos-empty-modern">
+                        <div className="empty-icon">
+                            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 11H3v10h6V11ZM21 11h-6v10h6V11ZM15 3H9v6h6V3Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3>No hay gastos registrados</h3>
+                        <p>
+                            {busqueda 
+                                ? 'No se encontraron gastos que coincidan con tu búsqueda'
+                                : 'Comienza registrando tu primer gasto para esta fecha y categoría'
+                            }
+                        </p>
+                        {permissions.canRegisterExpenses && !busqueda && (
                             <button 
                                 className="btn btn-primary"
                                 onClick={() => setShowRegistrarModal(true)}
                             >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                </svg>
                                 Registrar Primer Gasto
                             </button>
                         )}
                     </div>
-                ) : (
-                    <div className="gastos-lista">
+                ) : vistaActual === 'cards' ? (
+                    <div className="gastos-grid-modern">
                         {gastosFiltrados.map(gasto => {
                             const catInfo = getCategoriaInfo(gasto.categoria);
                             const usuarioNombre = gasto.usuario?.nombre_completo || gasto.usuario?.nombre || 'Usuario';
@@ -287,78 +430,198 @@ const GastosPage = () => {
                             return (
                                 <div 
                                     key={gasto.id} 
-                                    className={`gasto-card ${gasto.anulado ? 'gasto-anulado' : ''}`}
-                                    style={{ borderLeft: `4px solid ${catInfo.color}` }}
+                                    className={`gasto-card-modern ${gasto.anulado ? 'gasto-anulado' : ''}`}
                                 >
-                                    <div className="gasto-card-header">
-                                        <span 
-                                            className="gasto-categoria-badge"
+                                    <div className="gasto-card-header-modern">
+                                        <div 
+                                            className="gasto-categoria-tag"
                                             style={{ backgroundColor: catInfo.color }}
                                         >
-                                            {catInfo.label}
-                                        </span>
-                                        <span className="gasto-monto">
+                                            {catInfo.label.split(' ')[0]}
+                                        </div>
+                                        <span className="gasto-monto-modern">
                                             {formatCurrencyCOP(gasto.monto)}
                                         </span>
                                     </div>
 
-                                    <div className="gasto-card-body">
-                                        <h4 className="gasto-concepto">{gasto.concepto}</h4>
+                                    <div className="gasto-card-body-modern">
+                                        <h4 className="gasto-concepto-modern">{gasto.concepto}</h4>
+                                        
+                                        {/* Fecha del gasto - Destacada */}
+                                        <div className="gasto-detail-row gasto-fecha-destacada">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                                <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                            </svg>
+                                            <span><strong>Fecha:</strong> {formatFecha(gasto.fecha_gasto || filtroFecha)}</span>
+                                        </div>
                                         
                                         {gasto.proveedor && (
-                                            <p className="gasto-proveedor">
-                                                <span>🏪</span> {gasto.proveedor}
-                                            </p>
+                                            <div className="gasto-detail-row">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="2"/>
+                                                    <path d="M9 22V12h6v10" stroke="currentColor" strokeWidth="2"/>
+                                                </svg>
+                                                <span>{gasto.proveedor}</span>
+                                            </div>
                                         )}
                                         
                                         {gasto.descripcion && (
-                                            <p className="gasto-descripcion">{gasto.descripcion}</p>
+                                            <p className="gasto-descripcion-modern">{gasto.descripcion}</p>
                                         )}
                                         
                                         {gasto.numero_factura && (
-                                            <p className="gasto-factura">
-                                                <span>📄</span> Factura: {gasto.numero_factura}
-                                            </p>
+                                            <div className="gasto-detail-row">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2"/>
+                                                    <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                                </svg>
+                                                <span>Factura: {gasto.numero_factura}</span>
+                                            </div>
                                         )}
                                     </div>
 
-                                    <div className="gasto-card-footer">
-                                        <div className="gasto-meta">
-                                            <span className="gasto-metodo-pago">
-                                                {gasto.metodo_pago === 'efectivo' && '💵 Efectivo'}
-                                                {gasto.metodo_pago === 'transferencia' && '🏦 Transferencia'}
-                                                {gasto.metodo_pago === 'tarjeta' && '💳 Tarjeta'}
+                                    <div className="gasto-card-footer-modern">
+                                        <div className="gasto-meta-modern">
+                                            <span className="gasto-metodo-pago-modern">
+                                                {gasto.metodo_pago === 'efectivo' && (
+                                                    <>
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                                            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" strokeWidth="2"/>
+                                                        </svg>
+                                                        Efectivo
+                                                    </>
+                                                )}
+                                                {gasto.metodo_pago === 'transferencia' && (
+                                                    <>
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M3 3h18v8H3V3ZM3 13h18v8H3v-8Z" stroke="currentColor" strokeWidth="2"/>
+                                                        </svg>
+                                                        Transferencia
+                                                    </>
+                                                )}
+                                                {gasto.metodo_pago === 'tarjeta' && (
+                                                    <>
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <rect x="1" y="4" width="22" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                                            <path d="M1 10h22" stroke="currentColor" strokeWidth="2"/>
+                                                        </svg>
+                                                        Tarjeta
+                                                    </>
+                                                )}
                                             </span>
-                                            <span className="gasto-fecha-hora">
-                                                🕐 {formatHora(gasto.created_at)}
+                                            <span className="gasto-fecha-hora-modern">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                                                    <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                                </svg>
+                                                {formatHora(gasto.created_at)}
                                             </span>
-                                            <span className="gasto-usuario">
-                                                👤 {usuarioNombre}
+                                            <span className="gasto-usuario-modern">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
+                                                    <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                                                </svg>
+                                                {usuarioNombre}
                                             </span>
                                         </div>
 
                                         {!gasto.anulado && permissions.canCancelExpenses && (
                                             <button 
-                                                className="btn btn-danger btn-sm gasto-btn-anular"
+                                                className="gasto-btn-anular-modern"
                                                 onClick={() => handleOpenAnularModal(gasto)}
                                                 disabled={procesando}
+                                                title="Anular gasto"
                                             >
-                                                🗑️ Anular
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                                </svg>
                                             </button>
                                         )}
 
                                         {gasto.anulado && (
-                                            <div className="gasto-anulado-info">
-                                                <span className="gasto-anulado-badge">❌ ANULADO</span>
-                                                <p className="gasto-anulado-motivo">
-                                                    Motivo: {gasto.motivo_anulacion}
-                                                </p>
+                                            <div className="gasto-anulado-badge-modern">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                                                    <path d="m15 9-6 6M9 9l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                                </svg>
+                                                Anulado
+                                                <span className="anulado-motivo-tooltip">{gasto.motivo_anulacion}</span>
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             );
                         })}
+                    </div>
+                ) : (
+                    // Vista de Tabla
+                    <div className="gastos-table-container">
+                        <table className="gastos-table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Concepto</th>
+                                    <th>Categoría</th>
+                                    <th>Monto</th>
+                                    <th>Método</th>
+                                    <th>Proveedor</th>
+                                    <th>Fecha/Hora</th>
+                                    <th>Usuario</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {gastosFiltrados.map(gasto => {
+                                    const catInfo = getCategoriaInfo(gasto.categoria);
+                                    const usuarioNombre = gasto.usuario?.nombre_completo || gasto.usuario?.nombre || 'Usuario';
+                                    
+                                    return (
+                                        <tr key={gasto.id} className={gasto.anulado ? 'row-anulado' : ''}>
+                                            <td>
+                                                <div className="table-concepto">
+                                                    <strong>{gasto.concepto}</strong>
+                                                    {gasto.descripcion && (
+                                                        <small>{gasto.descripcion}</small>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span 
+                                                    className="table-categoria-badge"
+                                                    style={{ backgroundColor: catInfo.color }}
+                                                >
+                                                    {catInfo.label}
+                                                </span>
+                                            </td>
+                                            <td className="table-monto">{formatCurrencyCOP(gasto.monto)}</td>
+                                            <td className="table-metodo">{gasto.metodo_pago}</td>
+                                            <td>{gasto.proveedor || '-'}</td>
+                                            <td className="table-fecha">
+                                                {formatFecha(gasto.fecha_gasto || filtroFecha)}
+                                                <small>{formatHora(gasto.created_at)}</small>
+                                            </td>
+                                            <td>{usuarioNombre}</td>
+                                            <td>
+                                                {!gasto.anulado && permissions.canCancelExpenses ? (
+                                                    <button 
+                                                        className="table-btn-anular"
+                                                        onClick={() => handleOpenAnularModal(gasto)}
+                                                        disabled={procesando}
+                                                    >
+                                                        Anular
+                                                    </button>
+                                                ) : gasto.anulado ? (
+                                                    <span className="table-anulado-text">Anulado</span>
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </div>

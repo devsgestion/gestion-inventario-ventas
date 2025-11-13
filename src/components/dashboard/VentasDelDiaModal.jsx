@@ -112,7 +112,7 @@ const VentasDelDiaModal = ({ isOpen, onClose, empresaId }) => {
                         <p className="vdm-summary-value">{formatCurrencyCOP(totalVentasDelDia)}</p>
                     </div>
                     <div className="vdm-summary-card">
-                        <p className="vdm-summary-label">Ticket Promedio</p>
+                        <p className="vdm-summary-label">Promedio por Venta</p>
                         <p className="vdm-summary-value">
                             {cantidadVentas > 0 ? formatCurrencyCOP(totalVentasDelDia / cantidadVentas) : '$0'}
                         </p>

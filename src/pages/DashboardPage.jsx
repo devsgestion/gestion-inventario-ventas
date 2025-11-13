@@ -136,7 +136,7 @@ const DashboardPage = () => {
                     <div className="kpi-card kpi-warning">
                         <div className="kpi-icon">🏷️</div>
                         <div className="kpi-content">
-                            <h3 className="kpi-label">Ticket Promedio</h3>
+                            <h3 className="kpi-label">Promedio por Venta</h3>
                             <p className="kpi-value">
                                 {formatCurrencyCOP(resumenGeneral.ticket_promedio)}
                             </p>

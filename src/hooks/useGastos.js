@@ -68,10 +68,13 @@ const useGastos = (empresaId) => {
 
             if (fetchError) throw fetchError;
 
+            // Actualizar el estado con los gastos obtenidos
+            setGastos(data || []);
             return data || [];
         } catch (err) {
             console.error('Error obteniendo gastos por fecha:', err);
             setError(err.message);
+            setGastos([]);
             return [];
         } finally {
             setLoading(false);

@@ -55,16 +55,23 @@ const useDashboard = (empresaId) => {
             if (error) throw error;
             
             // Formatear fechas para los gráficos
-            const formattedData = (data || []).map(item => ({
-                ...item,
-                fecha: new Date(item.fecha).toLocaleDateString('es-CO', { 
-                    month: 'short', 
-                    day: 'numeric' 
-                }),
-                total_ventas: parseFloat(item.total_ventas || 0),
-                total_costos: parseFloat(item.total_costos || 0),
-                utilidad: parseFloat(item.utilidad || 0)
-            })).reverse(); // Revertir para mostrar cronológicamente
+            const formattedData = (data || []).map(item => {
+                // Parsear fecha correctamente para evitar problema de zona horaria
+                // Si la fecha viene como 'YYYY-MM-DD', la dividimos para crear la fecha local
+                const [year, month, day] = item.fecha.split('-').map(Number);
+                const fechaLocal = new Date(year, month - 1, day);
+                
+                return {
+                    ...item,
+                    fecha: fechaLocal.toLocaleDateString('es-CO', { 
+                        month: 'short', 
+                        day: 'numeric' 
+                    }),
+                    total_ventas: parseFloat(item.total_ventas || 0),
+                    total_costos: parseFloat(item.total_costos || 0),
+                    utilidad: parseFloat(item.utilidad || 0)
+                };
+            }).reverse(); // Revertir para mostrar cronológicamente
 
             setVentasUltimos30Dias(formattedData);
         } catch (err) {
