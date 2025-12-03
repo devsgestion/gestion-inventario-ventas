@@ -151,30 +151,80 @@ export const useCambiosDevoluciones = (empresaId) => {
         }
     };
 
-    // Buscar ventas recientes para seleccionar
+    // Buscar ventas recientes o por producto/ticket
     const buscarVentas = async (searchTerm = '') => {
         if (!empresaId) return [];
 
         try {
-            // Búsqueda por número de venta
-            const isNumeric = !isNaN(searchTerm) && searchTerm !== '';
+            const term = searchTerm.trim();
+            const isNumeric = !isNaN(term) && term !== '';
             
-            let query = supabase
+            // 1. Si es número, buscar por ticket
+            if (isNumeric) {
+                const { data, error } = await supabase
+                    .from('ventas')
+                    .select('*')
+                    .eq('empresa_id', empresaId)
+                    .eq('numero_venta', parseInt(term))
+                    .order('fecha_venta', { ascending: false });
+                
+                if (error) throw error;
+                return data || [];
+            } 
+            
+            // 2. Si es texto, buscar en detalle_venta por nombre de producto
+            if (term.length > 0) {
+                const { data, error } = await supabase
+                    .from('detalle_venta')
+                    .select(`
+                        venta_id,
+                        ventas!inner (
+                            id,
+                            numero_venta,
+                            fecha_venta,
+                            total_venta,
+                            empresa_id
+                        ),
+                        productos!inner (
+                            nombre
+                        )
+                    `)
+                    .eq('ventas.empresa_id', empresaId)
+                    .ilike('productos.nombre', `%${term}%`)
+                    .limit(50);
+
+                if (error) throw error;
+
+                // Deduplicar ventas y agregar info del producto encontrado
+                const ventasMap = new Map();
+                data?.forEach(item => {
+                    // Solo agregamos si tenemos la información de la venta (por el inner join debería estar)
+                    if (item.ventas && !ventasMap.has(item.venta_id)) {
+                        ventasMap.set(item.venta_id, {
+                            ...item.ventas,
+                            producto_encontrado: item.productos?.nombre
+                        });
+                    }
+                });
+                
+                // Convertir a array y ordenar por fecha descendente
+                const resultados = Array.from(ventasMap.values());
+                resultados.sort((a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta));
+                
+                return resultados;
+            }
+
+            // 3. Si está vacío, devolver recientes
+            const { data, error } = await supabase
                 .from('ventas')
                 .select('*')
                 .eq('empresa_id', empresaId)
-                .order('fecha_venta', { ascending: false });
+                .order('fecha_venta', { ascending: false })
+                .limit(20);
 
-            if (isNumeric) {
-                query = query.eq('numero_venta', parseInt(searchTerm));
-            } else {
-                query = query.limit(50);
-            }
-
-            const { data, error: searchError } = await query;
-            if (searchError) throw searchError;
-
+            if (error) throw error;
             return data || [];
+
         } catch (err) {
             console.error('Error al buscar ventas:', err);
             return [];

@@ -99,7 +99,7 @@ const CambiosDevolucionesPage = () => {
                     </button>
                 </div>
             ) : (
-                <ul className="cd-list">
+                <div className="cd-list">
                     {cambios.map(cambio => {
                         const productosDevueltos = Array.isArray(cambio.productos_devueltos) 
                             ? cambio.productos_devueltos 
@@ -108,128 +108,125 @@ const CambiosDevolucionesPage = () => {
                             ? cambio.productos_nuevos 
                             : [];
                         
-                        let diferenciaClass = 'cd-diferencia--cero';
+                        let badgeClass = 'neutral';
                         let diferenciaText = 'Sin diferencia';
+                        let diferenciaIcon = '⚖️';
                         
                         if (cambio.diferencia > 0) {
-                            diferenciaClass = 'cd-diferencia--positiva';
+                            badgeClass = 'positive';
                             diferenciaText = `Cliente pagó: ${formatCurrency(cambio.diferencia)}`;
+                            diferenciaIcon = '💵';
                         } else if (cambio.diferencia < 0) {
-                            diferenciaClass = 'cd-diferencia--negativa';
-                            diferenciaText = `Devuelto al cliente: ${formatCurrency(Math.abs(cambio.diferencia))}`;
+                            badgeClass = 'negative';
+                            diferenciaText = `Devuelto: ${formatCurrency(Math.abs(cambio.diferencia))}`;
+                            diferenciaIcon = '💸';
                         }
 
                         return (
-                            <li key={cambio.id} className="cd-item">
+                            <div key={cambio.id} className="cd-card">
                                 {cambio.anulado && (
-                                    <div style={{
-                                        background: 'var(--color-danger-light)',
-                                        padding: 'var(--space-sm)',
-                                        borderRadius: 'var(--border-radius-md)',
-                                        marginBottom: 'var(--space-md)',
-                                        border: '2px solid var(--color-danger)'
-                                    }}>
+                                    <div className="cd-anulado-banner">
                                         <strong>❌ CAMBIO ANULADO</strong>
-                                        <p style={{fontSize: '0.875rem', marginTop: '0.25rem'}}>
-                                            Fecha: {formatDateTime(cambio.fecha_anulacion)}
-                                        </p>
+                                        <span>•</span>
+                                        <span>{formatDateTime(cambio.fecha_anulacion)}</span>
                                         {cambio.motivo_anulacion && (
-                                            <p style={{fontSize: '0.875rem'}}>
-                                                Motivo: {cambio.motivo_anulacion}
-                                            </p>
+                                            <>
+                                                <span>•</span>
+                                                <span>Motivo: {cambio.motivo_anulacion}</span>
+                                            </>
                                         )}
                                     </div>
                                 )}
-                                <div className="cd-item-header">
-                                    <div>
-                                        <h3 className="cd-item-title">
-                                            Cambio #{cambio.id.substring(0, 8)}
-                                        </h3>
-                                        <p className="cd-item-date">
-                                            {formatDateTime(cambio.created_at)} • {cambio.usuario?.nombre_completo || 'Usuario desconocido'}
-                                        </p>
+                                
+                                <div className="cd-card-header">
+                                    <div className="cd-card-title">
+                                        <div className="cd-card-id">
+                                            🔄 Cambio #{cambio.id.substring(0, 8)}
+                                        </div>
+                                        <div className="cd-card-meta">
+                                            📅 {formatDateTime(cambio.created_at)} • 👤 {cambio.usuario?.nombre_completo || 'Usuario desconocido'}
+                                        </div>
                                     </div>
-                                    <span className={`cd-badge cd-badge--${cambio.estado}`}>
+                                    <span className={`cd-status-badge ${cambio.estado}`}>
                                         {cambio.estado}
                                     </span>
                                 </div>
 
-                                <div className="cd-item-body">
-                                    <div className="cd-item-section">
-                                        <h4>Productos Devueltos ({productosDevueltos.length})</h4>
-                                        <ul className="cd-item-productos">
+                                <div className="cd-card-body">
+                                    {/* Sección Devolución */}
+                                    <div className="cd-section">
+                                        <div className="cd-section-title returned">
+                                            ⬇️ Productos Devueltos ({productosDevueltos.length})
+                                        </div>
+                                        <ul className="cd-product-list-mini">
                                             {productosDevueltos.map((prod, idx) => (
-                                                <li key={idx} className="cd-item-producto">
-                                                    {prod.cantidad}x {prod.nombre} - {formatCurrency(prod.precio_unitario)}
+                                                <li key={idx} className="cd-product-item-mini">
+                                                    <span>{prod.cantidad}x {prod.nombre}</span>
+                                                    <strong>{formatCurrency(prod.precio_unitario)}</strong>
                                                 </li>
                                             ))}
                                         </ul>
-                                        <p style={{marginTop: 'var(--space-sm)', fontWeight: 600}}>
+                                        <div className="cd-section-total" style={{color: 'var(--color-danger)'}}>
                                             Total: {formatCurrency(cambio.valor_devolucion)}
-                                        </p>
+                                        </div>
                                     </div>
 
-                                    <div className="cd-item-section">
-                                        <h4>Productos Nuevos ({productosNuevos.length})</h4>
-                                        <ul className="cd-item-productos">
+                                    {/* Sección Nuevos */}
+                                    <div className="cd-section">
+                                        <div className="cd-section-title new">
+                                            ⬆️ Productos Nuevos ({productosNuevos.length})
+                                        </div>
+                                        <ul className="cd-product-list-mini">
                                             {productosNuevos.map((prod, idx) => (
-                                                <li key={idx} className="cd-item-producto">
-                                                    {prod.cantidad}x {prod.nombre} - {formatCurrency(prod.precio_unitario)}
+                                                <li key={idx} className="cd-product-item-mini">
+                                                    <span>{prod.cantidad}x {prod.nombre}</span>
+                                                    <strong>{formatCurrency(prod.precio_unitario)}</strong>
                                                 </li>
                                             ))}
                                         </ul>
-                                        <p style={{marginTop: 'var(--space-sm)', fontWeight: 600}}>
+                                        <div className="cd-section-total" style={{color: 'var(--color-success)'}}>
                                             Total: {formatCurrency(cambio.valor_nuevos)}
-                                        </p>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {cambio.motivo && (
-                                    <p style={{
-                                        marginBottom: 'var(--space-sm)', 
-                                        fontSize: '0.875rem',
-                                        color: 'var(--color-text-medium)'
-                                    }}>
-                                        <strong>Motivo:</strong> {cambio.motivo}
-                                    </p>
-                                )}
-
-                                {cambio.observaciones && (
-                                    <p style={{
-                                        marginBottom: 'var(--space-sm)', 
-                                        fontSize: '0.875rem',
-                                        color: 'var(--color-text-medium)'
-                                    }}>
-                                        <strong>Observaciones:</strong> {cambio.observaciones}
-                                    </p>
-                                )}
-
-                                <div className="cd-item-footer">
-                                    <div>
-                                        <span style={{fontSize: '0.875rem', color: 'var(--color-text-medium)'}}>
-                                            Venta Original: #{cambio.venta_original_id?.substring(0, 8)}
-                                        </span>
+                                <div className="cd-card-footer">
+                                    <div style={{display: 'flex', gap: '2rem'}}>
+                                        <div className="cd-info-group">
+                                            <span className="cd-label">Venta Original</span>
+                                            <span className="cd-value">#{cambio.venta_original_id?.substring(0, 8)}</span>
+                                        </div>
+                                        {cambio.motivo && (
+                                            <div className="cd-info-group">
+                                                <span className="cd-label">Motivo</span>
+                                                <span className="cd-value">{cambio.motivo}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div style={{display: 'flex', gap: 'var(--space-md)', alignItems: 'center'}}>
-                                        <div className={`cd-diferencia ${diferenciaClass}`}>
+
+                                    <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                                        <div className={`cd-total-badge ${badgeClass}`}>
+                                            <span>{diferenciaIcon}</span>
                                             {diferenciaText}
                                         </div>
+                                        
                                         {!cambio.anulado && (
                                             <button
                                                 onClick={() => handleAnularClick(cambio.id)}
                                                 disabled={procesandoAnulacion}
                                                 className="cd-btn cd-btn--danger cd-btn--small"
                                                 title="Anular este cambio/devolución"
+                                                style={{padding: '0.5rem 1rem'}}
                                             >
-                                                {procesandoAnulacion ? '⏳ Anulando...' : '❌ Anular'}
+                                                {procesandoAnulacion ? '⏳' : '❌ Anular'}
                                             </button>
                                         )}
                                     </div>
                                 </div>
-                            </li>
+                            </div>
                         );
                     })}
-                </ul>
+                </div>
             )}
 
             {showModal && (
@@ -260,7 +257,6 @@ const CambiosDevolucionesPage = () => {
                             marginBottom: 'var(--space-md)'
                         }}>
                             <li>El inventario volverá a su estado original</li>
-                            <li>La diferencia se restará de la caja abierta</li>
                             <li>El cambio quedará marcado como anulado</li>
                         </ul>
                         <p style={{fontWeight: 600, color: 'var(--color-danger)'}}>

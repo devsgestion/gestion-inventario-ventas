@@ -33,8 +33,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   fetch: (url, options = {}) => {
     return fetch(url, {
       ...options,
-      // Timeout corto para detección rápida de problemas
-      signal: AbortSignal.timeout(2000), // Reducido a 2 segundos
+      // Timeout ajustado a 15 segundos para evitar cortes en conexiones lentas
+      signal: AbortSignal.timeout(15000), 
     });
   },
 });
