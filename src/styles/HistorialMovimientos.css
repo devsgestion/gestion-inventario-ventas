@@ -1,0 +1,288 @@
+.historial-movimientos-page {
+    padding: var(--space-lg);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.historial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+}
+
+.historial-title {
+    font-size: 1.8rem;
+    color: var(--color-text-high);
+    margin: 0;
+}
+
+.filters-wrapper {
+    background: var(--color-surface-200);
+    padding: 1rem;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.date-filters {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.date-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.date-field label {
+    font-weight: 600;
+    color: var(--color-text-medium);
+    font-size: 0.9rem;
+}
+
+.date-field input[type="date"],
+.select-filter {
+    padding: 0.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    background: var(--color-surface-100);
+    color: var(--color-text-high);
+    font-family: inherit;
+}
+
+.select-filter {
+    min-width: 150px;
+}
+
+.historial-btn-primary {
+    padding: 0.6rem 1.5rem;
+    background: var(--color-brand);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-left: auto;
+}
+
+.historial-btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+}
+
+.historial-btn-primary:active {
+    transform: translateY(0);
+}
+
+.search-filters {
+    display: flex;
+    gap: 1rem;
+}
+
+.search-input {
+    flex: 1;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    background: var(--color-surface-100);
+    color: var(--color-text-high);
+    font-size: 1rem;
+}
+
+.btn-refresh {
+    padding: 0 1.5rem;
+    background: var(--color-surface-300);
+    color: var(--color-text-high);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-refresh:hover {
+    filter: brightness(1.1);
+}
+
+.table-container {
+    background: var(--color-surface-200);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.movimientos-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.movimientos-table th {
+    background: var(--color-surface-300);
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-medium);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.movimientos-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-high);
+}
+
+.movimientos-table tr:last-child td {
+    border-bottom: none;
+}
+
+.movimientos-table tr:hover {
+    background: var(--color-surface-300);
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-name {
+    font-weight: 600;
+}
+
+.product-ref {
+    font-size: 0.85rem;
+    color: var(--color-text-medium);
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.badge-venta {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--color-success);
+    border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.badge-compra, .badge-recepcion {
+    background: rgba(52, 152, 219, 0.1);
+    color: var(--color-info);
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.badge-ajuste, .badge-ajuste_stock {
+    background: rgba(241, 196, 15, 0.1);
+    color: var(--color-warning);
+    border: 1px solid rgba(241, 196, 15, 0.2);
+}
+
+.badge-merma {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--color-danger);
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.badge-devolucion {
+    background: rgba(155, 89, 182, 0.1);
+    color: #9b59b6;
+    border: 1px solid rgba(155, 89, 182, 0.2);
+}
+
+.qty-positive {
+    color: var(--color-success);
+    font-weight: 700;
+}
+
+.qty-negative {
+    color: var(--color-danger);
+    font-weight: 700;
+}
+
+.qty-price-detail {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--color-text-medium);
+    margin-top: 2px;
+}
+
+.active-filter-info {
+    font-size: 0.85rem;
+    color: var(--color-text-medium);
+    font-style: italic;
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 3px solid var(--color-brand);
+}
+
+.badge-default {
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--color-text-medium);
+    border: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.uuid-short {
+    font-family: monospace;
+    background: rgba(0,0,0,0.2);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+@media (max-width: 768px) {
+    .historial-movimientos-page {
+        padding: var(--space-md);
+    }
+    
+    .filters-wrapper {
+        gap: 0.5rem;
+    }
+
+    .date-filters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .date-field {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+    }
+
+    .date-field input {
+        width: 100%;
+    }
+
+    .search-filters {
+        flex-direction: column;
+    }
+
+    .movimientos-table th:nth-child(5),
+    .movimientos-table td:nth-child(5),
+    .movimientos-table th:nth-child(6),
+    .movimientos-table td:nth-child(6) {
+        display: none; /* Ocultar Razón y Usuario en móviles */
+    }
+}

@@ -52,6 +52,7 @@ const usePermissions = () => {
                 
                 // Inventario
                 canViewInventory: true,
+                canViewInventoryMovements: true, // ✅ NUEVO: Historial de movimientos
                 canEditInventory: true,
                 canAddProducts: true,
                 canDeleteProducts: false,
@@ -116,13 +117,14 @@ const usePermissions = () => {
                 
                 // Inventario
                 canViewInventory: true,
-                canEditInventory: true,       // ✅ NUEVO: Puede editar productos
-                canAddProducts: false,
+                canViewInventoryMovements: false, // 🛑 MODIFICADO: Sin historial
+                canEditInventory: true,      // 🛑 MODIFICADO: Solo lectura
+                canAddProducts: true,
                 canDeleteProducts: false,
-                canAdjustStock: false,
-                canRegisterPurchase: false,
-                canImportProducts: false,
-                canExportInventory: false,
+                canAdjustStock: true,
+                canRegisterPurchase: true,
+                canImportProducts: true,
+                canExportInventory: true,
                 
                 // Pedidos
                 canViewPedidos: false,
@@ -135,16 +137,16 @@ const usePermissions = () => {
                 canViewCambios: true,
                 canCancelCambios: false,
                 
-                // Dashboard - SIN ACCESO
+                // Dashboard - ACCESO LIMITADO
                 canViewDashboard: false,
-                canViewBasicMetrics: false,
+                canViewBasicMetrics: true,
                 canViewFinancialMetrics: false,
                 canViewInventoryValue: false,
                 canViewAdvancedAnalytics: false,
                 canExportDashboard: false,
                 
                 // Configuración y Reportes
-                canAccessSettings: true,      // ✅ NUEVO: Acceso a configuración
+                canAccessSettings: false,     // 🛑 MODIFICADO: Sin acceso a configuración
                 canEditCompanyInfo: false,
                 canViewAdvancedReports: false,
                 canViewCashHistory: false,
@@ -178,14 +180,15 @@ const usePermissions = () => {
                 canEditSales: true,
                 canOpenCloseCaja: true,
                 
-                // Inventario (solo consulta)
+                // Inventario (Permisos ampliados para gestión)
                 canViewInventory: true,
-                canEditInventory: false,
-                canAddProducts: false,
-                canDeleteProducts: false,
-                canAdjustStock: false,
-                canRegisterPurchase: false,
-                canImportProducts: false,
+                canViewInventoryMovements: true,
+                canEditInventory: true,       // ✅ HABILITADO
+                canAddProducts: true,         // ✅ HABILITADO
+                canDeleteProducts: false,     // 🛑 Mantenido restringido (solo admin/gestor)
+                canAdjustStock: true,         // ✅ HABILITADO
+                canRegisterPurchase: true,    // ✅ HABILITADO
+                canImportProducts: true,      // ✅ HABILITADO
                 canExportInventory: true,
                 
                 // Pedidos
@@ -244,6 +247,7 @@ const usePermissions = () => {
                 
                 // Inventario
                 canViewInventory: true,
+                canViewInventoryMovements: true, // ✅ NUEVO
                 canEditInventory: true,
                 canAddProducts: true,
                 canDeleteProducts: true,
@@ -308,6 +312,7 @@ const usePermissions = () => {
                 
                 // Inventario
                 canViewInventory: true,
+                canViewInventoryMovements: true, // ✅ NUEVO
                 canEditInventory: true,
                 canAddProducts: true,
                 canDeleteProducts: true,
@@ -372,6 +377,7 @@ const usePermissions = () => {
                 
                 // Inventario
                 canViewInventory: true,
+                canViewInventoryMovements: true, // ✅ NUEVO
                 canEditInventory: true,
                 canAddProducts: true,
                 canDeleteProducts: true,

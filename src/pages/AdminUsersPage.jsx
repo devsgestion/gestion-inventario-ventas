@@ -18,18 +18,26 @@ const AdminUsersPage = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [showEditRoleModal, setShowEditRoleModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false); // 🛑 Nuevo estado para modal de eliminación
+    const [userToDelete, setUserToDelete] = useState(null); // 🛑 Usuario a eliminar
+    const [deleteMode, setDeleteMode] = useState('user'); // 'user' | 'company'
     const [userToEdit, setUserToEdit] = useState(null);
     const [newUserCredentials, setNewUserCredentials] = useState({ email: '', password: '' });
     const [actionLoading, setActionLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     
+    // New state for company selection
+    const [empresas, setEmpresas] = useState([]);
+    const [isNewCompany, setIsNewCompany] = useState(true);
+
     // Form state
     const [formData, setFormData] = useState({
         email: '',
         password: '',
         nombre_completo: '',
         empresa_nombre: '',
+        empresa_id: '', // New field
         rol: 'vendedor'
     });
 
@@ -41,12 +49,27 @@ const AdminUsersPage = () => {
         }
     }, [perfil, permissions, navigate]);
 
-    // Cargar usuarios
+    // Cargar usuarios y empresas
     useEffect(() => {
         if (permissions.canManageUsers) {
             loadUsers();
+            loadEmpresas();
         }
     }, [permissions]);
+
+    const loadEmpresas = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('empresas')
+                .select('id, nombre')
+                .order('nombre');
+            
+            if (error) throw error;
+            setEmpresas(data || []);
+        } catch (error) {
+            console.error('Error al cargar empresas:', error);
+        }
+    };
 
     const loadUsers = async () => {
         setLoading(true);
@@ -94,26 +117,40 @@ const AdminUsersPage = () => {
 
         try {
             // Validaciones básicas
-            if (!formData.email || !formData.nombre_completo || !formData.empresa_nombre) {
-                throw new Error('Email, nombre y empresa son obligatorios');
+            if (!formData.email || !formData.nombre_completo) {
+                throw new Error('Email y nombre son obligatorios');
+            }
+
+            if (isNewCompany && !formData.empresa_nombre) {
+                throw new Error('El nombre de la empresa es obligatorio para nuevas empresas');
+            }
+
+            if (!isNewCompany && !formData.empresa_id) {
+                throw new Error('Debe seleccionar una empresa existente');
             }
 
             // Generar contraseña temporal
             const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
 
-            // 1. Crear empresa primero
-            const { data: empresaData, error: empresaError } = await supabase
-                .from('empresas')
-                .insert([{ 
-                    nombre: formData.empresa_nombre,
-                    owner_id: null
-                }])
-                .select()
-                .single();
+            let empresaIdToUse;
 
-            if (empresaError) throw empresaError;
+            if (isNewCompany) {
+                // 1. Crear empresa primero
+                const { data: empresaData, error: empresaError } = await supabase
+                    .from('empresas')
+                    .insert([{ 
+                        nombre: formData.empresa_nombre,
+                        owner_id: null
+                    }])
+                    .select()
+                    .single();
 
-            console.log('✅ Empresa creada:', empresaData.id);
+                if (empresaError) throw empresaError;
+                console.log('✅ Empresa creada:', empresaData.id);
+                empresaIdToUse = empresaData.id;
+            } else {
+                empresaIdToUse = formData.empresa_id;
+            }
 
             // Guardar la sesión actual del admin ANTES de crear el nuevo usuario
             const { data: { session: adminSession } } = await supabase.auth.getSession();
@@ -141,7 +178,7 @@ const AdminUsersPage = () => {
             const { error: perfilError } = await supabase.rpc('create_user_profile_admin', {
                 p_user_id: user.id,
                 p_nombre_completo: formData.nombre_completo,
-                p_empresa_id: empresaData.id,
+                p_empresa_id: empresaIdToUse,
                 p_rol: formData.rol,
                 p_created_by: perfil.id
             });
@@ -153,14 +190,16 @@ const AdminUsersPage = () => {
 
             console.log('✅ Perfil creado');
 
-            // 4. Actualizar owner_id de la empresa
-            const { error: updateError } = await supabase
-                .from('empresas')
-                .update({ owner_id: user.id })
-                .eq('id', empresaData.id);
+            // 4. Actualizar owner_id de la empresa (SOLO SI ES NUEVA)
+            if (isNewCompany) {
+                const { error: updateError } = await supabase
+                    .from('empresas')
+                    .update({ owner_id: user.id })
+                    .eq('id', empresaIdToUse);
 
-            if (updateError) {
-                console.warn('⚠️ Error actualizando empresa:', updateError);
+                if (updateError) {
+                    console.warn('⚠️ Error actualizando empresa:', updateError);
+                }
             }
 
             // 5. NO hacemos signOut porque cierra la sesión del admin
@@ -179,14 +218,17 @@ const AdminUsersPage = () => {
                 password: '',
                 nombre_completo: '',
                 empresa_nombre: '',
-                rol: 'usuario'
+                empresa_id: '',
+                rol: 'vendedor'
             });
+            setIsNewCompany(true); // Resetear toggle
 
             // Mostrar modal con contraseña
             setShowPasswordModal(true);
             
             // Recargar lista
             loadUsers();
+            loadEmpresas(); // Recargar empresas por si se creó una nueva
 
         } catch (error) {
             console.error('❌ Error al crear usuario:', error);
@@ -260,6 +302,64 @@ const AdminUsersPage = () => {
         setUserToEdit({ ...user });
         setShowEditRoleModal(true);
         setErrorMessage('');
+    };
+
+    // 🛑 Funciones de Eliminación 🛑
+    const openDeleteModal = (user) => {
+        setUserToDelete(user);
+        setDeleteMode('user'); // Por defecto solo usuario
+        setShowDeleteModal(true);
+        setErrorMessage('');
+    };
+
+    const handleDelete = async () => {
+        if (!userToDelete) return;
+        setActionLoading(true);
+        setErrorMessage('');
+
+        try {
+            let rpcName = '';
+            let params = {};
+
+            if (deleteMode === 'company') {
+                if (!confirm(`⚠️ ¡PELIGRO EXTREMO! ⚠️\n\nEstás a punto de eliminar la empresa "${userToDelete.empresa_nombre}" y TODOS sus datos:\n- Todos los usuarios\n- Inventario\n- Ventas\n- Historial\n\nEsta acción NO SE PUEDE DESHACER.\n\n¿Estás absolutamente seguro?`)) {
+                    setActionLoading(false);
+                    return;
+                }
+                rpcName = 'delete_company_full';
+                params = {
+                    p_admin_id: perfil.id,
+                    p_empresa_id: userToDelete.empresa_id
+                };
+            } else {
+                if (!confirm(`¿Estás seguro de eliminar al usuario ${userToDelete.nombre_completo}?`)) {
+                    setActionLoading(false);
+                    return;
+                }
+                rpcName = 'delete_single_user';
+                params = {
+                    p_admin_id: perfil.id,
+                    p_user_id: userToDelete.id
+                };
+            }
+
+            const { data, error } = await supabase.rpc(rpcName, params);
+
+            if (error) throw error;
+
+            setSuccessMessage(data.message || 'Operación realizada con éxito');
+            setShowDeleteModal(false);
+            setUserToDelete(null);
+            loadUsers();
+            loadEmpresas();
+            setTimeout(() => setSuccessMessage(''), 4000);
+
+        } catch (error) {
+            console.error('Error eliminando:', error);
+            setErrorMessage(`Error: ${error.message}`);
+        } finally {
+            setActionLoading(false);
+        }
     };
 
     if (loading) {
@@ -404,6 +504,13 @@ const AdminUsersPage = () => {
                                                         >
                                                             {user.activo ? 'Desactivar' : 'Activar'}
                                                         </button>
+                                                        <button
+                                                            onClick={() => openDeleteModal(user)}
+                                                            className="ap-btn ap-btn-sm ap-btn-danger"
+                                                            style={{ minWidth: '90px', backgroundColor: '#e74c3c', color: 'white' }}
+                                                        >
+                                                            Eliminar
+                                                        </button>
                                                     </>
                                                 )}
                                             </div>
@@ -454,15 +561,50 @@ const AdminUsersPage = () => {
                                 </div>
 
                                 <div className="ap-form-group">
-                                    <label className="ap-form-label">Nombre de la Empresa</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.empresa_nombre}
-                                        onChange={(e) => setFormData({...formData, empresa_nombre: e.target.value})}
-                                        className="ap-form-input"
-                                        placeholder="Mi Negocio S.A.S"
-                                    />
+                                    <label className="ap-form-label">Asignación de Empresa</label>
+                                    <div style={{ display: 'flex', gap: '15px', marginBottom: '10px' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                            <input 
+                                                type="radio" 
+                                                checked={isNewCompany} 
+                                                onChange={() => setIsNewCompany(true)}
+                                            />
+                                            Nueva Empresa
+                                        </label>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                            <input 
+                                                type="radio" 
+                                                checked={!isNewCompany} 
+                                                onChange={() => setIsNewCompany(false)}
+                                            />
+                                            Empresa Existente
+                                        </label>
+                                    </div>
+
+                                    {isNewCompany ? (
+                                        <input
+                                            type="text"
+                                            required={isNewCompany}
+                                            value={formData.empresa_nombre}
+                                            onChange={(e) => setFormData({...formData, empresa_nombre: e.target.value})}
+                                            className="ap-form-input"
+                                            placeholder="Nombre de la nueva empresa"
+                                        />
+                                    ) : (
+                                        <select
+                                            required={!isNewCompany}
+                                            value={formData.empresa_id}
+                                            onChange={(e) => setFormData({...formData, empresa_id: e.target.value})}
+                                            className="ap-form-input"
+                                        >
+                                            <option value="">-- Seleccionar Empresa --</option>
+                                            {empresas.map(emp => (
+                                                <option key={emp.id} value={emp.id}>
+                                                    {emp.nombre}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
                                 </div>
 
                                 <div className="ap-form-group">
@@ -777,6 +919,122 @@ const AdminUsersPage = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* 🛑 Modal de Eliminación 🛑 */}
+            {showDeleteModal && userToDelete && (
+                <div className="ap-modal-overlay">
+                    <div className="ap-modal-content" style={{ maxWidth: 500 }}>
+                        <div className="ap-modal-header" style={{ borderBottom: '1px solid #e74c3c' }}>
+                            <h3 className="ap-modal-title" style={{ color: '#e74c3c' }}>⚠️ Eliminar Datos</h3>
+                            <button 
+                                onClick={() => {
+                                    setShowDeleteModal(false);
+                                    setUserToDelete(null);
+                                    setErrorMessage('');
+                                }} 
+                                className="ap-modal-close-btn"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        
+                        <div className="ap-modal-body">
+                            {errorMessage && (
+                                <div className="ap-alert ap-alert-error" style={{ marginBottom: '20px' }}>
+                                    {errorMessage}
+                                </div>
+                            )}
+
+                            <p style={{ marginBottom: '20px', lineHeight: '1.5' }}>
+                                ¿Qué deseas eliminar en relación al usuario <strong>{userToDelete.nombre_completo}</strong>?
+                            </p>
+
+                            <div className="ap-form-group">
+                                <label className="ap-form-label">Selecciona una opción:</label>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    <label style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'flex-start', 
+                                        gap: '10px', 
+                                        cursor: 'pointer',
+                                        padding: '15px',
+                                        border: deleteMode === 'user' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                                        borderRadius: '8px',
+                                        background: deleteMode === 'user' ? 'var(--color-surface-200)' : 'transparent'
+                                    }}>
+                                        <input 
+                                            type="radio" 
+                                            name="deleteMode"
+                                            checked={deleteMode === 'user'} 
+                                            onChange={() => setDeleteMode('user')}
+                                            style={{ marginTop: '4px' }}
+                                        />
+                                        <div>
+                                            <strong style={{ display: 'block', marginBottom: '4px' }}>Solo este Usuario</strong>
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-medium)' }}>
+                                                Elimina el acceso de este usuario. Los datos de la empresa (ventas, inventario) permanecen intactos.
+                                            </span>
+                                        </div>
+                                    </label>
+
+                                    <label style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'flex-start', 
+                                        gap: '10px', 
+                                        cursor: 'pointer',
+                                        padding: '15px',
+                                        border: deleteMode === 'company' ? '2px solid #e74c3c' : '1px solid var(--color-border)',
+                                        borderRadius: '8px',
+                                        background: deleteMode === 'company' ? '#fff5f5' : 'transparent'
+                                    }}>
+                                        <input 
+                                            type="radio" 
+                                            name="deleteMode"
+                                            checked={deleteMode === 'company'} 
+                                            onChange={() => setDeleteMode('company')}
+                                            style={{ marginTop: '4px' }}
+                                        />
+                                        <div>
+                                            <strong style={{ display: 'block', marginBottom: '4px', color: '#c0392b' }}>Toda la Empresa y sus Datos</strong>
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-medium)' }}>
+                                                Elimina la empresa <strong>{userToDelete.empresa_nombre}</strong>, TODOS sus usuarios, inventario, ventas e historial. <br/>
+                                                <strong style={{ color: '#c0392b' }}>¡Esta acción es irreversible!</strong>
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="ap-modal-footer">
+                            <button 
+                                type="button" 
+                                onClick={() => {
+                                    setShowDeleteModal(false);
+                                    setUserToDelete(null);
+                                    setErrorMessage('');
+                                }} 
+                                className="ap-btn ap-btn-secondary"
+                                disabled={actionLoading}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={handleDelete}
+                                disabled={actionLoading} 
+                                className="ap-btn"
+                                style={{ 
+                                    backgroundColor: deleteMode === 'company' ? '#c0392b' : '#e74c3c',
+                                    color: 'white'
+                                }}
+                            >
+                                {actionLoading ? 'Eliminando...' : (deleteMode === 'company' ? '🗑️ Eliminar TODO' : 'Eliminar Usuario')}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

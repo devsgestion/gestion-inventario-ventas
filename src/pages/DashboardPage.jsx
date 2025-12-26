@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import useAuth from '../hooks/useAuth';
+import usePermissions from '../hooks/usePermissions';
 import useDashboard from '../hooks/useDashboard';
 import VentasChart from '../components/dashboard/VentasChart';
 import ProductosChart from '../components/dashboard/ProductosChart';
@@ -15,6 +16,7 @@ import '../styles/Dashboard.css';
 
 const DashboardPage = () => {
     const { perfil } = useAuth();
+    const permissions = usePermissions();
     const empresaId = perfil?.empresa_id;
     const [showVentasModal, setShowVentasModal] = useState(false);
 
@@ -29,6 +31,8 @@ const DashboardPage = () => {
         ventasPorHora,
         refresh
     } = useDashboard(empresaId);
+
+    const transaccionesHoy = (ventasPorHora || []).reduce((sum, item) => sum + (parseInt(item.transacciones) || 0), 0);
 
     if (loading) {
         return (
@@ -91,57 +95,73 @@ const DashboardPage = () => {
             {/* Tarjetas de Resumen (KPIs) */}
             {resumenGeneral && (
                 <div className="dashboard-kpis">
-                    <div className="kpi-card kpi-primary">
-                        <div className="kpi-icon">💰</div>
-                        <div className="kpi-content">
-                            <h3 className="kpi-label">Ventas Hoy</h3>
-                            <p className="kpi-value">
-                                {formatCurrencyCOP(resumenGeneral.total_ventas_hoy)}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="kpi-card kpi-success">
-                        <div className="kpi-icon">📈</div>
-                        <div className="kpi-content">
-                            <h3 className="kpi-label">Ventas del Mes</h3>
-                            <p className="kpi-value">
-                                {formatCurrencyCOP(resumenGeneral.total_ventas_mes)}
-                            </p>
-                            {comparacionMensual && (
-                                <p className={`kpi-variation ${getVariacionClass(comparacionMensual.variacion_ventas)}`}>
-                                    {getVariacionIcon(comparacionMensual.variacion_ventas)}
-                                    {Math.abs(comparacionMensual.variacion_ventas)}% vs mes anterior
+                    {permissions.canViewFinancialMetrics ? (
+                        <div className="kpi-card kpi-primary">
+                            <div className="kpi-icon">💰</div>
+                            <div className="kpi-content">
+                                <h3 className="kpi-label">Ventas Hoy</h3>
+                                <p className="kpi-value">
+                                    {formatCurrencyCOP(resumenGeneral.total_ventas_hoy)}
                                 </p>
-                            )}
+                            </div>
                         </div>
-                    </div>
-
-                    <div className="kpi-card kpi-info">
-                        <div className="kpi-icon">💵</div>
-                        <div className="kpi-content">
-                            <h3 className="kpi-label">Utilidad del Mes</h3>
-                            <p className="kpi-value">
-                                {formatCurrencyCOP(resumenGeneral.utilidad_mes)}
-                            </p>
-                            {comparacionMensual && (
-                                <p className={`kpi-variation ${getVariacionClass(comparacionMensual.variacion_utilidad)}`}>
-                                    {getVariacionIcon(comparacionMensual.variacion_utilidad)}
-                                    {Math.abs(comparacionMensual.variacion_utilidad)}% vs mes anterior
+                    ) : (
+                        <div className="kpi-card kpi-primary">
+                            <div className="kpi-icon">🛒</div>
+                            <div className="kpi-content">
+                                <h3 className="kpi-label">Transacciones Hoy</h3>
+                                <p className="kpi-value">
+                                    {transaccionesHoy}
                                 </p>
-                            )}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
-                    <div className="kpi-card kpi-warning">
-                        <div className="kpi-icon">🏷️</div>
-                        <div className="kpi-content">
-                            <h3 className="kpi-label">Promedio por Venta</h3>
-                            <p className="kpi-value">
-                                {formatCurrencyCOP(resumenGeneral.ticket_promedio)}
-                            </p>
-                        </div>
-                    </div>
+                    {permissions.canViewFinancialMetrics && (
+                        <>
+                            <div className="kpi-card kpi-success">
+                                <div className="kpi-icon">📈</div>
+                                <div className="kpi-content">
+                                    <h3 className="kpi-label">Ventas del Mes</h3>
+                                    <p className="kpi-value">
+                                        {formatCurrencyCOP(resumenGeneral.total_ventas_mes)}
+                                    </p>
+                                    {comparacionMensual && (
+                                        <p className={`kpi-variation ${getVariacionClass(comparacionMensual.variacion_ventas)}`}>
+                                            {getVariacionIcon(comparacionMensual.variacion_ventas)}
+                                            {Math.abs(comparacionMensual.variacion_ventas)}% vs mes anterior
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="kpi-card kpi-info">
+                                <div className="kpi-icon">💵</div>
+                                <div className="kpi-content">
+                                    <h3 className="kpi-label">Utilidad del Mes</h3>
+                                    <p className="kpi-value">
+                                        {formatCurrencyCOP(resumenGeneral.utilidad_mes)}
+                                    </p>
+                                    {comparacionMensual && (
+                                        <p className={`kpi-variation ${getVariacionClass(comparacionMensual.variacion_utilidad)}`}>
+                                            {getVariacionIcon(comparacionMensual.variacion_utilidad)}
+                                            {Math.abs(comparacionMensual.variacion_utilidad)}% vs mes anterior
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="kpi-card kpi-warning">
+                                <div className="kpi-icon">🏷️</div>
+                                <div className="kpi-content">
+                                    <h3 className="kpi-label">Promedio por Venta</h3>
+                                    <p className="kpi-value">
+                                        {formatCurrencyCOP(resumenGeneral.ticket_promedio)}
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     <div className="kpi-card">
                         <div className="kpi-icon">📦</div>
@@ -167,33 +187,37 @@ const DashboardPage = () => {
                         </div>
                     </div>
 
-                    <div className="kpi-card kpi-secondary">
-                        <div className="kpi-icon">🏦</div>
-                        <div className="kpi-content">
-                            <h3 className="kpi-label">Valor Inventario</h3>
-                            <p className="kpi-value">
-                                {formatCurrencyCOP(resumenGeneral.valor_inventario)}
-                            </p>
-                            <p className="kpi-detail">stock valorizado</p>
+                    {permissions.canViewFinancialMetrics && (
+                        <div className="kpi-card kpi-secondary">
+                            <div className="kpi-icon">🏦</div>
+                            <div className="kpi-content">
+                                <h3 className="kpi-label">Valor Inventario</h3>
+                                <p className="kpi-value">
+                                    {formatCurrencyCOP(resumenGeneral.valor_inventario)}
+                                </p>
+                                <p className="kpi-detail">stock valorizado</p>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             )}
 
             {/* Grid de Gráficos */}
             <div className="dashboard-charts">
                 {/* Ventas últimos 30 días */}
-                <div className="chart-card chart-card-wide">
-                    <div className="chart-card-header">
-                        <h3>📅 Ventas y Utilidad - Últimos 30 Días</h3>
+                {permissions.canViewFinancialMetrics && (
+                    <div className="chart-card chart-card-wide">
+                        <div className="chart-card-header">
+                            <h3>📅 Ventas y Utilidad - Últimos 30 Días</h3>
+                        </div>
+                        <div className="chart-card-body">
+                            <VentasChart data={ventasUltimos30Dias} height={350} />
+                        </div>
                     </div>
-                    <div className="chart-card-body">
-                        <VentasChart data={ventasUltimos30Dias} height={350} />
-                    </div>
-                </div>
+                )}
 
                 {/* Comparación mensual */}
-                {comparacionMensual && (
+                {permissions.canViewFinancialMetrics && comparacionMensual && (
                     <div className="chart-card">
                         <div className="chart-card-header">
                             <h3>📊 Comparación Mensual</h3>
@@ -248,22 +272,24 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Ventas por hora */}
-                <div className="chart-card chart-card-wide">
-                    <div className="chart-card-header">
-                        <h3>⏰ Ventas por Hora - Hoy</h3>
-                        <p className="chart-card-subtitle">
-                            {new Date().toLocaleDateString('es-CO', { 
-                                weekday: 'long', 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
-                            })}
-                        </p>
+                {permissions.canViewFinancialMetrics && (
+                    <div className="chart-card chart-card-wide">
+                        <div className="chart-card-header">
+                            <h3>⏰ Ventas por Hora - Hoy</h3>
+                            <p className="chart-card-subtitle">
+                                {new Date().toLocaleDateString('es-CO', { 
+                                    weekday: 'long', 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                })}
+                            </p>
+                        </div>
+                        <div className="chart-card-body">
+                            <VentasPorHoraChart data={ventasPorHora} height={350} />
+                        </div>
                     </div>
-                    <div className="chart-card-body">
-                        <VentasPorHoraChart data={ventasPorHora} height={280} />
-                    </div>
-                </div>
+                )}
             </div>
 
             {/* Modal de Ventas del Día */}

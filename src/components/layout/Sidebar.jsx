@@ -68,15 +68,28 @@ const Sidebar = () => {
 
                         {/* Inventario - gestor, admin_gestor, admin, superadmin, vendedor (solo consulta) */}
                         {permissions.canViewInventory && (
-                            <li className="c-nav-item">
-                                <NavLink 
-                                    to="/inventario" 
-                                    className={({ isActive }) => `c-nav-link ${isActive ? 'c-nav-link-active' : ''}`}
-                                    onClick={closeSidebar}
-                                >
-                                    <span className="c-nav-link__icon">📦</span><span className="c-nav-link__text">Inventario</span>
-                                </NavLink>
-                            </li>
+                            <>
+                                <li className="c-nav-item">
+                                    <NavLink 
+                                        to="/inventario" 
+                                        className={({ isActive }) => `c-nav-link ${isActive ? 'c-nav-link-active' : ''}`}
+                                        onClick={closeSidebar}
+                                    >
+                                        <span className="c-nav-link__icon">📦</span><span className="c-nav-link__text">Inventario</span>
+                                    </NavLink>
+                                </li>
+                                {permissions.canViewInventoryMovements && (
+                                    <li className="c-nav-item">
+                                        <NavLink 
+                                            to="/movimientos" 
+                                            className={({ isActive }) => `c-nav-link ${isActive ? 'c-nav-link-active' : ''}`}
+                                            onClick={closeSidebar}
+                                        >
+                                            <span className="c-nav-link__icon">📜</span><span className="c-nav-link__text">Historial Movimientos</span>
+                                        </NavLink>
+                                    </li>
+                                )}
+                            </>
                         )}
 
                         {/* Punto de Venta - vendedor, admin_vendedor, admin, superadmin */}

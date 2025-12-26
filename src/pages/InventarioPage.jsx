@@ -11,6 +11,7 @@ import GuidedTour from '../components/layout/GuidedTour';
 import HelpButton from '../components/layout/HelpButton';
 import { inventarioTourSteps, isTourCompleted } from '../config/tourSteps';
 import useAuth from '../hooks/useAuth.jsx';
+import usePermissions from '../hooks/usePermissions'; // 🛑 Importar usePermissions
 import { formatCurrencyCOP } from '../utils/formatters';
 import '../styles/inventario.css';
 
@@ -22,6 +23,7 @@ const ReportesResumen = ({ empresaId, refreshKey }) => {
     const [reporteDia, setReporteDia] = useState(null);
     const [reporteUtilidad, setReporteUtilidad] = useState(null); // 🛑 Nuevo Estado
     const [loading, setLoading] = useState(false);
+    const permissions = usePermissions(); // 🛑 Usar hook de permisos
 
     const fetchReportes = useCallback(async () => {
         if (!empresaId) return;
@@ -30,8 +32,15 @@ const ReportesResumen = ({ empresaId, refreshKey }) => {
         // 1. Reporte de Ventas
         const { data: ventasData, error: ventasError } = await supabase.rpc('get_ventas_del_dia', { p_empresa_id: empresaId });
         
-        // 2. Reporte de Utilidad (Requiere la RPC get_utilidad_del_dia)
-        const { data: utilidadData, error: utilidadError } = await supabase.rpc('get_utilidad_del_dia', { p_empresa_id: empresaId });
+        // 2. Reporte de Utilidad (Solo si tiene permisos)
+        let utilidadData = null;
+        let utilidadError = null;
+        
+        if (permissions.canViewFinancialMetrics) {
+            const response = await supabase.rpc('get_utilidad_del_dia', { p_empresa_id: empresaId });
+            utilidadData = response.data;
+            utilidadError = response.error;
+        }
 
         // Manejo de ventasData
         if (!ventasError && ventasData && ventasData.length > 0) {
@@ -41,10 +50,12 @@ const ReportesResumen = ({ empresaId, refreshKey }) => {
         }
 
         // Manejo de utilidadData
-        if (!utilidadError && utilidadData && utilidadData.length > 0) {
-            setReporteUtilidad(Array.isArray(utilidadData) ? utilidadData[0] : utilidadData);
-        } else {
-            setReporteUtilidad({ total_ventas: 0, total_costos: 0, utilidad_neta: 0 });
+        if (permissions.canViewFinancialMetrics) {
+            if (!utilidadError && utilidadData && utilidadData.length > 0) {
+                setReporteUtilidad(Array.isArray(utilidadData) ? utilidadData[0] : utilidadData);
+            } else {
+                setReporteUtilidad({ total_ventas: 0, total_costos: 0, utilidad_neta: 0 });
+            }
         }
         
         if (ventasError || utilidadError) {
@@ -52,7 +63,7 @@ const ReportesResumen = ({ empresaId, refreshKey }) => {
         }
 
         setLoading(false);
-    }, [empresaId]);
+    }, [empresaId, permissions.canViewFinancialMetrics]);
 
     useEffect(() => {
         fetchReportes();
@@ -70,16 +81,22 @@ const ReportesResumen = ({ empresaId, refreshKey }) => {
 
     return (
         <div className="c-report-grid">
-            <div className="c-report-grid__stat">
-                <h4 className="c-report-grid__title">VENTAS DEL DÍA (HOY)</h4>
-                <h2 className="c-report-grid__value">{formatCurrencyCOP(totalVentas)}</h2>
-            </div>
-            <div className="c-report-grid__stat">
-                <h4 className="c-report-grid__title">UTILIDAD NETA HOY</h4>
-                <h2 className="c-report-grid__value" style={{ color: utilidad >= 0 ? 'green' : 'red' }}>
-                    {formatCurrencyCOP(utilidad)}
-                </h2>
-            </div>
+            {permissions.canViewFinancialMetrics && (
+                <div className="c-report-grid__stat">
+                    <h4 className="c-report-grid__title">VENTAS DEL DÍA (HOY)</h4>
+                    <h2 className="c-report-grid__value">{formatCurrencyCOP(totalVentas)}</h2>
+                </div>
+            )}
+            
+            {permissions.canViewFinancialMetrics && (
+                <div className="c-report-grid__stat">
+                    <h4 className="c-report-grid__title">UTILIDAD NETA HOY</h4>
+                    <h2 className="c-report-grid__value" style={{ color: utilidad >= 0 ? 'green' : 'red' }}>
+                        {formatCurrencyCOP(utilidad)}
+                    </h2>
+                </div>
+            )}
+            
             <div className="c-report-grid__stat">
                 <h4 className="c-report-grid__title">Transacciones Hoy</h4>
                 <h2 className="c-report-grid__value">{transacciones}</h2>
@@ -94,6 +111,7 @@ const ReportesResumen = ({ empresaId, refreshKey }) => {
 
 const InventarioPage = () => {
     const { perfil, logout, isBootstrapping, isLoading } = useAuth();
+    const permissions = usePermissions(); // 🛑 Usar hook de permisos
     const [mostrarFormulario, setMostrarFormulario] = useState(false); // Modal para Crear/Editar Producto
     const [mostrarFormularioCompra, setMostrarFormularioCompra] = useState(false); // 🛑 Modal para Compra
     const [productoSeleccionado, setProductoSeleccionado] = useState(null); // Producto para Compra/Edición
@@ -225,21 +243,25 @@ const InventarioPage = () => {
                             </label>
                             
                             {/* 🛑 NUEVO: Botón Importar Excel 🛑 */}
-                            <button
-                                onClick={() => setShowImportModal(true)}
-                                className="btn btn-secondary"
-                                title="Importar productos desde Excel"
-                            >
-                                📥 Importar Excel
-                            </button>
+                            {permissions.canImportProducts && (
+                                <button
+                                    onClick={() => setShowImportModal(true)}
+                                    className="btn btn-secondary"
+                                    title="Importar productos desde Excel"
+                                >
+                                    📥 Importar Excel
+                                </button>
+                            )}
                             
-                            <button
-                                onClick={() => setMostrarFormulario(true)}
-                                className="btn btn-primary btn-success btn-new-product-action c-inventario__add-btn"
-                                style={{ minWidth: 180 }}
-                            >
-                                + Crear Nuevo Producto
-                            </button>
+                            {permissions.canAddProducts && (
+                                <button
+                                    onClick={() => setMostrarFormulario(true)}
+                                    className="btn btn-primary btn-success btn-new-product-action c-inventario__add-btn"
+                                    style={{ minWidth: 180 }}
+                                >
+                                    + Crear Nuevo Producto
+                                </button>
+                            )}
                         </div>
                     </div>
                     

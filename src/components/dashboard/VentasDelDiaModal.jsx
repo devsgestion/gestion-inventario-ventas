@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../api/supabaseClient';
 import { formatCurrencyCOP } from '../../utils/formatters';
+import usePermissions from '../../hooks/usePermissions';
 import './VentasDelDiaModal.css';
 
 const VentasDelDiaModal = ({ isOpen, onClose, empresaId }) => {
+    const permissions = usePermissions();
     const [ventas, setVentas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -102,22 +104,24 @@ const VentasDelDiaModal = ({ isOpen, onClose, empresaId }) => {
                 </div>
 
                 {/* Summary */}
-                <div className="vdm-summary">
-                    <div className="vdm-summary-card">
-                        <p className="vdm-summary-label">Total Ventas</p>
-                        <p className="vdm-summary-value">{cantidadVentas}</p>
+                {permissions.canViewFinancialMetrics && (
+                    <div className="vdm-summary">
+                        <div className="vdm-summary-card">
+                            <p className="vdm-summary-label">Total Ventas</p>
+                            <p className="vdm-summary-value">{cantidadVentas}</p>
+                        </div>
+                        <div className="vdm-summary-card">
+                            <p className="vdm-summary-label">Ingresos</p>
+                            <p className="vdm-summary-value">{formatCurrencyCOP(totalVentasDelDia)}</p>
+                        </div>
+                        <div className="vdm-summary-card">
+                            <p className="vdm-summary-label">Promedio por Venta</p>
+                            <p className="vdm-summary-value">
+                                {cantidadVentas > 0 ? formatCurrencyCOP(totalVentasDelDia / cantidadVentas) : '$0'}
+                            </p>
+                        </div>
                     </div>
-                    <div className="vdm-summary-card">
-                        <p className="vdm-summary-label">Ingresos</p>
-                        <p className="vdm-summary-value">{formatCurrencyCOP(totalVentasDelDia)}</p>
-                    </div>
-                    <div className="vdm-summary-card">
-                        <p className="vdm-summary-label">Promedio por Venta</p>
-                        <p className="vdm-summary-value">
-                            {cantidadVentas > 0 ? formatCurrencyCOP(totalVentasDelDia / cantidadVentas) : '$0'}
-                        </p>
-                    </div>
-                </div>
+                )}
 
                 {/* Content */}
                 <div className="vdm-content">
@@ -159,20 +163,24 @@ const VentasDelDiaModal = ({ isOpen, onClose, empresaId }) => {
                                                     <span className="vdm-product-qty">
                                                         ×{detalle.cantidad}
                                                     </span>
-                                                    <span className="vdm-product-price">
-                                                        {formatCurrencyCOP(subtotal)}
-                                                    </span>
+                                                    {permissions.canViewFinancialMetrics && (
+                                                        <span className="vdm-product-price">
+                                                            {formatCurrencyCOP(subtotal)}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             );
                                         })}
                                     </div>
 
-                                    <div className="vdm-sale-total">
-                                        <span className="vdm-total-label">Total</span>
-                                        <span className="vdm-total-value">
-                                            {formatCurrencyCOP(venta.total_venta)}
-                                        </span>
-                                    </div>
+                                    {permissions.canViewFinancialMetrics && (
+                                        <div className="vdm-sale-total">
+                                            <span className="vdm-total-label">Total</span>
+                                            <span className="vdm-total-value">
+                                                {formatCurrencyCOP(venta.total_venta)}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

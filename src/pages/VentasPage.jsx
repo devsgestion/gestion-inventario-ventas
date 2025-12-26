@@ -251,6 +251,12 @@ const VentasPage = () => {
         setShowConfirmModal(false);
         if (isCheckoutDisabled) return;
 
+        // 🛑 VALIDACIÓN DE SEGURIDAD: Verificar que el usuario existe
+        if (!userId) {
+            alert("⚠️ Error: Usuario no identificado. Tu perfil parece estar incompleto. Contacta al administrador.");
+            return;
+        }
+
         setIsProcessingSale(true);
 
         const itemsParaRPC = carrito.map(item => ({

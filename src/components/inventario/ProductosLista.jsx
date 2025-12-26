@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import useInventario from '../../hooks/useInventario';
+import usePermissions from '../../hooks/usePermissions'; // 🛑 Importar usePermissions
 import AjusteStockModal from './AjusteStockModal';
 import { formatCurrencyCOP } from '../../utils/formatters';
 import { supabase } from '../../api/supabaseClient'; 
@@ -10,6 +11,7 @@ import './ProductosLista.css';
 
 const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegisterStock, mostrarInactivos = false }) => {
     const { productos, loading, error, fetchProductos, productosBajoStock } = useInventario(empresaId, refreshKey);
+    const permissions = usePermissions(); // 🛑 Usar hook de permisos
 
     const [productoSeleccionado, setProductoSeleccionado] = useState(null);
     const [editingId, setEditingId] = useState(null);
@@ -100,6 +102,8 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
         
         return { cantidad, stockTotal, valorInventario };
     }, [productos, selectedCategory]);
+
+    const canPerformActions = permissions.canEditInventory || permissions.canAdjustStock || permissions.canRegisterPurchase || permissions.canDeleteProducts;
         
     const countTotal = productos.length;
     const countAlertas = productosBajoStock.length;
@@ -489,10 +493,14 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                             <th className="c-productos-table__header">Nombre</th>
                             <th className="c-productos-table__header">Stock Actual</th>
                             <th className="c-productos-table__header">Precio Venta</th>
-                            <th className="c-productos-table__header">Costo (CPP)</th>
+                            {permissions.canEditInventory && (
+                                <th className="c-productos-table__header">Costo (CPP)</th>
+                            )}
                             <th className="c-productos-table__header">Alerta Mín.</th>
                             <th className="c-productos-table__header">Estado</th>
-                            <th className="c-productos-table__header" style={{minWidth: 80, textAlign: 'center'}}>Acciones</th>
+                            {canPerformActions && (
+                                <th className="c-productos-table__header" style={{minWidth: 80, textAlign: 'center'}}>Acciones</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -514,7 +522,7 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                         )}
                                     </div>
                                 </td>
-                                <td className="c-productos-table__cell" onClick={() => startPriceEdit(p.id, p.precio_venta)}>
+                                <td className="c-productos-table__cell" onClick={() => permissions.canEditInventory && startPriceEdit(p.id, p.precio_venta)}>
                                     {editingId === p.id ? (
                                         <input 
                                             type="text"
@@ -533,14 +541,19 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                             autoFocus
                                         />
                                     ) : (
-                                        <span className="c-productos-lista__price-cell" title="Click para editar precio">
+                                        <span 
+                                            className={`c-productos-lista__price-cell ${permissions.canEditInventory ? 'c-productos-lista__price-cell--editable' : ''}`} 
+                                            title={permissions.canEditInventory ? "Click para editar precio" : "Precio de venta"}
+                                        >
                                             {formatCurrencyCOP(p.precio_venta)}
                                         </span>
                                     )}
                                 </td>
-                                <td className="c-productos-table__cell">
-                                    {formatCurrencyCOP(p.precio_costo)}
-                                </td>
+                                {permissions.canEditInventory && (
+                                    <td className="c-productos-table__cell">
+                                        {formatCurrencyCOP(p.precio_costo)}
+                                    </td>
+                                )}
                                 <td className="c-productos-table__cell">{p.alerta_stock_min}</td>
                                 
                                 <td className="c-productos-table__cell">
@@ -549,48 +562,49 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                     </span>
                                 </td>
 
-                                <td className="c-productos-table__cell c-productos-table__cell--actions">
-                                    <div className="c-productos-lista__actions">
-                                        {/* Botón de menú contextual */}
-                                        <div className="c-productos-lista__menu-wrapper">
-                                            <button 
-                                                onClick={(e) => {
-                                                    const newMenuId = openMenuId === p.id ? null : p.id;
-                                                    
-                                                    // Si vamos a abrir el menú, decidir el modo (dropdown o modal)
-                                                    if (newMenuId) {
-                                                        const button = e.currentTarget;
-                                                        const rect = button.getBoundingClientRect();
-                                                        const viewportHeight = window.innerHeight;
-                                                        const spaceBelow = viewportHeight - rect.bottom;
-                                                        const menuHeight = 280;
+                                {canPerformActions && (
+                                    <td className="c-productos-table__cell c-productos-table__cell--actions">
+                                        <div className="c-productos-lista__actions">
+                                            {/* Botón de menú contextual */}
+                                            <div className="c-productos-lista__menu-wrapper">
+                                                <button 
+                                                    onClick={(e) => {
+                                                        const newMenuId = openMenuId === p.id ? null : p.id;
                                                         
-                                                        // Si no hay suficiente espacio, abrir como modal centrado
-                                                        if (spaceBelow < menuHeight) {
-                                                            setMenuOpenUpward(true);
+                                                        // Si vamos a abrir el menú, decidir el modo (dropdown o modal)
+                                                        if (newMenuId) {
+                                                            const button = e.currentTarget;
+                                                            const rect = button.getBoundingClientRect();
+                                                            const viewportHeight = window.innerHeight;
+                                                            const spaceBelow = viewportHeight - rect.bottom;
+                                                            const menuHeight = 280;
+                                                            
+                                                            // Si no hay suficiente espacio, abrir como modal centrado
+                                                            if (spaceBelow < menuHeight) {
+                                                                setMenuOpenUpward(true);
+                                                            } else {
+                                                                setMenuOpenUpward(false);
+                                                            }
                                                         } else {
                                                             setMenuOpenUpward(false);
                                                         }
-                                                    } else {
-                                                        setMenuOpenUpward(false);
-                                                    }
-                                                    
-                                                    setOpenMenuId(newMenuId);
-                                                }}
-                                                className="c-productos-lista__menu-btn"
-                                                disabled={actionLoading}
-                                                title="Acciones"
-                                            >
-                                                ⋮
-                                            </button>
-                                            
-                                            {/* Menú desplegable o modal */}
-                                            {openMenuId === p.id && (
-                                                <>
-                                                    {/* Overlay oscuro cuando es modal */}
-                                                    {menuOpenUpward && <div className="c-productos-lista__modal-overlay" onClick={() => setOpenMenuId(null)}></div>}
-                                                    
-                                                    <div className={`c-productos-lista__dropdown-menu ${menuOpenUpward ? 'c-productos-lista__dropdown-menu--modal' : ''}`}>
+                                                        
+                                                        setOpenMenuId(newMenuId);
+                                                    }}
+                                                    className="c-productos-lista__menu-btn"
+                                                    disabled={actionLoading}
+                                                    title="Acciones"
+                                                >
+                                                    ⋮
+                                                </button>
+                                                
+                                                {/* Menú desplegable o modal */}
+                                                {openMenuId === p.id && (
+                                                    <>
+                                                        {/* Overlay oscuro cuando es modal */}
+                                                        {menuOpenUpward && <div className="c-productos-lista__modal-overlay" onClick={() => setOpenMenuId(null)}></div>}
+                                                        
+                                                        <div className={`c-productos-lista__dropdown-menu ${menuOpenUpward ? 'c-productos-lista__dropdown-menu--modal' : ''}`}>
                                                         {p.activo !== false && (
                                                             <>
                                                                 <button
@@ -681,6 +695,7 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                         </div>
                                     </div>
                                 </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>
