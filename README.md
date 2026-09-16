@@ -108,10 +108,8 @@ Sistema completo de punto de venta (POS) con control de inventario, gestión de 
 
 4. **Configurar Supabase**
    
-   Ejecuta los siguientes scripts SQL en tu proyecto de Supabase:
-   - `docs/DATABASE_TABLES.md` (estructura de tablas)
-   - `docs/DATABASE_FUNCTIONS.sql` (funciones RPC principales)
-   - `docs/DASHBOARD_FUNCTIONS.sql` (funciones para el dashboard)
+   El esquema de base de datos se gestiona desde `supabase/` (ver `supabase/README.md`).
+   Los archivos `docs/*.sql` son históricos y no deben ejecutarse en orden arbitrario.
 
 5. **Iniciar servidor de desarrollo**
    ```bash
@@ -131,7 +129,9 @@ gestion-inventario-ventas/
 │   ├── DATABASE_TABLES.md      # Esquema de base de datos
 │   ├── DATABASE_FUNCTIONS.md   # Funciones RPC principales
 │   ├── DASHBOARD_FUNCTIONS.sql # Funciones del dashboard
-│   └── DASHBOARD_README.md     # Guía del dashboard
+│   ├── DASHBOARD_README.md     # Guía del dashboard
+│   └── historial/              # Notas de depuración antiguas (no vigentes)
+├── supabase/                   # Esquema de BD: inspección y migraciones (fuente de verdad)
 ├── src/
 │   ├── api/                    # Cliente de Supabase
 │   ├── assets/                 # Recursos estáticos

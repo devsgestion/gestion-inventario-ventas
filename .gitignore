@@ -29,3 +29,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Backups de Supabase (contienen datos reales)
+supabase/backups/
+supabase/.temp/
+supabase/inspect/resultado_estado_actual.*
