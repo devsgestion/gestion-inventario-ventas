@@ -126,6 +126,43 @@ body.theme-light .c-productos-lista__search-clear:hover {
   vertical-align: middle;
 }
 
+/* Encabezados ordenables (clic para alternar mayor→menor / menor→mayor) */
+.c-productos-table__header--sortable {
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.c-productos-table__header--sortable:hover {
+  background-color: #3a4a66;
+}
+
+.c-productos-table__header--active {
+  color: var(--color-brand, #3498db);
+}
+
+.c-productos-table__sort-icon {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 0.75em;
+}
+
+.c-productos-table__sort-icon--idle {
+  opacity: 0.4;
+}
+
+.c-productos-table__header--sortable:hover .c-productos-table__sort-icon--idle {
+  opacity: 0.8;
+}
+
+body.theme-light .c-productos-table__header--sortable:hover {
+  background-color: #3d4a5f !important;
+}
+
+body.theme-light .c-productos-table__header--active {
+  color: #90cdf4 !important;
+}
+
 /* Ajustes específicos por columna */
 .c-productos-table__header:nth-child(8) { /* Estado (antes era 7, ahora 8 por categoría) */
   text-align: center;

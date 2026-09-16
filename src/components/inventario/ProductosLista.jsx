@@ -43,7 +43,10 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
     // 🛑 NUEVO ESTADO: Para filtros avanzados 🛑
     const [selectedCategory, setSelectedCategory] = useState('todas');
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-    
+
+    // Ordenamiento de la tabla: key = campo del producto, direction = 'desc' | 'asc'
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
+
     // 🛑 NUEVO ESTADO: Para menú contextual de acciones 🛑
     const [openMenuId, setOpenMenuId] = useState(null);
     const [menuOpenUpward, setMenuOpenUpward] = useState(false);
@@ -81,7 +84,34 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
         
         return cumpleAlertas && cumpleEstado && cumpleBusqueda && cumpleCategoria;
     });
-    
+
+    // --- Ordenamiento por columna ---
+    // sortConfig.key = campo del producto; direction = 'desc' (mayor a menor) | 'asc'
+    const handleSort = (key) => {
+        setSortConfig(prev => {
+            if (prev.key !== key) return { key, direction: 'desc' };
+            return { key, direction: prev.direction === 'desc' ? 'asc' : 'desc' };
+        });
+    };
+
+    const sortIndicator = (key) => {
+        if (sortConfig.key !== key) return <span className="c-productos-table__sort-icon c-productos-table__sort-icon--idle">⇅</span>;
+        return <span className="c-productos-table__sort-icon">{sortConfig.direction === 'desc' ? '▼' : '▲'}</span>;
+    };
+
+    const productosOrdenados = React.useMemo(() => {
+        if (!sortConfig.key) return productosFiltrados;
+        const { key, direction } = sortConfig;
+        const factor = direction === 'desc' ? -1 : 1;
+        return [...productosFiltrados].sort((a, b) => {
+            const va = a[key], vb = b[key];
+            if (typeof va === 'number' || typeof vb === 'number') {
+                return ((Number(va) || 0) - (Number(vb) || 0)) * factor;
+            }
+            return String(va ?? '').localeCompare(String(vb ?? ''), 'es', { sensitivity: 'base', numeric: true }) * factor;
+        });
+    }, [productosFiltrados, sortConfig]);
+
     // 🛑 NUEVO: Obtener lista de categorías únicas 🛑
     const categoriasUnicas = React.useMemo(() => {
         const cats = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
@@ -419,7 +449,38 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                                 <option value="sin-categoria">❌ Sin categoría</option>
                             </select>
                         </div>
-                        
+
+                        <div className="c-productos-lista__filter-group">
+                            <label className="c-productos-lista__filter-label">
+                                <span className="c-productos-lista__filter-label-icon">↕️</span>
+                                <span>Ordenar por:</span>
+                            </label>
+                            <select
+                                value={sortConfig.key ? `${sortConfig.key}:${sortConfig.direction}` : ''}
+                                onChange={(e) => {
+                                    const [key, direction] = e.target.value.split(':');
+                                    setSortConfig(key ? { key, direction } : { key: null, direction: 'desc' });
+                                }}
+                                className="c-productos-lista__filter-select"
+                            >
+                                <option value="">Sin ordenar (orden original)</option>
+                                <option value="stock_actual:desc">📦 Stock: mayor a menor</option>
+                                <option value="stock_actual:asc">📦 Stock: menor a mayor</option>
+                                <option value="precio_venta:desc">💲 Precio venta: mayor a menor</option>
+                                <option value="precio_venta:asc">💲 Precio venta: menor a mayor</option>
+                                {permissions.canEditInventory && (
+                                    <>
+                                        <option value="precio_costo:desc">🏷️ Costo (CPP): mayor a menor</option>
+                                        <option value="precio_costo:asc">🏷️ Costo (CPP): menor a mayor</option>
+                                    </>
+                                )}
+                                <option value="nombre:asc">🔤 Nombre: A → Z</option>
+                                <option value="nombre:desc">🔤 Nombre: Z → A</option>
+                                <option value="codigo_referencia:asc">🔢 Referencia: A → Z</option>
+                                <option value="codigo_referencia:desc">🔢 Referencia: Z → A</option>
+                            </select>
+                        </div>
+
                         {estadisticasPorCategoria && (
                             <div className="c-productos-lista__category-stats">
                                 <div className="c-productos-lista__stat-card">
@@ -489,14 +550,24 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                 <table className="c-productos-table">
                     <thead>
                         <tr>
-                            <th className="c-productos-table__header">Ref.</th>
-                            <th className="c-productos-table__header">Nombre</th>
-                            <th className="c-productos-table__header">Stock Actual</th>
-                            <th className="c-productos-table__header">Precio Venta</th>
-                            {permissions.canEditInventory && (
-                                <th className="c-productos-table__header">Costo (CPP)</th>
-                            )}
-                            <th className="c-productos-table__header">Alerta Mín.</th>
+                            {[
+                                { key: 'codigo_referencia', label: 'Ref.' },
+                                { key: 'nombre', label: 'Nombre' },
+                                { key: 'stock_actual', label: 'Stock Actual' },
+                                { key: 'precio_venta', label: 'Precio Venta' },
+                                ...(permissions.canEditInventory ? [{ key: 'precio_costo', label: 'Costo (CPP)' }] : []),
+                                { key: 'alerta_stock_min', label: 'Alerta Mín.' },
+                            ].map(col => (
+                                <th
+                                    key={col.key}
+                                    className={`c-productos-table__header c-productos-table__header--sortable ${sortConfig.key === col.key ? 'c-productos-table__header--active' : ''}`}
+                                    onClick={() => handleSort(col.key)}
+                                    title={`Ordenar por ${col.label}`}
+                                    aria-sort={sortConfig.key === col.key ? (sortConfig.direction === 'desc' ? 'descending' : 'ascending') : 'none'}
+                                >
+                                    {col.label} {sortIndicator(col.key)}
+                                </th>
+                            ))}
                             <th className="c-productos-table__header">Estado</th>
                             {canPerformActions && (
                                 <th className="c-productos-table__header" style={{minWidth: 80, textAlign: 'center'}}>Acciones</th>
@@ -504,7 +575,7 @@ const ProductosLista = ({ empresaId, refreshKey = 0, onProductAdjusted, onRegist
                         </tr>
                     </thead>
                     <tbody>
-                        {productosFiltrados.map((p) => (
+                        {productosOrdenados.map((p) => (
                             <tr 
                                 key={p.id} 
                                 className={`c-productos-table__row ${p.stock_actual <= p.alerta_stock_min ? 'c-productos-table__row--low-stock' : ''} ${p.activo === false ? 'c-productos-table__row--inactive' : ''}`}
