@@ -285,18 +285,33 @@ const useInventario = (empresaId, refreshTrigger = 0) => {
             if (ventasError) throw ventasError;
             const resumen = ventasData?.[0] || { total_ventas: 0, cantidad_transacciones: 0 };
 
-            // 2. Insertar el cierre en cierres_caja
+            // 2. Registrar el cierre en cierres_caja.
+            // Existe UNIQUE (empresa_id, fecha_cierre): si la caja ya se cerró hoy
+            // (o se cerró, se reabrió y se vendió más), se ACTUALIZA el cierre del día
+            // con los totales completos en lugar de fallar por clave duplicada.
             const { error: cierreError } = await supabase
                 .from('cierres_caja')
-                .insert({
+                .upsert({
                     empresa_id: userProfile.empresa_id,
                     fecha_cierre: today,
                     total_ingresos: resumen.total_ventas,
                     total_transacciones: resumen.cantidad_transacciones,
                     usuario_cierre_id: session.user.id,
-                });
+                }, { onConflict: 'empresa_id,fecha_cierre' });
 
-            if (cierreError) throw cierreError;
+            if (cierreError) {
+                // Si no se pudo actualizar el cierre pero ya existe uno para hoy,
+                // no dejar la caja bloqueada: continuar y marcarla como CERRADA.
+                const { data: cierreExistente } = await supabase
+                    .from('cierres_caja')
+                    .select('id')
+                    .eq('empresa_id', userProfile.empresa_id)
+                    .eq('fecha_cierre', today)
+                    .maybeSingle();
+
+                if (!cierreExistente) throw cierreError;
+                console.warn('No se pudo actualizar el cierre de hoy, se conserva el existente:', cierreError.message);
+            }
 
             // 3. Actualizar estado_caja a CERRADA
             const { error } = await supabase
